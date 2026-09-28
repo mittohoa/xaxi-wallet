@@ -1,0 +1,25 @@
+// Bien dich cac file test TypeScript roi chay bang node --test.
+import { build } from 'esbuild'
+import { spawnSync } from 'node:child_process'
+import { rmSync } from 'node:fs'
+
+const outdir = 'tests/.out'
+rmSync(outdir, { recursive: true, force: true })
+
+await build({
+  entryPoints: ['tests/core.test.ts', 'tests/app.test.tsx'],
+  outdir,
+  bundle: true,
+  platform: 'node',
+  format: 'esm',
+  target: 'node20',
+  external: ['node:*', 'jsdom', 'fake-indexeddb', 'fake-indexeddb/auto'],
+  logLevel: 'error',
+})
+
+const result = spawnSync(
+  process.execPath,
+  ['--test', '--test-force-exit', `${outdir}/core.test.js`, `${outdir}/app.test.js`],
+  { stdio: 'inherit' },
+)
+process.exit(result.status ?? 1)
