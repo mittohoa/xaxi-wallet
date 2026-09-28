@@ -11,3 +11,8 @@ src-tauri/target/
 src-tauri/gen/
 tests/.out
 *.tsbuildinfo
+
+# Biến môi trường / ghi chú cục bộ — không đẩy lên remote
+.env
+.env.*
+!.env.example
