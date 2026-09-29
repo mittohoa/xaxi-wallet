@@ -9,6 +9,7 @@ import { loadDemoData, primeOpeningBalances } from '../lib/demo'
 import { formatDate, todayISO } from '../lib/date'
 import { formatMoney, parseAmount } from '../lib/format'
 import { formatBytes, readStorageStatus, requestPersistence, type StorageStatus } from '../lib/storage'
+import { nativeShareAvailable } from '../lib/native/shell'
 import { saveSettings, useApp } from '../store'
 import type { Id, Recurring, Settings as SettingsType, TxKind, WalletKind } from '../types'
 
@@ -55,22 +56,41 @@ export function Settings() {
     await saveSettings(next)
   }
 
+  /**
+   * Bao ket qua SAU khi tep that su ra khoi app, khong phai truoc.
+   *
+   * Truoc day toast chay ngay sau loi goi tai ve, nen tren Android — noi loi
+   * goi do khong tao ra tep nao — app van bao "da xuat ban sao luu". Loi im
+   * lang nang nhat tung co trong app nay.
+   */
+  async function xuat(run: () => Promise<void>, xong: string) {
+    try {
+      await run()
+      toast(nativeShareAvailable() ? 'Chọn nơi lưu tệp' : xong)
+    } catch (e) {
+      toast(e instanceof Error ? e.message : 'Không xuất được tệp')
+    }
+  }
+
   async function exportJSON() {
     const backup = await buildBackup()
-    downloadFile(`xaxi-backup-${todayISO()}.json`, JSON.stringify(backup, null, 2), 'application/json')
-    toast('Đã xuất bản sao lưu')
+    await xuat(
+      () => downloadFile(`xaxi-backup-${todayISO()}.json`, JSON.stringify(backup, null, 2), 'application/json'),
+      'Đã xuất bản sao lưu',
+    )
   }
 
   async function exportCSV() {
-    downloadFile(`xaxi-giao-dich-${todayISO()}.csv`, toCSV(transactions, categories, wallets), 'text/csv')
-    toast('Đã xuất CSV')
+    await xuat(
+      () => downloadFile(`xaxi-giao-dich-${todayISO()}.csv`, toCSV(transactions, categories, wallets), 'text/csv'),
+      'Đã xuất CSV',
+    )
   }
 
   async function exportPhotos() {
     const { blob, count } = await exportAttachments()
     if (count === 0) return toast('Chưa có ảnh nào để xuất')
-    downloadBlob(`xaxi-anh-bien-lai-${todayISO()}.zip`, blob)
-    toast(`Đã xuất ${count} ảnh`)
+    await xuat(() => downloadBlob(`xaxi-anh-bien-lai-${todayISO()}.zip`, blob), `Đã xuất ${count} ảnh`)
   }
 
   async function importJSON(file: File | undefined) {

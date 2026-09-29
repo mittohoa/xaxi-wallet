@@ -13,6 +13,7 @@ interface ShellPlugin {
   pickDate(options: { date: string }): Promise<{ date?: string; cancelled: boolean }>
   consumeSharedText(): Promise<{ text: string }>
   setOverlayOpen(options: { open: boolean }): Promise<void>
+  shareFile(options: { name: string; mimeType: string; data: string }): Promise<{ shared: boolean; bytes: number }>
 }
 
 const Shell = registerPlugin<ShellPlugin>('Shell')
@@ -100,4 +101,38 @@ export function nativeBackAvailable(): boolean {
 export function setNativeOverlayOpen(open: boolean): void {
   if (!available()) return
   Shell.setOverlayOpen({ open }).catch(() => undefined)
+}
+
+/** Lop native co nhan viec xuat tep khong */
+export function nativeShareAvailable(): boolean {
+  return available()
+}
+
+/** Doc mot Blob thanh base64 de chuyen qua cau noi sang lop native */
+function toBase64(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onerror = () => reject(reader.error ?? new Error('Không đọc được dữ liệu.'))
+    reader.onload = () => {
+      const url = String(reader.result)
+      const comma = url.indexOf(',')
+      resolve(comma >= 0 ? url.slice(comma + 1) : url)
+    }
+    reader.readAsDataURL(blob)
+  })
+}
+
+/**
+ * Xuat mot tep ra ngoai app qua bang Chia se cua Android.
+ *
+ * Tra ve false khi khong phai Android, de ben goi tu rot ve cach cua web.
+ *
+ * Du lieu di qua cau noi duoi dang base64, nen phinh khoang 4/3. Voi ban sao
+ * luu JSON va tep CSV thi khong dang ke; bo anh vai tram tam cung chi vai MB.
+ */
+export async function shareNativeFile(name: string, blob: Blob): Promise<boolean> {
+  if (!available()) return false
+  const data = await toBase64(blob)
+  await Shell.shareFile({ name, mimeType: blob.type || 'application/octet-stream', data })
+  return true
 }

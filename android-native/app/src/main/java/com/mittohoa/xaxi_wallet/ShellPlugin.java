@@ -1,6 +1,9 @@
 package com.mittohoa.xaxi_wallet;
 
 import android.app.DatePickerDialog;
+import android.content.Intent;
+import android.net.Uri;
+import android.util.Base64;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.VibrationEffect;
@@ -10,8 +13,11 @@ import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 
+import androidx.core.content.FileProvider;
 import androidx.core.view.WindowInsetsControllerCompat;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.util.Calendar;
 
 import com.getcapacitor.JSObject;
@@ -197,5 +203,78 @@ public class ShellPlugin extends Plugin {
     public void setOverlayOpen(PluginCall call) {
         MainActivity.overlayOpen = Boolean.TRUE.equals(call.getBoolean("open", false));
         call.resolve();
+    }
+
+    /** Thu muc tam cho tep xuat ra; nam trong vung rieng cua app */
+    private static final String EXPORT_DIR = "xuat";
+
+    /**
+     * Ghi mot tep roi mo bang Chia se de nguoi dung tu chon noi luu.
+     *
+     * Vi sao phai co: lop web tai tep bang the <a download> tro toi blob URL.
+     * Cach do dung tren trinh duyet, nhung WebView cua Android KHONG xu ly no —
+     * khong co tep nao duoc tao, ma lop web van tuong da xong va bao "da xuat
+     * ban sao luu". Nguoi dung tin la minh co ban sao luu, thuc ra khong co gi.
+     *
+     * Chon bang Chia se thay vi ghi thang vao thu muc Tai xuong: khong can quyen
+     * nao o bat ky phien ban Android nao, va nguoi dung tu quyet dinh du lieu tai
+     * chinh cua minh di dau.
+     */
+    @PluginMethod
+    public void shareFile(PluginCall call) {
+        String name = call.getString("name", "xaxi-export");
+        String mime = call.getString("mimeType", "application/octet-stream");
+        String data = call.getString("data");
+        if (data == null) {
+            call.reject("Thiếu nội dung tệp.");
+            return;
+        }
+
+        try {
+            File dir = new File(getContext().getCacheDir(), EXPORT_DIR);
+            if (!dir.exists() && !dir.mkdirs()) {
+                call.reject("Không tạo được thư mục tạm.");
+                return;
+            }
+
+            // Don ban xuat truoc do: day la du lieu tai chinh, khong de no nam lai
+            // trong bo nho dem lau hon muc can thiet. Ban cu chac chan da duoc doc
+            // xong vi nguoi dung da di qua bang Chia se roi.
+            File[] cu = dir.listFiles();
+            if (cu != null) {
+                for (File f : cu) f.delete();
+            }
+
+            File out = new File(dir, name);
+            FileOutputStream stream = new FileOutputStream(out);
+            try {
+                stream.write(Base64.decode(data, Base64.DEFAULT));
+            } finally {
+                stream.close();
+            }
+
+            Uri uri = FileProvider.getUriForFile(
+                getContext(),
+                getContext().getPackageName() + ".fileprovider",
+                out
+            );
+
+            Intent send = new Intent(Intent.ACTION_SEND);
+            send.setType(mime);
+            send.putExtra(Intent.EXTRA_STREAM, uri);
+            send.putExtra(Intent.EXTRA_TITLE, name);
+            send.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+
+            Intent chooser = Intent.createChooser(send, name);
+            chooser.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            getActivity().startActivity(chooser);
+
+            JSObject result = new JSObject();
+            result.put("shared", true);
+            result.put("bytes", out.length());
+            call.resolve(result);
+        } catch (Exception e) {
+            call.reject("Không lưu được tệp: " + e.getMessage());
+        }
     }
 }

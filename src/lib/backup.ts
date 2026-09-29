@@ -1,4 +1,5 @@
 import { db } from '../db/db'
+import { shareNativeFile } from './native/shell'
 import { purgeOrphans } from './attachments'
 import type { BackupFile, Category, Transaction, Wallet } from '../types'
 import { formatDate } from './date'
@@ -102,12 +103,25 @@ export function toCSV(txs: Transaction[], categories: Category[], wallets: Walle
   return '\ufeff' + [CSV_HEADER.join(','), ...rows].join('\r\n')
 }
 
-export function downloadFile(filename: string, content: string, mime: string): void {
-  downloadBlob(filename, new Blob([content], { type: `${mime};charset=utf-8` }))
+export function downloadFile(filename: string, content: string, mime: string): Promise<void> {
+  return downloadBlob(filename, new Blob([content], { type: `${mime};charset=utf-8` }))
 }
 
-/** Duong tai ve cho du lieu nhi phan — anh bien lai dong goi ZIP di loi nay */
-export function downloadBlob(filename: string, blob: Blob): void {
+/**
+ * Dua mot tep ra khoi app.
+ *
+ * Hai duong hoan toan khac nhau, va chuyen nay tung lam hong ca tinh nang:
+ *
+ * - Tren Android phai nho lop native. The <a download> tro toi blob URL KHONG
+ *   duoc WebView xu ly — khong tep nao duoc tao, ma lop web van chay tiep va
+ *   bao "da xuat ban sao luu". Nguoi dung tin la minh co ban sao luu, thuc ra
+ *   khong co gi. Do la kieu hong tham lang nhat trong ca app nay.
+ *
+ * - Tren trinh duyet thi the <a download> lai la cach dung.
+ */
+export async function downloadBlob(filename: string, blob: Blob): Promise<void> {
+  if (await shareNativeFile(filename, blob)) return
+
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url
