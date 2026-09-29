@@ -1,21 +1,22 @@
-import { db } from '../db/db'
-import type { Category, Transaction, TxKind, TxSource, Wallet } from '../types'
+import { db, newId, stamp, touch } from '../db/db'
+import type { Category, CategorySlug, Id, Transaction, TxKind, TxSource, Wallet } from '../types'
 import { todayISO } from './date'
 import { normalize } from './quickadd'
 
 export interface NewTransaction {
   kind: TxKind
   amount: number
-  categoryId: number
-  walletId: number
+  categoryId: Id
+  walletId: Id
   date?: string
   note?: string
   source?: TxSource
   estimated?: boolean
 }
 
-export async function addTransaction(input: NewTransaction): Promise<number> {
-  return db.transactions.add({
+export async function addTransaction(input: NewTransaction): Promise<Id> {
+  return db.transactions.add(
+    stamp({
     kind: input.kind,
     amount: Math.round(input.amount),
     categoryId: input.categoryId,
@@ -23,13 +24,14 @@ export async function addTransaction(input: NewTransaction): Promise<number> {
     date: input.date ?? todayISO(),
     note: input.note?.trim() || undefined,
     createdAt: Date.now(),
-    source: input.source ?? 'manual',
-    estimated: input.estimated || undefined,
-  })
+      source: input.source ?? 'manual',
+      estimated: input.estimated || undefined,
+    }),
+  )
 }
 
 /** Danh muc he thong theo slug; rot ve danh muc cung loai dau tien neu thieu */
-export function systemCategory(categories: Category[], slug: NonNullable<Category['slug']>): Category | undefined {
+export function systemCategory(categories: Category[], slug: CategorySlug): Category | undefined {
   const kind: TxKind = slug.endsWith('income') ? 'income' : 'expense'
   return categories.find((c) => c.slug === slug) ?? categories.find((c) => c.kind === kind)
 }
@@ -38,12 +40,12 @@ export function systemCategory(categories: Category[], slug: NonNullable<Categor
 
 export async function markNoSpend(date: string): Promise<void> {
   const existing = await db.dayMarks.where('date').equals(date).first()
-  if (!existing) await db.dayMarks.add({ date, markedAt: Date.now() })
+  if (!existing) await db.dayMarks.add(stamp({ date, markedAt: Date.now() }))
 }
 
 export async function unmarkNoSpend(date: string): Promise<void> {
   const existing = await db.dayMarks.where('date').equals(date).first()
-  if (existing?.id) await db.dayMarks.delete(existing.id)
+  if (existing) await db.dayMarks.delete(existing.id)
 }
 
 /* ---------- Doi soat so du ---------- */
@@ -68,28 +70,30 @@ export async function reconcileWallet(
 ): Promise<ReconcileResult> {
   const difference = Math.round(countedBalance - computedBalance)
   if (difference === 0) {
-    await db.wallets.update(wallet.id!, { lastReconciledAt: date })
+    await db.wallets.update(wallet.id, { ...touch(), lastReconciledAt: date })
     return { difference: 0, createdKind: null }
   }
 
   const kind: TxKind = difference < 0 ? 'expense' : 'income'
   const slug = kind === 'expense' ? 'reconcile-expense' : 'reconcile-income'
   const category = systemCategory(categories, slug)
-  if (!category?.id) throw new Error('Thiếu danh mục hệ thống để ghi chênh lệch đối soát.')
+  if (!category) throw new Error('Thiếu danh mục hệ thống để ghi chênh lệch đối soát.')
 
   await db.transaction('rw', db.transactions, db.wallets, async () => {
-    await db.transactions.add({
-      kind,
-      amount: Math.abs(difference),
-      categoryId: category.id!,
-      walletId: wallet.id!,
-      date,
-      note: kind === 'expense' ? 'Chênh lệch đối soát số dư' : 'Chênh lệch đối soát số dư (dư ra)',
-      createdAt: Date.now(),
-      source: 'reconcile',
-      estimated: true,
-    })
-    await db.wallets.update(wallet.id!, { lastReconciledAt: date })
+    await db.transactions.add(
+      stamp({
+        kind,
+        amount: Math.abs(difference),
+        categoryId: category.id,
+        walletId: wallet.id,
+        date,
+        note: kind === 'expense' ? 'Chênh lệch đối soát số dư' : 'Chênh lệch đối soát số dư (dư ra)',
+        createdAt: Date.now(),
+        source: 'reconcile' as const,
+        estimated: true,
+      }),
+    )
+    await db.wallets.update(wallet.id, { ...touch(), lastReconciledAt: date })
   })
 
   return { difference, createdKind: kind }
@@ -102,7 +106,7 @@ export interface Shortcut {
   label: string
   kind: TxKind
   amount: number
-  categoryId: number
+  categoryId: Id
   note?: string
   uses: number
 }
@@ -115,12 +119,12 @@ export function suggestShortcuts(transactions: Transaction[], categories: Catego
   const cutoff = new Date()
   cutoff.setDate(cutoff.getDate() - windowDays)
   const cutoffISO = cutoff.toISOString().slice(0, 10)
-  const catById = new Map(categories.map((c) => [c.id!, c]))
+  const catById = new Map(categories.map((c) => [c.id, c]))
 
   const groups = new Map<string, Shortcut & { lastUsed: string }>()
   for (const t of transactions) {
     if (t.date < cutoffISO) continue
-    if (t.source === 'reconcile') continue
+    if (t.source === 'reconcile' || t.transferId) continue
     const note = t.note?.trim() ?? ''
     const key = `${t.kind}|${t.categoryId}|${normalize(note)}|${t.amount}`
     const existing = groups.get(key)
@@ -147,4 +151,79 @@ export function suggestShortcuts(transactions: Transaction[], categories: Catego
     .sort((a, b) => (b.uses === a.uses ? b.lastUsed.localeCompare(a.lastUsed) : b.uses - a.uses))
     .slice(0, limit)
     .map(({ lastUsed: _lastUsed, ...rest }) => rest)
+}
+
+/* ---------- Chuyen tien giua hai vi ---------- */
+
+export interface TransferInput {
+  fromWalletId: Id
+  toWalletId: Id
+  amount: number
+  date?: string
+  note?: string
+}
+
+/**
+ * Ghi mot lan chuyen tien thanh CAP ban ghi lien ket.
+ *
+ * Vi sao khong ghi mot ban ghi duy nhat: so du tung vi duoc suy ra bang cach
+ * duyet giao dich va cong tru theo `walletId`. Mot ban ghi thi khong the vua
+ * tru vi nguon vua cong vi dich. Cap ban ghi giu cho phep tinh so du khong
+ * phai doi gi, con `transferId` la thu bao cho moi phep tinh thu/chi biet ma
+ * loai chung ra.
+ */
+export async function transferBetweenWallets(
+  input: TransferInput,
+  categories: Category[],
+): Promise<Id> {
+  if (input.fromWalletId === input.toWalletId) {
+    throw new Error('Ví nguồn và ví đích phải khác nhau.')
+  }
+  const amount = Math.round(input.amount)
+  if (!Number.isFinite(amount) || amount <= 0) {
+    throw new Error('Số tiền chuyển phải lớn hơn 0.')
+  }
+
+  const out = systemCategory(categories, 'transfer-out')
+  const into = systemCategory(categories, 'transfer-in')
+  if (!out || !into) throw new Error('Thiếu danh mục hệ thống cho chuyển tiền.')
+
+  const transferId = newId()
+  const date = input.date ?? todayISO()
+  const note = input.note?.trim() || undefined
+  const createdAt = Date.now()
+
+  await db.transactions.bulkAdd([
+    stamp({
+      kind: 'expense' as const,
+      amount,
+      categoryId: out.id,
+      walletId: input.fromWalletId,
+      date,
+      note,
+      createdAt,
+      source: 'transfer' as const,
+      transferId,
+    }),
+    stamp({
+      kind: 'income' as const,
+      amount,
+      categoryId: into.id,
+      walletId: input.toWalletId,
+      date,
+      note,
+      createdAt: createdAt + 1,
+      source: 'transfer' as const,
+      transferId,
+    }),
+  ])
+
+  return transferId
+}
+
+/** Xoa ca hai ve cua mot lan chuyen tien — xoa mot ve thi so du sai hai vi */
+export async function deleteTransfer(transferId: Id): Promise<number> {
+  const legs = await db.transactions.where('transferId').equals(transferId).toArray()
+  await db.transactions.bulkDelete(legs.map((t) => t.id))
+  return legs.length
 }

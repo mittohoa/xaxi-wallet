@@ -1,4 +1,4 @@
-import { db } from '../db/db'
+import { db, stamp, touch } from '../db/db'
 import type { Recurring } from '../types'
 import { toISO, todayISO } from './date'
 
@@ -35,21 +35,23 @@ export async function postDueRecurring(): Promise<number> {
       let cursor = rule.nextDate
       // Tran an toan: khong sinh qua 400 ban ghi cho mot quy tac bi bo quen lau
       for (let guard = 0; cursor <= today && guard < 400; guard++) {
-        await db.transactions.add({
-          kind: rule.kind,
-          amount: rule.amount,
-          categoryId: rule.categoryId,
-          walletId: rule.walletId,
-          date: cursor,
-          note: rule.note || rule.name,
-          createdAt: Date.now(),
-          source: 'recurring',
-          recurringId: rule.id,
-        })
+        await db.transactions.add(
+          stamp({
+            kind: rule.kind,
+            amount: rule.amount,
+            categoryId: rule.categoryId,
+            walletId: rule.walletId,
+            date: cursor,
+            note: rule.note || rule.name,
+            createdAt: Date.now(),
+            source: 'recurring' as const,
+            recurringId: rule.id,
+          }),
+        )
         created++
         cursor = advance(rule, cursor)
       }
-      await db.recurring.update(rule.id!, { nextDate: cursor })
+      await db.recurring.update(rule.id, { ...touch(), nextDate: cursor })
     }
   })
   return created

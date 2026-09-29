@@ -1,8 +1,8 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { DEFAULT_SETTINGS, db } from './db/db'
+import { DEFAULT_SETTINGS, db, stamp, touch } from './db/db'
 import { configureFormat } from './lib/format'
-import type { Budget, Category, DayMark, Recurring, Settings, Template, Transaction, Wallet } from './types'
+import type { Budget, Category, DayMark, Id, Recurring, Settings, Template, Transaction, Wallet } from './types'
 
 export interface AppData {
   categories: Category[]
@@ -20,6 +20,9 @@ export interface AppData {
 interface Ctx extends AppData {
   toast: (message: string) => void
 }
+
+/** Ban thiet lap dung tam khi chua doc duoc tu CSDL */
+const FALLBACK_SETTINGS: Settings = { ...DEFAULT_SETTINGS, id: 'pending', updatedAt: 0 }
 
 const AppCtx = createContext<Ctx | null>(null)
 
@@ -54,11 +57,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
       dayMarks,
       templates,
       recurring,
-      settings: { ...DEFAULT_SETTINGS, ...(settingsRows[0] ?? {}) } as Settings,
+      settings: { ...FALLBACK_SETTINGS, ...(settingsRows[0] ?? {}) } as Settings,
     }
   }, [])
 
-  const settings = raw?.settings ?? DEFAULT_SETTINGS
+  const settings = raw?.settings ?? FALLBACK_SETTINGS
 
   // Dinh dang tien te phai san sang truoc khi cac trang render so lieu
   configureFormat(settings.locale, settings.currency)
@@ -116,8 +119,8 @@ export function useLookups() {
   const { categories, wallets } = useApp()
   return useMemo(
     () => ({
-      catById: new Map(categories.map((c) => [c.id!, c])),
-      walletById: new Map(wallets.map((w) => [w.id!, w])),
+      catById: new Map(categories.map((c) => [c.id, c])),
+      walletById: new Map(wallets.map((w) => [w.id, w])),
     }),
     [categories, wallets],
   )
@@ -125,8 +128,8 @@ export function useLookups() {
 
 export async function saveSettings(patch: Partial<Settings>): Promise<void> {
   const existing = await db.settings.toArray()
-  if (existing.length === 0) await db.settings.add({ ...DEFAULT_SETTINGS, ...patch })
-  else await db.settings.update(existing[0].id!, patch)
+  if (existing.length === 0) await db.settings.add(stamp({ ...DEFAULT_SETTINGS, ...patch }))
+  else await db.settings.update(existing[0].id, { ...patch, ...touch() })
 }
 
-export type { Transaction, Category, Wallet, Budget, Settings, DayMark, Template, Recurring }
+export type { Transaction, Category, Wallet, Budget, Settings, DayMark, Template, Recurring, Id }

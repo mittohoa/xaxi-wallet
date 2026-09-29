@@ -1,9 +1,9 @@
 import { useMemo, useState } from 'react'
-import { db } from '../db/db'
+import { db, stamp, touch } from '../db/db'
 import { formatMoney, parseAmount } from '../lib/format'
 import { todayISO } from '../lib/date'
 import { useApp } from '../store'
-import type { Transaction, TxKind } from '../types'
+import type { Id, Transaction, TxKind } from '../types'
 import { ConfirmButton, Segmented, Sheet } from './ui'
 
 export function TransactionSheet({ editing, onClose }: { editing: Transaction | 'new'; onClose: () => void }) {
@@ -12,8 +12,8 @@ export function TransactionSheet({ editing, onClose }: { editing: Transaction | 
 
   const [kind, setKind] = useState<TxKind>(initial?.kind ?? 'expense')
   const [amountText, setAmountText] = useState(initial ? String(initial.amount) : '')
-  const [categoryId, setCategoryId] = useState<number | null>(initial?.categoryId ?? null)
-  const [walletId, setWalletId] = useState<number | null>(initial?.walletId ?? null)
+  const [categoryId, setCategoryId] = useState<Id | null>(initial?.categoryId ?? null)
+  const [walletId, setWalletId] = useState<Id | null>(initial?.walletId ?? null)
   const [date, setDate] = useState(initial?.date ?? todayISO())
   const [note, setNote] = useState(initial?.note ?? '')
   const [error, setError] = useState<string | null>(null)
@@ -45,10 +45,10 @@ export function TransactionSheet({ editing, onClose }: { editing: Transaction | 
     }
 
     if (initial?.id) {
-      await db.transactions.update(initial.id, payload)
+      await db.transactions.update(initial.id, { ...payload, ...touch() })
       toast('Đã cập nhật giao dịch')
     } else {
-      await db.transactions.add({ ...payload, createdAt: Date.now() })
+      await db.transactions.add(stamp({ ...payload, createdAt: Date.now() }))
       toast(kind === 'expense' ? 'Đã ghi khoản chi' : 'Đã ghi khoản thu')
     }
     onClose()
@@ -106,7 +106,7 @@ export function TransactionSheet({ editing, onClose }: { editing: Transaction | 
               className="chip"
               aria-pressed={c.id === effectiveCategoryId}
               style={{ color: c.id === effectiveCategoryId ? c.color : undefined }}
-              onClick={() => setCategoryId(c.id!)}
+              onClick={() => setCategoryId(c.id)}
             >
               <span aria-hidden="true">{c.icon}</span>
               <span style={{ color: 'var(--text-primary)' }}>{c.name}</span>
@@ -123,7 +123,7 @@ export function TransactionSheet({ editing, onClose }: { editing: Transaction | 
             id="tx-wallet"
             className="input"
             value={effectiveWalletId ?? ''}
-            onChange={(e) => setWalletId(Number(e.target.value))}
+            onChange={(e) => setWalletId(e.target.value)}
           >
             {activeWallets.map((w) => (
               <option key={w.id} value={w.id}>

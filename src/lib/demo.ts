@@ -5,7 +5,7 @@
  *
  * Dung so ngau nhien co hat co dinh nen ket qua lap lai duoc.
  */
-import { db } from '../db/db'
+import { db, stamp, touch } from '../db/db'
 import type { Budget, Category, DayMark, Transaction, Wallet } from '../types'
 import { toISO, todayISO } from './date'
 import { firstDueDate } from './recurring'
@@ -88,30 +88,30 @@ export async function loadDemoData(): Promise<DemoSummary> {
 
     // Luong vao ngay 5, thuong quy vao thang cuoi quy
     if (dayOfMonth === 5) {
-      transactions.push({
+      transactions.push(stamp({
         kind: 'income',
         amount: 18_000_000,
-        categoryId: pick('Lương').id!,
-        walletId: bank.id!,
+        categoryId: pick('Lương').id,
+        walletId: bank.id,
         date,
         note: 'Lương tháng',
         createdAt: (createdAt += 1000),
         source: 'recurring',
-      })
+      }))
     }
 
     for (const [day, category, amount, note] of MONTHLY_FIXED) {
       if (dayOfMonth !== day) continue
-      transactions.push({
+      transactions.push(stamp({
         kind: 'expense',
         amount,
-        categoryId: pick(category).id!,
-        walletId: bank.id!,
+        categoryId: pick(category).id,
+        walletId: bank.id,
         date,
         note,
         createdAt: (createdAt += 1000),
         source: 'recurring',
-      })
+      }))
     }
 
     let spentToday = 0
@@ -120,61 +120,61 @@ export async function loadDemoData(): Promise<DemoSummary> {
       const times = pattern.category === 'Ăn uống' ? 1 + Math.floor(random() * 2.4) : 1
       for (let i = 0; i < times; i++) {
         const wallet = random() < 0.55 ? ewallet : cash
-        transactions.push({
+        transactions.push(stamp({
           kind: 'expense',
           amount: between(pattern.min, pattern.max),
-          categoryId: pick(pattern.category).id!,
-          walletId: wallet.id!,
+          categoryId: pick(pattern.category).id,
+          walletId: wallet.id,
           date,
           note: pattern.notes[Math.floor(random() * pattern.notes.length)],
           createdAt: (createdAt += 1000),
           source: random() < 0.7 ? 'quick' : 'manual',
-        })
+        }))
         spentToday++
       }
     }
 
     // Ngay that su khong chi gi — danh dau de do phu van tron ven
-    if (spentToday === 0) dayMarks.push({ date, markedAt: createdAt })
+    if (spentToday === 0) dayMarks.push(stamp({ date, markedAt: createdAt }))
   }
 
   // Mot but toan doi soat de minh hoa co che 'Chi chua ro'
   const reconcileDate = toISO(new Date(Date.now() - 9 * 86_400_000))
-  transactions.push({
+  transactions.push(stamp({
     kind: 'expense',
     amount: 240_000,
     categoryId: categories.find((c) => c.slug === 'reconcile-expense')!.id!,
-    walletId: cash.id!,
+    walletId: cash.id,
     date: reconcileDate,
     note: 'Chênh lệch đối soát số dư',
     createdAt: (createdAt += 1000),
     source: 'reconcile',
     estimated: true,
-  })
+  }))
 
   // Vai khoan trong hop cho phan loai
   for (let i = 0; i < 3; i++) {
     const d = new Date()
     d.setDate(d.getDate() - (1 + i * 2))
-    transactions.push({
+    transactions.push(stamp({
       kind: 'expense',
       amount: between(40_000, 260_000),
       categoryId: categories.find((c) => c.slug === 'uncategorized-expense')!.id!,
-      walletId: ewallet.id!,
+      walletId: ewallet.id,
       date: toISO(d),
       note: ['chuyển khoản', 'quét QR', 'thanh toán thẻ'][i],
       createdAt: (createdAt += 1000),
       source: 'quick',
-    })
+    }))
   }
 
   const month = todayISO().slice(0, 7)
-  const budgets: Budget[] = [
-    { categoryId: pick('Ăn uống').id!, month, limit: 4_000_000 },
-    { categoryId: pick('Đi lại').id!, month, limit: 1_200_000 },
-    { categoryId: pick('Mua sắm').id!, month, limit: 1_500_000 },
-    { categoryId: pick('Giải trí').id!, month, limit: 800_000 },
-  ]
+  const budgets: Budget[] = ([
+    { categoryId: pick('Ăn uống').id, month, limit: 4_000_000 },
+    { categoryId: pick('Đi lại').id, month, limit: 1_200_000 },
+    { categoryId: pick('Mua sắm').id, month, limit: 1_500_000 },
+    { categoryId: pick('Giải trí').id, month, limit: 800_000 },
+  ] as Omit<Budget, 'id' | 'updatedAt' | 'deviceId'>[]).map(stamp)
 
   await db.transaction('rw', [db.transactions, db.dayMarks, db.budgets, db.recurring, db.wallets], async () => {
     await Promise.all([db.transactions.clear(), db.dayMarks.clear(), db.budgets.clear(), db.recurring.clear()])
@@ -183,31 +183,31 @@ export async function loadDemoData(): Promise<DemoSummary> {
       db.dayMarks.bulkAdd(dayMarks),
       db.budgets.bulkAdd(budgets),
       db.recurring.bulkAdd([
-        {
+        stamp({
           name: 'Tiền thuê nhà',
           kind: 'expense',
           amount: 4_500_000,
-          categoryId: pick('Nhà cửa').id!,
-          walletId: bank.id!,
+          categoryId: pick('Nhà cửa').id,
+          walletId: bank.id,
           freq: 'monthly',
           anchor: 3,
           nextDate: firstDueDate('monthly', 3),
           active: true,
-        },
-        {
+        }),
+        stamp({
           name: 'Internet',
           kind: 'expense',
           amount: 220_000,
-          categoryId: pick('Hoá đơn').id!,
-          walletId: bank.id!,
+          categoryId: pick('Hoá đơn').id,
+          walletId: bank.id,
           freq: 'monthly',
           anchor: 10,
           nextDate: firstDueDate('monthly', 10),
           active: true,
-        },
+        }),
       ]),
     ])
-    await db.wallets.update(cash.id!, { lastReconciledAt: reconcileDate })
+    await db.wallets.update(cash.id, { ...touch(), lastReconciledAt: reconcileDate })
   })
 
   return { transactions: transactions.length, dayMarks: dayMarks.length, gaps: intentionalGaps.size }
@@ -219,6 +219,6 @@ export async function primeOpeningBalances(wallets: Wallet[]): Promise<void> {
   await Promise.all(
     wallets
       .filter((w) => w.openingBalance === 0 && presets[w.kind] !== undefined)
-      .map((w) => db.wallets.update(w.id!, { openingBalance: presets[w.kind] })),
+      .map((w) => db.wallets.update(w.id, { ...touch(), openingBalance: presets[w.kind] })),
   )
 }

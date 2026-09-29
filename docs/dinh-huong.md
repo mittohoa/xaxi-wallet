@@ -187,8 +187,8 @@ Thiết bị thứ hai nhập cùng cụm mật khẩu là đọc được — k
 | # | Việc | Phá nguyên tắc nào không | Ghi chú |
 |---|---|---|---|
 | ~~0a~~ | ~~Xin lưu trữ bền vững~~ | — | **xong** — kèm phát hiện rằng bản Android vốn đã an toàn, xem §6.1.B |
-| 0b | **Chuyển tiền giữa ví** | không | báo cáo đang sai — xem §6.1.A |
-| 0c | **Đổi khoá chính sang UUID + thêm `updatedAt`/`deletedAt`/`deviceId`** | không | làm sớm rẻ, làm muộn rất đắt — xem §3.6 |
+| ~~0b~~ | ~~Chuyển tiền giữa ví~~ | — | **xong** — kiểm chứng trên máy: tổng chi không đổi sau khi chuyển 2tr |
+| ~~0c~~ | ~~Đổi khoá chính sang UUID~~ | — | **xong** — di trú 227 giao dịch thật trên A50s, số liệu y hệt trước sau |
 | 1 | Thử OCR và giọng nói bằng phần cứng thật | không | chưa xong, chặn việc khẳng định hai tính năng này chạy được |
 | 2 | Hoàn thiện giao diện sau khi có tham chiếu | không | đang chờ ảnh chụp app khác |
 | 3 | **Sáu hũ** | không | cần đổi lược đồ ngân sách |
@@ -208,7 +208,7 @@ Nguồn: `docs/mo-ta.md` (CapMoney) và `docs/template/url.md` (ExpenseOwl, Mone
 
 Đây không phải "tính năng còn thiếu" — là chỗ app đang **sai** hoặc **có nguy cơ mất dữ liệu**.
 
-#### A. Không có khái niệm chuyển tiền giữa ví — **báo cáo đang sai**
+#### A. Chuyển tiền giữa ví — **đã sửa**
 
 CapMoney có "chuyển tiền giữa tài khoản bằng cặp giao dịch liên kết". XAXI không có gì cả.
 
@@ -219,7 +219,11 @@ Hậu quả: rút 2 triệu từ ngân hàng ra tiền mặt, người dùng bu�
 - phân bổ theo danh mục bị bẩn
 - câu hỏi "tháng này chi bao nhiêu" trả lời **sai**
 
-Đây là lỗi tính toán, không phải thiếu tiện nghi. Cần thêm loại giao dịch thứ ba (`transfer`) với hai bản ghi liên kết bị **loại khỏi mọi phép tính thu/chi**.
+Đây là lỗi tính toán, không phải thiếu tiện nghi.
+
+Cách sửa: một lần chuyển được ghi thành **cặp bản ghi liên kết** cùng mang `transferId` — một bản kiểu `expense` ở ví nguồn, một bản kiểu `income` ở ví đích. Nhờ vậy phép tính số dư từng ví không phải đổi gì, còn `transferId` là thứ báo cho mọi phép tính thu/chi biết mà loại chúng ra.
+
+Kiểm chứng trên A50s: chuyển 2.000.000₫ giữa hai ví, tổng chi tháng giữ nguyên `14.839.000₫` trước và sau, số dư hai ví đổi đúng chiều.
 
 #### B. Lưu trữ bền vững — **đã làm, nhưng kết luận ban đầu của tôi sai**
 

@@ -6,6 +6,7 @@ import { parseReceipt } from '../lib/receipt'
 import { walletBalances } from '../lib/stats'
 import { useApp } from '../store'
 import { Sheet } from './ui'
+import type { Id } from '../types'
 import { ocrSupported, recognizeImage } from '../lib/native/ocr'
 
 /**
@@ -15,8 +16,8 @@ import { ocrSupported, recognizeImage } from '../lib/native/ocr'
 export function ReceiptSheet({ initialText = '', onClose }: { initialText?: string; onClose: () => void }) {
   const { categories, wallets, transactions, toast } = useApp()
   const [text, setText] = useState(initialText)
-  const [walletId, setWalletId] = useState<number | null>(wallets.find((w) => !w.archived)?.id ?? null)
-  const [categoryId, setCategoryId] = useState<number | null>(null)
+  const [walletId, setWalletId] = useState<Id | null>(wallets.find((w) => !w.archived)?.id ?? null)
+  const [categoryId, setCategoryId] = useState<Id | null>(null)
   const [alsoReconcile, setAlsoReconcile] = useState(true)
   const [scanning, setScanning] = useState(false)
   const [scanError, setScanError] = useState<string | null>(null)
@@ -144,7 +145,7 @@ export function ReceiptSheet({ initialText = '', onClose }: { initialText?: stri
                 id="receipt-cat"
                 className="input"
                 value={effectiveCategoryId ?? ''}
-                onChange={(e) => setCategoryId(Number(e.target.value))}
+                onChange={(e) => setCategoryId(e.target.value)}
               >
                 {kindCategories.map((c) => (
                   <option key={c.id} value={c.id}>
@@ -159,7 +160,7 @@ export function ReceiptSheet({ initialText = '', onClose }: { initialText?: stri
                 id="receipt-wallet"
                 className="input"
                 value={walletId ?? ''}
-                onChange={(e) => setWalletId(Number(e.target.value))}
+                onChange={(e) => setWalletId(e.target.value)}
               >
                 {wallets
                   .filter((w) => !w.archived)

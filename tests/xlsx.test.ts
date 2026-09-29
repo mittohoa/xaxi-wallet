@@ -136,11 +136,11 @@ test('dòng trùng với giao dịch đã có bị đánh dấu và bỏ chọn 
   const sheet = await readXlsx(buildWorkbook())
   const existing = [
     {
-      id: 1,
+      id: '1',
       kind: 'expense' as const,
       amount: 120_000,
-      categoryId: 1,
-      walletId: 1,
+      categoryId: '1',
+      walletId: '1',
       date: '2026-09-08',
       note: 'THANH TOAN GRAB',
       createdAt: 1,

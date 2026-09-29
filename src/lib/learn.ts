@@ -9,7 +9,7 @@
  *   2. Phat hien khoan dinh ky — tim nhung khoan lap lai deu dan de de xuat
  *      tu dong hoa, giam cong nhap VINH VIEN chu khong phai mot lan.
  */
-import type { Category, Recurring, Transaction, TxKind } from '../types'
+import type { Category, Id, Recurring, Transaction, TxKind } from '../types'
 import { normalize } from './quickadd'
 import { toISO } from './date'
 
@@ -23,7 +23,7 @@ function tokenize(text: string): string[] {
 }
 
 export interface Prediction {
-  categoryId: number
+  categoryId: Id
   /** 0..1 — cao khi bang chung manh va tach bach so voi lua chon thu hai */
   confidence: number
 }
@@ -49,9 +49,9 @@ export function trainClassifier(transactions: Transaction[], categories: Categor
   // Danh muc 'chua phan loai' khong phai mot lua chon dung — khong hoc tu chung
   const generic = new Set(categories.filter((c) => c.slug).map((c) => c.id))
 
-  const docCount = new Map<number, number>()
-  const tokenCount = new Map<number, Map<string, number>>()
-  const totalTokens = new Map<number, number>()
+  const docCount = new Map<Id, number>()
+  const tokenCount = new Map<Id, Map<string, number>>()
+  const totalTokens = new Map<Id, number>()
   const vocabulary = new Set<string>()
   let trained = 0
 
@@ -74,7 +74,7 @@ export function trainClassifier(transactions: Transaction[], categories: Categor
     }
   }
 
-  const kindOf = new Map(categories.map((c) => [c.id!, c.kind]))
+  const kindOf = new Map(categories.map((c) => [c.id, c.kind]))
   const vocabSize = Math.max(vocabulary.size, 1)
 
   return {
@@ -86,7 +86,7 @@ export function trainClassifier(transactions: Transaction[], categories: Categor
       // Khong co tu nao tung gap thi doan cung chi la doan mo
       if (!tokens.some((t) => vocabulary.has(t))) return null
 
-      const scores: { id: number; score: number; evidence: number }[] = []
+      const scores: { id: Id; score: number; evidence: number }[] = []
       for (const [categoryId, docs] of docCount) {
         if (kindOf.get(categoryId) !== kind) continue
         const bucket = tokenCount.get(categoryId)!
@@ -127,8 +127,8 @@ export interface RecurringSuggestion {
   kind: TxKind
   /** so tien dai dien — lay trung vi de mot lan bat thuong khong keo lech */
   amount: number
-  categoryId: number
-  walletId: number
+  categoryId: Id
+  walletId: Id
   freq: 'monthly' | 'weekly'
   anchor: number
   occurrences: number
@@ -161,12 +161,12 @@ export function detectRecurring(
   existingRules: Recurring[],
   categories: Category[],
 ): RecurringSuggestion[] {
-  const catById = new Map(categories.map((c) => [c.id!, c]))
+  const catById = new Map(categories.map((c) => [c.id, c]))
   const groups = new Map<string, Transaction[]>()
 
   for (const t of transactions) {
     // Bo qua cac ban ghi do chinh may sinh ra, tranh de xuat vong lap
-    if (t.source === 'recurring' || t.source === 'reconcile') continue
+    if (t.source === 'recurring' || t.source === 'reconcile' || t.transferId) continue
     const note = normalize(t.note ?? '')
     if (!note) continue
     const key = `${t.kind}|${t.categoryId}|${note}`

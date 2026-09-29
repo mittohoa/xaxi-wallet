@@ -1,10 +1,10 @@
 import { useState } from 'react'
-import { db } from '../db/db'
+import { db, stamp, touch } from '../db/db'
 import { firstDueDate } from '../lib/recurring'
 import { formatDate } from '../lib/date'
 import { formatMoney, parseAmount } from '../lib/format'
 import { useApp } from '../store'
-import type { Recurring, RecurringFreq, TxKind } from '../types'
+import type { Id, Recurring, RecurringFreq, TxKind } from '../types'
 import { ConfirmButton, Segmented, Sheet } from './ui'
 
 const WEEKDAYS = ['Chủ nhật', 'Thứ 2', 'Thứ 3', 'Thứ 4', 'Thứ 5', 'Thứ 6', 'Thứ 7']
@@ -22,8 +22,8 @@ export function RecurringSheet({ editing, onClose }: { editing: Recurring | 'new
   const [amountText, setAmountText] = useState(initial ? String(initial.amount) : '')
   const [freq, setFreq] = useState<RecurringFreq>(initial?.freq ?? 'monthly')
   const [anchor, setAnchor] = useState(initial?.anchor ?? new Date().getDate())
-  const [categoryId, setCategoryId] = useState<number | null>(initial?.categoryId ?? null)
-  const [walletId, setWalletId] = useState<number | null>(initial?.walletId ?? null)
+  const [categoryId, setCategoryId] = useState<Id | null>(initial?.categoryId ?? null)
+  const [walletId, setWalletId] = useState<Id | null>(initial?.walletId ?? null)
   const [armed, setArmed] = useState(false)
 
   const kindCategories = categories.filter((c) => c.kind === kind)
@@ -51,10 +51,10 @@ export function RecurringSheet({ editing, onClose }: { editing: Recurring | 'new
       nextDate: initial ? initial.nextDate : firstDueDate(freq, anchor),
     }
     if (initial?.id) {
-      await db.recurring.update(initial.id, payload)
+      await db.recurring.update(initial.id, { ...payload, ...touch() })
       toast('Đã cập nhật khoản định kỳ')
     } else {
-      await db.recurring.add(payload)
+      await db.recurring.add(stamp(payload))
       toast('Đã tạo khoản định kỳ')
     }
     onClose()
@@ -151,7 +151,7 @@ export function RecurringSheet({ editing, onClose }: { editing: Recurring | 'new
             id="rec-cat"
             className="input"
             value={effectiveCategoryId ?? ''}
-            onChange={(e) => setCategoryId(Number(e.target.value))}
+            onChange={(e) => setCategoryId(e.target.value)}
           >
             {kindCategories.map((c) => (
               <option key={c.id} value={c.id}>
@@ -166,7 +166,7 @@ export function RecurringSheet({ editing, onClose }: { editing: Recurring | 'new
             id="rec-wallet"
             className="input"
             value={effectiveWalletId ?? ''}
-            onChange={(e) => setWalletId(Number(e.target.value))}
+            onChange={(e) => setWalletId(e.target.value)}
           >
             {activeWallets.map((w) => (
               <option key={w.id} value={w.id}>

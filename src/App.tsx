@@ -3,7 +3,9 @@ import { ReceiptSheet } from './components/ReceiptSheet'
 import { ReconcileSheet } from './components/ReconcileSheet'
 import { StatementSheet } from './components/StatementSheet'
 import { TransactionSheet } from './components/TransactionSheet'
+import { TransferSheet } from './components/TransferSheet'
 import { seedIfEmpty } from './db/db'
+import { migrateLegacyDatabase } from './db/migrate'
 import type { CommandName } from './lib/ask'
 import { postDueRecurring } from './lib/recurring'
 import { requestPersistence } from './lib/storage'
@@ -36,6 +38,7 @@ const SHEET_TITLE: Record<Exclude<CommandName, 'help'>, string> = {
   statement: 'Nhập sao kê',
   history: 'Lịch sử giao dịch',
   gaps: 'Lấp khoảng trống',
+  transfer: 'Chuyển tiền giữa ví',
 }
 
 /** Tam truot chiem ca man hinh, dung cho cac man hinh phu mo bang lenh */
@@ -132,6 +135,7 @@ function Shell() {
         </FullSheet>
       )}
 
+      {screen === 'transfer' && <TransferSheet onClose={close} />}
       {screen === 'receipt' && <ReceiptSheet onClose={close} />}
       {screen === 'reconcile' && <ReconcileSheet onClose={close} />}
       {screen === 'statement' && <StatementSheet onClose={close} />}
@@ -148,7 +152,12 @@ export default function App() {
   useEffect(() => {
     // Xin bao ve du lieu khoi bi he thong don — lam som nhat co the
     requestPersistence()
-    seedIfEmpty().then(() => setSeeded(true))
+    // Di tru tu ban cu (khoa so tu tang) truoc khi tao du lieu mac dinh,
+    // khong thi seed se chen vao CSDL rong va bo di tru se bo qua du lieu cu
+    migrateLegacyDatabase()
+      .catch(() => undefined)
+      .then(() => seedIfEmpty())
+      .then(() => setSeeded(true))
   }, [])
 
   if (!seeded) return null

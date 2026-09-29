@@ -9,10 +9,10 @@
  * Bac 2 (OCR bang ML Kit) va bac 3 (mo hinh ngon ngu) se cam vao dung cho nay
  * ma khong doi giao dien: chung chi can tra ve cung kieu `Answer`.
  */
-import type { Budget, Category, DayMark, Transaction, TxKind, Wallet } from '../types'
+import type { Budget, Category, DayMark, Id, Transaction, TxKind, Wallet } from '../types'
 import { containsWord, normalize, parseQuickEntry, type CategoryGuesser, type QuickParse } from './quickadd'
 import { defaultRange, extractTimeRange, type TimeRange } from './timerange'
-import { byCategory, inRange, sumTotals, walletBalances, type CategorySlice, type Totals } from './stats'
+import { byCategory, inRange, spendable, sumTotals, walletBalances, type CategorySlice, type Totals } from './stats'
 import { computeCoverage, firstActivity } from './coverage'
 import { monthOf } from './date'
 
@@ -27,6 +27,7 @@ export type CommandName =
   | 'statement'
   | 'history'
   | 'gaps'
+  | 'transfer'
   | 'help'
 
 interface CommandSpec {
@@ -39,6 +40,7 @@ interface CommandSpec {
 
 export const COMMANDS: CommandSpec[] = [
   { name: 'receipt', triggers: ['dan bien lai', 'bien lai', 'dan tin nhan', 'sms'], label: 'Dán biên lai', hint: 'dán tin nhắn biến động số dư' },
+  { name: 'transfer', triggers: ['chuyen tien', 'chuyen khoan noi bo', 'rut tien', 'chuyen vi'], label: 'Chuyển tiền giữa ví', hint: 'không tính vào thu hay chi' },
   { name: 'reconcile', triggers: ['doi soat', 'so du that', 'kiem ke'], label: 'Đối soát số dư', hint: 'gõ một con số, app tự bù phần chưa ghi' },
   { name: 'budgets', triggers: ['ngan sach', 'han muc'], label: 'Ngân sách', hint: 'đặt hạn mức theo danh mục' },
   { name: 'reports', triggers: ['bao cao', 'thong ke', 'bieu do'], label: 'Báo cáo', hint: 'sáu tháng gần nhất' },
@@ -206,9 +208,12 @@ function answerQuestion(original: string, folded: string, ctx: AskContext): Answ
   if (hasAny(rest, LIST_MARKERS) || isBareKeyword) {
     // Tim theo ghi chu khi nguoi dung go mot tu khoa tu do
     const needle = rest.replace(/\b(liet ke|danh sach|tim|xem lai|nhung khoan|cac khoan|chi|thu)\b/g, '').trim()
+    const searchable = spendable(scoped)
     const matched = needle
-      ? scoped.filter((t) => normalize(`${t.note ?? ''} ${ctx.categories.find((c) => c.id === t.categoryId)?.name ?? ''}`).includes(needle))
-      : filtered
+      ? searchable.filter((t) =>
+          normalize(`${t.note ?? ''} ${ctx.categories.find((c) => c.id === t.categoryId)?.name ?? ''}`).includes(needle),
+        )
+      : spendable(filtered)
     if (needle && matched.length === 0) {
       return { kind: 'none', title: 'Không tìm thấy', message: `Không có giao dịch nào khớp "${original.trim()}" trong ${range.label}.` }
     }
@@ -237,7 +242,7 @@ function answerQuestion(original: string, folded: string, ctx: AskContext): Answ
 function answerBalance(ctx: AskContext): Answer {
   const balances = walletBalances(ctx.wallets, ctx.transactions)
   const active = ctx.wallets.filter((w) => !w.archived)
-  const rows = active.map((w) => ({ wallet: w, balance: balances.get(w.id!) ?? 0 }))
+  const rows = active.map((w) => ({ wallet: w, balance: balances.get(w.id) ?? 0 }))
   return {
     kind: 'balance',
     title: 'Số dư hiện tại',
@@ -254,8 +259,8 @@ function answerCoverage(ctx: AskContext): Answer {
 function answerBudget(ctx: AskContext, range: TimeRange): Answer {
   const month = monthOf(range.start)
   const scoped = inRange(ctx.transactions, range.start, range.end)
-  const spentBy = new Map<number, number>()
-  for (const s of byCategory(scoped, ctx.categories, 'expense')) spentBy.set(s.category.id!, s.amount)
+  const spentBy = new Map<Id, number>()
+  for (const s of byCategory(scoped, ctx.categories, 'expense')) spentBy.set(s.category.id, s.amount)
 
   const items = ctx.budgets
     .filter((b) => b.month === month)

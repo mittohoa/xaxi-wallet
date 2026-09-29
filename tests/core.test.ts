@@ -8,28 +8,28 @@ import { parseReceipt } from '../src/lib/receipt'
 import { parseCSV, parseStatement } from '../src/lib/statement'
 import { computeCoverage } from '../src/lib/coverage'
 import { advance, firstDueDate } from '../src/lib/recurring'
-import { byCategory, dailySeries, monthlySeries, sumTotals, walletBalances } from '../src/lib/stats'
+import { byCategory, dailySeries, isTransfer, monthlySeries, spendable, sumTotals, walletBalances } from '../src/lib/stats'
 import { suggestShortcuts } from '../src/lib/actions'
 import type { Category, Recurring, Transaction, Wallet } from '../src/types'
 
 configureFormat('vi-VN', 'VND')
 
 const CATEGORIES: Category[] = [
-  { id: 1, name: 'Ăn uống', kind: 'expense', icon: '🍜', color: '#eb6834', keywords: ['ca phe', 'an trua', 'com'] },
-  { id: 2, name: 'Đi lại', kind: 'expense', icon: '🛵', color: '#2a78d6', keywords: ['xang', 'grab'] },
-  { id: 3, name: 'Chi khác', kind: 'expense', icon: '📦', color: '#898781', builtin: true, slug: 'uncategorized-expense' },
-  { id: 4, name: 'Lương', kind: 'income', icon: '💼', color: '#2a78d6', keywords: ['luong'] },
+  { id: '1', name: 'Ăn uống', kind: 'expense', icon: '🍜', color: '#eb6834', keywords: ['ca phe', 'an trua', 'com'] },
+  { id: '2', name: 'Đi lại', kind: 'expense', icon: '🛵', color: '#2a78d6', keywords: ['xang', 'grab'] },
+  { id: '3', name: 'Chi khác', kind: 'expense', icon: '📦', color: '#898781', builtin: true, slug: 'uncategorized-expense' },
+  { id: '4', name: 'Lương', kind: 'income', icon: '💼', color: '#2a78d6', keywords: ['luong'] },
 ]
 
 const WALLETS: Wallet[] = [
-  { id: 1, name: 'Tiền mặt', kind: 'cash', icon: '👛', color: '#1baf7a', openingBalance: 500_000 },
-  { id: 2, name: 'Ngân hàng', kind: 'bank', icon: '🏦', color: '#2a78d6', openingBalance: 2_000_000 },
+  { id: '1', name: 'Tiền mặt', kind: 'cash', icon: '👛', color: '#1baf7a', openingBalance: 500_000 },
+  { id: '2', name: 'Ngân hàng', kind: 'bank', icon: '🏦', color: '#2a78d6', openingBalance: 2_000_000 },
 ]
 
 function tx(partial: Partial<Transaction> & Pick<Transaction, 'kind' | 'amount' | 'date'>): Transaction {
   return {
-    categoryId: 1,
-    walletId: 1,
+    categoryId: '1',
+    walletId: '1',
     createdAt: 1,
     ...partial,
   } as Transaction
@@ -80,7 +80,7 @@ test('parseQuickEntry tách được số tiền và danh mục theo từ khoá'
   assert.ok(r)
   assert.equal(r.amount, 35_000)
   assert.equal(r.kind, 'expense')
-  assert.equal(r.categoryId, 1)
+  assert.equal(r.categoryId, '1')
   assert.equal(r.reason, 'keyword')
   assert.equal(r.note, 'cà phê')
 })
@@ -90,22 +90,22 @@ test('parseQuickEntry hiểu "hôm qua" và dấu + cho khoản thu', () => {
   assert.ok(r)
   assert.equal(r.amount, 100_000)
   assert.equal(r.date, daysAgo(1))
-  assert.equal(r.categoryId, 2)
+  assert.equal(r.categoryId, '2')
 
   const income = parseQuickEntry('+15tr lương tháng 9', CATEGORIES, [])
   assert.ok(income)
   assert.equal(income.kind, 'income')
   assert.equal(income.amount, 15_000_000)
-  assert.equal(income.categoryId, 4)
+  assert.equal(income.categoryId, '4')
 })
 
 test('parseQuickEntry ưu tiên thói quen đã có hơn từ khoá', () => {
   const history: Transaction[] = [
-    tx({ kind: 'expense', amount: 30_000, date: '2026-09-01', categoryId: 2, note: 'cà phê', createdAt: 10 }),
+    tx({ kind: 'expense', amount: 30_000, date: '2026-09-01', categoryId: '2', note: 'cà phê', createdAt: 10 }),
   ]
   const r = parseQuickEntry('cà phê 35k', CATEGORIES, history)
   assert.ok(r)
-  assert.equal(r.categoryId, 2, 'phải dùng danh mục người dùng từng chọn')
+  assert.equal(r.categoryId, '2', 'phải dùng danh mục người dùng từng chọn')
   assert.equal(r.reason, 'history')
 })
 
@@ -203,7 +203,7 @@ test('parseStatement từ chối file không nhận ra cột', () => {
 
 test('computeCoverage phân biệt ngày không chi tiêu với ngày quên ghi', () => {
   const transactions = [tx({ kind: 'expense', amount: 10_000, date: daysAgo(1) })]
-  const dayMarks = [{ id: 1, date: daysAgo(2), markedAt: 1 }]
+  const dayMarks = [{ id: '1', date: daysAgo(2), markedAt: 1 }]
 
   const coverage = computeCoverage(transactions, dayMarks, 5, daysAgo(4))
   assert.equal(coverage.window, 4, 'hôm nay không bị tính là thiếu')
@@ -241,20 +241,20 @@ test('firstDueDate cho khoản hàng tuần rơi đúng thứ đã chọn', () =
 
 test('walletBalances cộng số dư đầu kỳ với giao dịch', () => {
   const transactions = [
-    tx({ kind: 'expense', amount: 100_000, date: '2026-09-01', walletId: 1 }),
-    tx({ kind: 'income', amount: 300_000, date: '2026-09-02', walletId: 2 }),
+    tx({ kind: 'expense', amount: 100_000, date: '2026-09-01', walletId: '1' }),
+    tx({ kind: 'income', amount: 300_000, date: '2026-09-02', walletId: '2' }),
   ]
   const balances = walletBalances(WALLETS, transactions)
-  assert.equal(balances.get(1), 400_000)
-  assert.equal(balances.get(2), 2_300_000)
+  assert.equal(balances.get('1'), 400_000)
+  assert.equal(balances.get('2'), 2_300_000)
 })
 
 test('sumTotals, byCategory và dailySeries khớp nhau', () => {
   const transactions = [
-    tx({ kind: 'expense', amount: 50_000, date: '2026-09-01', categoryId: 1 }),
-    tx({ kind: 'expense', amount: 30_000, date: '2026-09-01', categoryId: 2 }),
-    tx({ kind: 'expense', amount: 20_000, date: '2026-09-03', categoryId: 1 }),
-    tx({ kind: 'income', amount: 500_000, date: '2026-09-05', categoryId: 4 }),
+    tx({ kind: 'expense', amount: 50_000, date: '2026-09-01', categoryId: '1' }),
+    tx({ kind: 'expense', amount: 30_000, date: '2026-09-01', categoryId: '2' }),
+    tx({ kind: 'expense', amount: 20_000, date: '2026-09-03', categoryId: '1' }),
+    tx({ kind: 'income', amount: 500_000, date: '2026-09-05', categoryId: '4' }),
   ]
 
   const totals = sumTotals(transactions)
@@ -263,7 +263,7 @@ test('sumTotals, byCategory và dailySeries khớp nhau', () => {
   assert.equal(totals.net, 400_000)
 
   const slices = byCategory(transactions, CATEGORIES, 'expense')
-  assert.equal(slices[0].category.id, 1)
+  assert.equal(slices[0].category.id, '1')
   assert.equal(slices[0].amount, 70_000)
   assert.equal(slices[0].count, 2)
   assert.equal(Math.round(slices[0].share * 100), 70)
@@ -276,7 +276,7 @@ test('sumTotals, byCategory và dailySeries khớp nhau', () => {
 })
 
 test('byCategory không làm rơi giao dịch có danh mục đã xoá', () => {
-  const slices = byCategory([tx({ kind: 'expense', amount: 10_000, date: '2026-09-01', categoryId: 999 })], CATEGORIES, 'expense')
+  const slices = byCategory([tx({ kind: 'expense', amount: 10_000, date: '2026-09-01', categoryId: '999' })], CATEGORIES, 'expense')
   assert.equal(slices.length, 1)
   assert.equal(slices[0].amount, 10_000)
   assert.equal(slices[0].category.name, '(đã xoá)')
@@ -296,23 +296,23 @@ test('monthlySeries trả đủ số tháng kể cả tháng trống', () => {
 
 test('suggestShortcuts chỉ gợi ý khoản lặp lại và bỏ qua bút toán đối soát', () => {
   const transactions = [
-    tx({ kind: 'expense', amount: 35_000, date: daysAgo(1), categoryId: 1, note: 'cà phê' }),
-    tx({ kind: 'expense', amount: 35_000, date: daysAgo(2), categoryId: 1, note: 'Cà Phê' }),
-    tx({ kind: 'expense', amount: 99_000, date: daysAgo(3), categoryId: 2, note: 'chỉ một lần' }),
-    tx({ kind: 'expense', amount: 500_000, date: daysAgo(1), categoryId: 3, note: 'lệch', source: 'reconcile' }),
-    tx({ kind: 'expense', amount: 500_000, date: daysAgo(2), categoryId: 3, note: 'lệch', source: 'reconcile' }),
+    tx({ kind: 'expense', amount: 35_000, date: daysAgo(1), categoryId: '1', note: 'cà phê' }),
+    tx({ kind: 'expense', amount: 35_000, date: daysAgo(2), categoryId: '1', note: 'Cà Phê' }),
+    tx({ kind: 'expense', amount: 99_000, date: daysAgo(3), categoryId: '2', note: 'chỉ một lần' }),
+    tx({ kind: 'expense', amount: 500_000, date: daysAgo(1), categoryId: '3', note: 'lệch', source: 'reconcile' }),
+    tx({ kind: 'expense', amount: 500_000, date: daysAgo(2), categoryId: '3', note: 'lệch', source: 'reconcile' }),
   ]
   const shortcuts = suggestShortcuts(transactions, CATEGORIES)
   assert.equal(shortcuts.length, 1)
   assert.equal(shortcuts[0].amount, 35_000)
   assert.equal(shortcuts[0].uses, 2)
-  assert.equal(shortcuts[0].categoryId, 1)
+  assert.equal(shortcuts[0].categoryId, '1')
 })
 
 test('suggestShortcuts bỏ qua giao dịch ngoài cửa sổ thời gian', () => {
   const old = [
-    tx({ kind: 'expense', amount: 35_000, date: daysAgo(200), categoryId: 1, note: 'cà phê' }),
-    tx({ kind: 'expense', amount: 35_000, date: daysAgo(201), categoryId: 1, note: 'cà phê' }),
+    tx({ kind: 'expense', amount: 35_000, date: daysAgo(200), categoryId: '1', note: 'cà phê' }),
+    tx({ kind: 'expense', amount: 35_000, date: daysAgo(201), categoryId: '1', note: 'cà phê' }),
   ]
   assert.equal(suggestShortcuts(old, CATEGORIES).length, 0)
 })
@@ -353,16 +353,72 @@ test('parseQuickEntry đọc được câu nói không có chữ số', () => {
   assert.ok(r)
   assert.equal(r.amount, 35_000)
   assert.equal(r.kind, 'expense')
-  assert.equal(r.categoryId, 1)
+  assert.equal(r.categoryId, '1')
   assert.equal(r.note, 'cà phê')
 })
 
 test('parseQuickEntry đọc được câu nói có cả ngày', () => {
   const r = parseQuickEntry('xăng một trăm nghìn hôm qua', CATEGORIES, [])!
   assert.equal(r.amount, 100_000)
-  assert.equal(r.categoryId, 2)
+  assert.equal(r.categoryId, '2')
   assert.equal(r.note, 'xăng')
   const d = new Date()
   d.setDate(d.getDate() - 1)
   assert.equal(r.date, toISO(d))
+})
+
+/* ---------------- chuyen tien giua vi ---------------- */
+
+test('chuyển tiền giữa hai ví không được tính vào tổng thu hay tổng chi', () => {
+  const data = [
+    tx({ kind: 'expense', amount: 50_000, date: '2026-09-01', categoryId: '1' }),
+    // Mot lan chuyen 2 trieu tu vi 2 sang vi 1: cap ban ghi cung transferId
+    tx({ kind: 'expense', amount: 2_000_000, date: '2026-09-02', walletId: '2', transferId: 'tr1' }),
+    tx({ kind: 'income', amount: 2_000_000, date: '2026-09-02', walletId: '1', transferId: 'tr1' }),
+  ]
+
+  const totals = sumTotals(data)
+  assert.equal(totals.expense, 50_000, 'chuyển tiền không phải khoản chi')
+  assert.equal(totals.income, 0, 'chuyển tiền không phải khoản thu')
+  assert.equal(totals.net, -50_000)
+})
+
+test('nhưng số dư từng ví thì vẫn phải đổi đúng', () => {
+  const data = [
+    tx({ kind: 'expense', amount: 2_000_000, date: '2026-09-02', walletId: '2', transferId: 'tr1' }),
+    tx({ kind: 'income', amount: 2_000_000, date: '2026-09-02', walletId: '1', transferId: 'tr1' }),
+  ]
+  const balances = walletBalances(WALLETS, data)
+  assert.equal(balances.get('1'), 500_000 + 2_000_000, 'ví nhận phải tăng')
+  assert.equal(balances.get('2'), 2_000_000 - 2_000_000, 'ví nguồn phải giảm')
+  const tong = [...balances.values()].reduce((s, v) => s + v, 0)
+  assert.equal(tong, 2_500_000, 'tổng tài sản không đổi khi chỉ chuyển chỗ')
+})
+
+test('chuyển tiền không lọt vào phân bổ danh mục và biểu đồ', () => {
+  const data = [
+    tx({ kind: 'expense', amount: 50_000, date: '2026-09-01', categoryId: '1' }),
+    tx({ kind: 'expense', amount: 2_000_000, date: '2026-09-01', categoryId: '3', transferId: 'tr1' }),
+    tx({ kind: 'income', amount: 2_000_000, date: '2026-09-01', categoryId: '4', transferId: 'tr1' }),
+  ]
+
+  const slices = byCategory(data, CATEGORIES, 'expense')
+  assert.equal(slices.length, 1, 'chỉ còn một danh mục chi thật')
+  assert.equal(slices[0].amount, 50_000)
+
+  const daily = dailySeries(data, '2026-09')
+  assert.equal(daily[0].expense, 50_000)
+  assert.equal(daily[0].income, 0)
+
+  const monthly = monthlySeries(data, '2026-09', 1)
+  assert.equal(monthly[0].expense, 50_000)
+  assert.equal(monthly[0].income, 0)
+})
+
+test('isTransfer và spendable nhận đúng cặp chuyển tiền', () => {
+  const thuong = tx({ kind: 'expense', amount: 1000, date: '2026-09-01' })
+  const chuyen = tx({ kind: 'expense', amount: 1000, date: '2026-09-01', transferId: 'tr1' })
+  assert.equal(isTransfer(thuong), false)
+  assert.equal(isTransfer(chuyen), true)
+  assert.deepEqual(spendable([thuong, chuyen]), [thuong])
 })

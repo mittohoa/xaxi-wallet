@@ -1,4 +1,4 @@
-import type { Category, Transaction, TxKind } from '../types'
+import type { Category, Id, Transaction, TxKind } from '../types'
 import { parseAmount } from './format'
 import { todayISO, toISO } from './date'
 import { findNumberWords } from './numberwords'
@@ -34,14 +34,14 @@ export interface QuickParse {
   amount: number
   date: string
   note: string
-  categoryId: number | null
+  categoryId: Id | null
   /** cach doan ra danh muc, de hien cho nguoi dung biet may dua vao dau */
   reason: 'history' | 'learned' | 'keyword' | 'none'
 }
 
 /** Bo phan loai da hoc tu lich su; truyen vao de tranh huan luyen lai moi lan go */
 export interface CategoryGuesser {
-  predict(note: string, kind: TxKind): { categoryId: number; confidence: number } | null
+  predict(note: string, kind: TxKind): { categoryId: Id; confidence: number } | null
 }
 
 /** Duoi muc nay thi doan khong du chac de dung thay cho tu khoa */
@@ -163,7 +163,7 @@ export function parseQuickEntry(
   if (!explicitSign && INCOME_HINTS.some((h) => ` ${foldedNote} `.includes(h))) kind = 'income'
 
   // 5) danh muc: uu tien thoi quen cua chinh nguoi dung, sau do toi tu khoa
-  let categoryId: number | null = null
+  let categoryId: Id | null = null
   let reason: QuickParse['reason'] = 'none'
 
   if (foldedNote) {
@@ -186,8 +186,8 @@ export function parseQuickEntry(
   }
 
   if (categoryId === null && foldedNote) {
-    let best: { id: number; len: number } | null = null
-    const consider = (id: number, token: string) => {
+    let best: { id: Id; len: number } | null = null
+    const consider = (id: Id, token: string) => {
       const k = normalize(token)
       if (k && containsWord(foldedNote, k) && (!best || k.length > best.len)) best = { id, len: k.length }
     }
@@ -197,7 +197,7 @@ export function parseQuickEntry(
       consider(c.id, c.name)
     }
     if (best) {
-      categoryId = (best as { id: number; len: number }).id
+      categoryId = (best as { id: Id; len: number }).id
       reason = 'keyword'
     }
   }

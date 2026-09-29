@@ -11,15 +11,15 @@ import type { Category, Transaction, Wallet } from '../src/types'
 configureFormat('vi-VN', 'VND')
 
 const CATEGORIES: Category[] = [
-  { id: 1, name: 'Ăn uống', kind: 'expense', icon: '🍜', color: '#eb6834', keywords: ['ca phe', 'an trua', 'com'] },
-  { id: 2, name: 'Đi lại', kind: 'expense', icon: '🛵', color: '#2a78d6', keywords: ['xang', 'grab'] },
-  { id: 3, name: 'Chi khác', kind: 'expense', icon: '📦', color: '#898781', builtin: true, slug: 'uncategorized-expense' },
-  { id: 4, name: 'Lương', kind: 'income', icon: '💼', color: '#2a78d6', keywords: ['luong'] },
+  { id: '1', name: 'Ăn uống', kind: 'expense', icon: '🍜', color: '#eb6834', keywords: ['ca phe', 'an trua', 'com'] },
+  { id: '2', name: 'Đi lại', kind: 'expense', icon: '🛵', color: '#2a78d6', keywords: ['xang', 'grab'] },
+  { id: '3', name: 'Chi khác', kind: 'expense', icon: '📦', color: '#898781', builtin: true, slug: 'uncategorized-expense' },
+  { id: '4', name: 'Lương', kind: 'income', icon: '💼', color: '#2a78d6', keywords: ['luong'] },
 ]
 
 const WALLETS: Wallet[] = [
-  { id: 1, name: 'Tiền mặt', kind: 'cash', icon: '👛', color: '#1baf7a', openingBalance: 1_000_000 },
-  { id: 2, name: 'Ngân hàng', kind: 'bank', icon: '🏦', color: '#2a78d6', openingBalance: 5_000_000 },
+  { id: '1', name: 'Tiền mặt', kind: 'cash', icon: '👛', color: '#1baf7a', openingBalance: 1_000_000 },
+  { id: '2', name: 'Ngân hàng', kind: 'bank', icon: '🏦', color: '#2a78d6', openingBalance: 5_000_000 },
 ]
 
 const daysAgo = (n: number) => {
@@ -29,7 +29,7 @@ const daysAgo = (n: number) => {
 }
 
 function tx(p: Partial<Transaction> & Pick<Transaction, 'kind' | 'amount' | 'date'>): Transaction {
-  return { categoryId: 1, walletId: 1, createdAt: 1, ...p } as Transaction
+  return { categoryId: '1', walletId: '1', createdAt: 1, ...p } as Transaction
 }
 
 const thisMonth = new Date().toISOString().slice(0, 7)
@@ -124,9 +124,9 @@ test('interpret trả empty với chuỗi rỗng', () => {
 
 test('hỏi tổng chi một danh mục trong tháng', () => {
   const data = [
-    tx({ kind: 'expense', amount: 50_000, date: firstOfMonth, categoryId: 1 }),
-    tx({ kind: 'expense', amount: 30_000, date: firstOfMonth, categoryId: 1 }),
-    tx({ kind: 'expense', amount: 90_000, date: firstOfMonth, categoryId: 2 }),
+    tx({ kind: 'expense', amount: 50_000, date: firstOfMonth, categoryId: '1' }),
+    tx({ kind: 'expense', amount: 30_000, date: firstOfMonth, categoryId: '1' }),
+    tx({ kind: 'expense', amount: 90_000, date: firstOfMonth, categoryId: '2' }),
   ]
   const r = interpret('tháng này ăn uống bao nhiêu', ctx(data))
   assert.equal(r.type, 'query')
@@ -140,8 +140,8 @@ test('hỏi tổng chi một danh mục trong tháng', () => {
 
 test('hỏi khoản chi nhiều nhất cho ra phân bổ theo danh mục', () => {
   const data = [
-    tx({ kind: 'expense', amount: 50_000, date: firstOfMonth, categoryId: 1 }),
-    tx({ kind: 'expense', amount: 200_000, date: firstOfMonth, categoryId: 2 }),
+    tx({ kind: 'expense', amount: 50_000, date: firstOfMonth, categoryId: '1' }),
+    tx({ kind: 'expense', amount: 200_000, date: firstOfMonth, categoryId: '2' }),
   ]
   const r = interpret('tháng này chi nhiều nhất vào việc gì', ctx(data))
   assert.equal(r.type, 'query')
@@ -152,10 +152,10 @@ test('hỏi khoản chi nhiều nhất cho ra phân bổ theo danh mục', () =>
 })
 
 test('hỏi số dư cho ra từng ví và tổng', () => {
-  const data = [tx({ kind: 'expense', amount: 200_000, date: firstOfMonth, walletId: 1 })]
+  const data = [tx({ kind: 'expense', amount: 200_000, date: firstOfMonth, walletId: '1' })]
   const r = interpret('còn bao nhiêu tiền', ctx(data))
   if (r.type !== 'query' || r.answer.kind !== 'balance') return assert.fail('phải là balance')
-  assert.equal(r.answer.wallets.find((w) => w.wallet.id === 1)?.balance, 800_000)
+  assert.equal(r.answer.wallets.find((w) => w.wallet.id === '1')?.balance, 800_000)
   assert.equal(r.answer.total, 5_800_000)
 })
 
@@ -174,8 +174,8 @@ test('hỏi so sánh với kỳ trước', () => {
 
 test('gõ một từ khoá tự do thì tìm trong ghi chú', () => {
   const data = [
-    tx({ kind: 'expense', amount: 66_000, date: firstOfMonth, categoryId: 2, note: 'grab về nhà' }),
-    tx({ kind: 'expense', amount: 35_000, date: firstOfMonth, categoryId: 1, note: 'cà phê' }),
+    tx({ kind: 'expense', amount: 66_000, date: firstOfMonth, categoryId: '2', note: 'grab về nhà' }),
+    tx({ kind: 'expense', amount: 35_000, date: firstOfMonth, categoryId: '1', note: 'cà phê' }),
   ]
   const r = interpret('grab', ctx(data))
   if (r.type !== 'query' || r.answer.kind !== 'list') return assert.fail('phải là list')
@@ -197,12 +197,12 @@ test('hỏi ngân sách khi chưa đặt thì hướng dẫn cách đặt', () =
 
 test('hỏi ngân sách khi đã đặt thì xếp theo mức dùng nhiều nhất', () => {
   const data = [
-    tx({ kind: 'expense', amount: 900_000, date: firstOfMonth, categoryId: 1 }),
-    tx({ kind: 'expense', amount: 100_000, date: firstOfMonth, categoryId: 2 }),
+    tx({ kind: 'expense', amount: 900_000, date: firstOfMonth, categoryId: '1' }),
+    tx({ kind: 'expense', amount: 100_000, date: firstOfMonth, categoryId: '2' }),
   ]
   const budgets = [
-    { id: 1, categoryId: 1, month: thisMonth, limit: 1_000_000 },
-    { id: 2, categoryId: 2, month: thisMonth, limit: 1_000_000 },
+    { id: '1', categoryId: '1', month: thisMonth, limit: 1_000_000 },
+    { id: '2', categoryId: '2', month: thisMonth, limit: 1_000_000 },
   ]
   const r = interpret('ngân sách tháng này thế nào', ctx(data, { budgets }))
   if (r.type !== 'query' || r.answer.kind !== 'budget') return assert.fail('phải là budget')
@@ -218,8 +218,8 @@ test('hỏi độ phủ dữ liệu', () => {
 
 test('hỏi thu nhập thì lọc theo khoản thu chứ không phải chi', () => {
   const data = [
-    tx({ kind: 'income', amount: 15_000_000, date: firstOfMonth, categoryId: 4 }),
-    tx({ kind: 'expense', amount: 500_000, date: firstOfMonth, categoryId: 1 }),
+    tx({ kind: 'income', amount: 15_000_000, date: firstOfMonth, categoryId: '4' }),
+    tx({ kind: 'expense', amount: 500_000, date: firstOfMonth, categoryId: '1' }),
   ]
   const r = interpret('tháng này thu nhập bao nhiêu', ctx(data))
   if (r.type !== 'query' || r.answer.kind !== 'total') return assert.fail('phải là total')

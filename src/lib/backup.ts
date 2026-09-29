@@ -76,8 +76,8 @@ const SOURCE_LABEL: Record<string, string> = {
 }
 
 export function toCSV(txs: Transaction[], categories: Category[], wallets: Wallet[]): string {
-  const catById = new Map(categories.map((c) => [c.id!, c]))
-  const walById = new Map(wallets.map((w) => [w.id!, w]))
+  const catById = new Map(categories.map((c) => [c.id, c]))
+  const walById = new Map(wallets.map((w) => [w.id, w]))
   const rows = [...txs]
     .sort((a, b) => (a.date === b.date ? a.createdAt - b.createdAt : a.date.localeCompare(b.date)))
     .map((t) =>

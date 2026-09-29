@@ -6,7 +6,7 @@ import { formatMoney } from '../lib/format'
 import { normalize } from '../lib/quickadd'
 import { inRange, sumTotals } from '../lib/stats'
 import { useApp } from '../store'
-import type { Transaction } from '../types'
+import type { Id, Transaction } from '../types'
 
 type Filter = 'all' | 'income' | 'expense' | 'inbox'
 
@@ -15,7 +15,7 @@ export function Transactions({ onEdit }: { onEdit: (tx: Transaction) => void }) 
   const [month, setMonth] = useState(currentMonth())
   const [filter, setFilter] = useState<Filter>('all')
   const [query, setQuery] = useState('')
-  const [walletId, setWalletId] = useState<number | 'all'>('all')
+  const [walletId, setWalletId] = useState<Id | 'all'>('all')
 
   const range = monthRange(month, settings.startDayOfMonth)
   const uncategorizedIds = useMemo(
@@ -27,7 +27,7 @@ export function Transactions({ onEdit }: { onEdit: (tx: Transaction) => void }) 
       ),
     [categories],
   )
-  const catById = useMemo(() => new Map(categories.map((c) => [c.id!, c])), [categories])
+  const catById = useMemo(() => new Map(categories.map((c) => [c.id, c])), [categories])
 
   const filtered = useMemo(() => {
     const q = normalize(query)
@@ -94,7 +94,7 @@ export function Transactions({ onEdit }: { onEdit: (tx: Transaction) => void }) 
           <select
             className="input sm"
             value={walletId}
-            onChange={(e) => setWalletId(e.target.value === 'all' ? 'all' : Number(e.target.value))}
+            onChange={(e) => setWalletId(e.target.value)}
             aria-label="Lọc theo ví"
           >
             <option value="all">Mọi ví</option>

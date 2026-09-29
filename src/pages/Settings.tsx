@@ -2,14 +2,14 @@ import { useEffect, useRef, useState } from 'react'
 import { RecurringSheet } from '../components/RecurringSheet'
 import { StatementSheet } from '../components/StatementSheet'
 import { ConfirmButton, Empty, Segmented } from '../components/ui'
-import { db, wipeAll } from '../db/db'
+import { db, stamp, touch, wipeAll } from '../db/db'
 import { buildBackup, downloadFile, readTextFile, restoreBackup, toCSV } from '../lib/backup'
 import { loadDemoData, primeOpeningBalances } from '../lib/demo'
 import { formatDate, todayISO } from '../lib/date'
 import { formatMoney, parseAmount } from '../lib/format'
 import { formatBytes, readStorageStatus, requestPersistence, type StorageStatus } from '../lib/storage'
 import { saveSettings, useApp } from '../store'
-import type { Recurring, Settings as SettingsType, TxKind, WalletKind } from '../types'
+import type { Id, Recurring, Settings as SettingsType, TxKind, WalletKind } from '../types'
 
 const FREQ_LABEL: Record<Recurring['freq'], string> = {
   daily: 'Hàng ngày',
@@ -79,13 +79,15 @@ export function Settings() {
     if (!name) return
     const preset = WALLET_KINDS.find((k) => k.value === newWallet.kind)!
     const opening = parseAmount(newWallet.opening)
-    await db.wallets.add({
-      name,
-      kind: newWallet.kind,
-      icon: preset.icon,
-      color: CATEGORY_COLORS[wallets.length % CATEGORY_COLORS.length],
-      openingBalance: Number.isFinite(opening) ? Math.round(opening) : 0,
-    })
+    await db.wallets.add(
+      stamp({
+        name,
+        kind: newWallet.kind,
+        icon: preset.icon,
+        color: CATEGORY_COLORS[wallets.length % CATEGORY_COLORS.length],
+        openingBalance: Number.isFinite(opening) ? Math.round(opening) : 0,
+      }),
+    )
     setNewWallet({ name: '', kind: 'cash', opening: '' })
     toast('Đã thêm ví')
   }
@@ -93,17 +95,19 @@ export function Settings() {
   async function addCategory() {
     const name = newCategory.name.trim()
     if (!name) return
-    await db.categories.add({
-      name,
-      kind: newCategory.kind,
-      icon: newCategory.icon || '🏷️',
-      color: CATEGORY_COLORS[categories.length % CATEGORY_COLORS.length],
-    })
+    await db.categories.add(
+      stamp({
+        name,
+        kind: newCategory.kind,
+        icon: newCategory.icon || '🏷️',
+        color: CATEGORY_COLORS[categories.length % CATEGORY_COLORS.length],
+      }),
+    )
     setNewCategory({ name: '', kind: newCategory.kind, icon: '🏷️' })
     toast('Đã thêm danh mục')
   }
 
-  async function removeCategory(id: number) {
+  async function removeCategory(id: Id) {
     const used = transactions.some((t) => t.categoryId === id)
     if (used) return toast('Danh mục đang có giao dịch — không thể xoá')
     await db.categories.delete(id)
@@ -251,7 +255,7 @@ export function Settings() {
               type="button"
               className="btn ghost sm"
               onClick={async () => {
-                await db.wallets.update(w.id!, { archived: !w.archived })
+                await db.wallets.update(w.id, { ...touch(), archived: !w.archived })
                 toast(w.archived ? 'Đã mở lại ví' : 'Đã ẩn ví')
               }}
             >
@@ -309,7 +313,7 @@ export function Settings() {
                       <button
                         type="button"
                         className="chip-x"
-                        onClick={() => removeCategory(c.id!)}
+                        onClick={() => removeCategory(c.id)}
                         aria-label={`Xoá danh mục ${c.name}`}
                       >
                         ×

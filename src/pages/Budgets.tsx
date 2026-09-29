@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react'
 import { Empty } from '../components/ui'
-import { db } from '../db/db'
+import { db, stamp, touch } from '../db/db'
 import { currentMonth, daysInMonth, monthLabel, monthRange, shiftMonth, todayISO } from '../lib/date'
 import { formatMoney, parseAmount } from '../lib/format'
 import { byCategory, inRange } from '../lib/stats'
 import { useApp } from '../store'
+import type { Id } from '../types'
 
 /** Mau canh bao theo muc do dung ngan sach — luon di kem nhan chu, khong chi dua vao mau */
 function statusOf(ratio: number, paceRatio: number): { color: string; label: string } {
@@ -17,13 +18,13 @@ function statusOf(ratio: number, paceRatio: number): { color: string; label: str
 export function Budgets() {
   const { budgets, categories, transactions, settings, toast } = useApp()
   const [month, setMonth] = useState(currentMonth())
-  const [drafts, setDrafts] = useState<Record<number, string>>({})
+  const [drafts, setDrafts] = useState<Record<Id, string>>({})
 
   const range = monthRange(month, settings.startDayOfMonth)
   const monthTx = useMemo(() => inRange(transactions, range.start, range.end), [transactions, range.start, range.end])
   const spendByCategory = useMemo(() => {
-    const map = new Map<number, number>()
-    for (const s of byCategory(monthTx, categories, 'expense')) map.set(s.category.id!, s.amount)
+    const map = new Map<Id, number>()
+    for (const s of byCategory(monthTx, categories, 'expense')) map.set(s.category.id, s.amount)
     return map
   }, [monthTx, categories])
 
@@ -37,19 +38,19 @@ export function Budgets() {
   const totalLimit = monthBudgets.reduce((s, b) => s + b.limit, 0)
   const totalSpent = monthBudgets.reduce((s, b) => s + (spendByCategory.get(b.categoryId) ?? 0), 0)
 
-  async function setLimit(categoryId: number, text: string) {
+  async function setLimit(categoryId: Id, text: string) {
     const value = parseAmount(text)
     const existing = monthBudgets.find((b) => b.categoryId === categoryId)
     if (!Number.isFinite(value) || value <= 0) {
-      if (existing?.id) {
+      if (existing) {
         await db.budgets.delete(existing.id)
         toast('Đã bỏ hạn mức')
       }
-    } else if (existing?.id) {
-      await db.budgets.update(existing.id, { limit: Math.round(value) })
+    } else if (existing) {
+      await db.budgets.update(existing.id, { ...touch(), limit: Math.round(value) })
       toast('Đã cập nhật hạn mức')
     } else {
-      await db.budgets.add({ categoryId, month, limit: Math.round(value) })
+      await db.budgets.add(stamp({ categoryId, month, limit: Math.round(value) }))
       toast('Đã đặt hạn mức')
     }
     setDrafts((d) => ({ ...d, [categoryId]: '' }))
@@ -62,7 +63,7 @@ export function Budgets() {
     await db.budgets.bulkAdd(
       source
         .filter((b) => !monthBudgets.some((m) => m.categoryId === b.categoryId))
-        .map((b) => ({ categoryId: b.categoryId, month, limit: b.limit })),
+        .map((b) => stamp({ categoryId: b.categoryId, month, limit: b.limit })),
     )
     toast('Đã sao chép hạn mức tháng trước')
   }
@@ -110,7 +111,7 @@ export function Budgets() {
         {expenseCategories.length === 0 && <Empty icon="🎯" title="Chưa có danh mục chi nào" />}
         {expenseCategories.map((c) => {
           const budget = monthBudgets.find((b) => b.categoryId === c.id)
-          const spent = spendByCategory.get(c.id!) ?? 0
+          const spent = spendByCategory.get(c.id) ?? 0
           const ratio = budget ? spent / budget.limit : 0
           const status = statusOf(ratio, paceRatio)
           return (
@@ -124,10 +125,10 @@ export function Budgets() {
                   className="input sm budget-input"
                   inputMode="decimal"
                   placeholder="hạn mức"
-                  value={drafts[c.id!] ?? (budget ? String(budget.limit) : '')}
-                  onChange={(e) => setDrafts((d) => ({ ...d, [c.id!]: e.target.value }))}
+                  value={drafts[c.id] ?? (budget ? String(budget.limit) : '')}
+                  onChange={(e) => setDrafts((d) => ({ ...d, [c.id]: e.target.value }))}
                   onBlur={(e) => {
-                    if (drafts[c.id!] !== undefined) setLimit(c.id!, e.target.value)
+                    if (drafts[c.id] !== undefined) setLimit(c.id, e.target.value)
                   }}
                   onKeyDown={(e) => {
                     if (e.key === 'Enter') (e.target as HTMLInputElement).blur()

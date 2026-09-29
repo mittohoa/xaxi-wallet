@@ -3,7 +3,7 @@ import { AnswerView } from '../components/AnswerView'
 import { Avatar, Figure, Money } from '../components/ui'
 import { addTransaction, markNoSpend, suggestShortcuts, systemCategory } from '../lib/actions'
 import { detectRecurring, trainClassifier } from '../lib/learn'
-import { db } from '../db/db'
+import { db, stamp } from '../db/db'
 import { listenOnce, stopListening, voiceReady } from '../lib/native/voice'
 import { saveSettings } from '../store'
 import { helpAnswer, interpret, type Answer, type CommandName } from '../lib/ask'
@@ -100,7 +100,7 @@ export function Console({
 
   const balances = useMemo(() => walletBalances(wallets, transactions), [wallets, transactions])
   const netWorth = useMemo(
-    () => wallets.filter((w) => !w.archived).reduce((s, w) => s + (balances.get(w.id!) ?? 0), 0),
+    () => wallets.filter((w) => !w.archived).reduce((s, w) => s + (balances.get(w.id) ?? 0), 0),
     [wallets, balances],
   )
 
@@ -117,7 +117,19 @@ export function Console({
   )
 
   const shortcuts = useMemo(() => suggestShortcuts(transactions, categories, 5), [transactions, categories])
-  const recent = useMemo(() => [...transactions].sort((a, b) => b.createdAt - a.createdAt).slice(0, 8), [transactions])
+  // Moi lan chuyen tien la hai ban ghi — chi hien mot dong de khoi roi mat
+  const recent = useMemo(() => {
+    const seen = new Set<string>()
+    return [...transactions]
+      .sort((a, b) => b.createdAt - a.createdAt)
+      .filter((t) => {
+        if (!t.transferId) return true
+        if (seen.has(t.transferId)) return false
+        seen.add(t.transferId)
+        return t.kind === 'expense'
+      })
+      .slice(0, 8)
+  }, [transactions])
 
   const today = todayISO()
   const todayLogged = transactions.some((t) => t.date === today) || dayMarks.some((m) => m.date === today)
@@ -241,18 +253,20 @@ export function Console({
                     type="button"
                     className="btn sm primary"
                     onClick={async () => {
-                      await db.recurring.add({
-                        name: suggestion.name,
-                        kind: suggestion.kind,
-                        amount: suggestion.amount,
-                        categoryId: suggestion.categoryId,
-                        walletId: suggestion.walletId,
-                        freq: suggestion.freq,
-                        anchor: suggestion.anchor,
-                        nextDate: suggestion.nextDate,
-                        active: true,
-                        note: suggestion.name,
-                      })
+                      await db.recurring.add(
+                        stamp({
+                          name: suggestion.name,
+                          kind: suggestion.kind,
+                          amount: suggestion.amount,
+                          categoryId: suggestion.categoryId,
+                          walletId: suggestion.walletId,
+                          freq: suggestion.freq,
+                          anchor: suggestion.anchor,
+                          nextDate: suggestion.nextDate,
+                          active: true,
+                          note: suggestion.name,
+                        }),
+                      )
                       toast(`Đã tự động hoá "${suggestion.name}"`)
                     }}
                   >

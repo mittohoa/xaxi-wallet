@@ -5,6 +5,7 @@ import { formatMoney, parseAmount } from '../lib/format'
 import { walletBalances } from '../lib/stats'
 import { useApp } from '../store'
 import { Sheet } from './ui'
+import type { Id } from '../types'
 
 /**
  * Doi soat so du: nguoi dung nhin so du that trong vi / app ngan hang
@@ -14,7 +15,7 @@ import { Sheet } from './ui'
 export function ReconcileSheet({ onClose }: { onClose: () => void }) {
   const { wallets, transactions, categories, toast } = useApp()
   const active = wallets.filter((w) => !w.archived)
-  const [walletId, setWalletId] = useState<number | null>(active[0]?.id ?? null)
+  const [walletId, setWalletId] = useState<Id | null>(active[0]?.id ?? null)
   const [text, setText] = useState('')
 
   const balances = useMemo(() => walletBalances(wallets, transactions), [wallets, transactions])
@@ -43,7 +44,7 @@ export function ReconcileSheet({ onClose }: { onClose: () => void }) {
 
       <div className="field">
         <label htmlFor="rec-wallet">Ví / tài khoản</label>
-        <select id="rec-wallet" className="input" value={walletId ?? ''} onChange={(e) => setWalletId(Number(e.target.value))}>
+        <select id="rec-wallet" className="input" value={walletId ?? ''} onChange={(e) => setWalletId(e.target.value)}>
           {active.map((w) => (
             <option key={w.id} value={w.id}>
               {w.icon} {w.name}

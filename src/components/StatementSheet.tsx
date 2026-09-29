@@ -1,11 +1,12 @@
 import { useMemo, useState } from 'react'
-import { db } from '../db/db'
+import { db, stamp } from '../db/db'
 import { systemCategory } from '../lib/actions'
 import { formatDate } from '../lib/date'
 import { formatMoney } from '../lib/format'
 import { parseStatementFile, type StatementParse } from '../lib/statement'
 import { useApp } from '../store'
 import { Sheet } from './ui'
+import type { Id } from '../types'
 
 /**
  * Nhap sao ke CSV nguoi dung tu xuat tu app ngan hang.
@@ -16,7 +17,7 @@ export function StatementSheet({ onClose }: { onClose: () => void }) {
   const { transactions, categories, wallets, toast } = useApp()
   const [result, setResult] = useState<StatementParse | null>(null)
   const [rows, setRows] = useState<StatementParse['rows']>([])
-  const [walletId, setWalletId] = useState<number | null>(wallets.find((w) => !w.archived)?.id ?? null)
+  const [walletId, setWalletId] = useState<Id | null>(wallets.find((w) => !w.archived)?.id ?? null)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
 
@@ -62,16 +63,18 @@ export function StatementSheet({ onClose }: { onClose: () => void }) {
     const now = Date.now()
     const payload = rows
       .filter((r) => r.selected)
-      .map((r, i) => ({
-        kind: r.kind,
-        amount: r.amount,
-        categoryId: (r.kind === 'income' ? incomeCat.id : expenseCat.id)!,
-        walletId,
-        date: r.date,
-        note: r.note || undefined,
-        createdAt: now + i,
-        source: 'quick' as const,
-      }))
+      .map((r, i) =>
+        stamp({
+          kind: r.kind,
+          amount: r.amount,
+          categoryId: r.kind === 'income' ? incomeCat.id : expenseCat.id,
+          walletId,
+          date: r.date,
+          note: r.note || undefined,
+          createdAt: now + i,
+          source: 'quick' as const,
+        }),
+      )
     await db.transactions.bulkAdd(payload)
     setBusy(false)
     toast(`Đã nhập ${payload.length} giao dịch vào hộp chờ phân loại`)
@@ -113,7 +116,7 @@ export function StatementSheet({ onClose }: { onClose: () => void }) {
 
           <div className="field">
             <label htmlFor="stmt-wallet">Nhập vào ví</label>
-            <select id="stmt-wallet" className="input" value={walletId ?? ''} onChange={(e) => setWalletId(Number(e.target.value))}>
+            <select id="stmt-wallet" className="input" value={walletId ?? ''} onChange={(e) => setWalletId(e.target.value)}>
               {wallets
                 .filter((w) => !w.archived)
                 .map((w) => (
