@@ -2,6 +2,9 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { AnswerView } from '../components/AnswerView'
 import { Avatar } from '../components/ui'
 import { addTransaction, markNoSpend, suggestShortcuts, systemCategory } from '../lib/actions'
+import { detectRecurring, trainClassifier } from '../lib/learn'
+import { db } from '../db/db'
+import { saveSettings } from '../store'
 import { helpAnswer, interpret, type Answer, type CommandName } from '../lib/ask'
 import { computeCoverage, firstActivity } from '../lib/coverage'
 import { currentMonth, formatDateLong, monthRange, todayISO } from '../lib/date'
@@ -32,7 +35,7 @@ export function Console({
 }) {
   const app = useApp()
   const { catById } = useLookups()
-  const { transactions, wallets, categories, budgets, dayMarks, settings, toast } = app
+  const { transactions, wallets, categories, budgets, dayMarks, recurring, settings, toast } = app
 
   const [text, setText] = useState('')
   const [answer, setAnswer] = useState<Answer | null>(null)
@@ -46,9 +49,20 @@ export function Console({
     return () => window.clearInterval(t)
   }, [text])
 
+  // Huan luyen lai khi lich su doi — chay tuc thi tren vai tram ban ghi,
+  // va quan trong hon: chay tren may, khong goi ra ngoai.
+  const guesser = useMemo(() => trainClassifier(transactions, categories), [transactions, categories])
+
   const askContext = useMemo(
-    () => ({ transactions, categories, wallets, budgets, dayMarks, gapWindowDays: settings.gapWindowDays }),
-    [transactions, categories, wallets, budgets, dayMarks, settings.gapWindowDays],
+    () => ({ transactions, categories, wallets, budgets, dayMarks, gapWindowDays: settings.gapWindowDays, guesser }),
+    [transactions, categories, wallets, budgets, dayMarks, settings.gapWindowDays, guesser],
+  )
+
+  const dismissed = settings.dismissedSuggestions ?? []
+  const suggestion = useMemo(
+    () => detectRecurring(transactions, recurring, categories).filter((s) => !dismissed.includes(s.key))[0],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [transactions, recurring, categories, settings.dismissedSuggestions],
   )
 
   const intent = useMemo(() => interpret(text, askContext), [text, askContext])
@@ -180,6 +194,50 @@ export function Console({
               </div>
             )}
 
+            {suggestion && (
+              <div className="suggest">
+                <div className="suggest-head">
+                  <span className="suggest-badge">tự nhận ra</span>
+                  <span className="suggest-count">{suggestion.occurrences} lần {suggestion.freq === 'monthly' ? 'hằng tháng' : 'hằng tuần'}</span>
+                </div>
+                <div className="suggest-body">
+                  Bạn ghi <b>{suggestion.name}</b> {formatMoney(suggestion.amount)}{' '}
+                  {suggestion.freq === 'monthly' ? `vào ngày ${suggestion.anchor} mỗi tháng` : 'mỗi tuần'}. Để app tự ghi
+                  giúp, khỏi phải nhớ?
+                </div>
+                <div className="nudge-actions">
+                  <button
+                    type="button"
+                    className="btn sm primary"
+                    onClick={async () => {
+                      await db.recurring.add({
+                        name: suggestion.name,
+                        kind: suggestion.kind,
+                        amount: suggestion.amount,
+                        categoryId: suggestion.categoryId,
+                        walletId: suggestion.walletId,
+                        freq: suggestion.freq,
+                        anchor: suggestion.anchor,
+                        nextDate: suggestion.nextDate,
+                        active: true,
+                        note: suggestion.name,
+                      })
+                      toast(`Đã tự động hoá "${suggestion.name}"`)
+                    }}
+                  >
+                    Tự ghi từ nay
+                  </button>
+                  <button
+                    type="button"
+                    className="btn sm"
+                    onClick={() => saveSettings({ dismissedSuggestions: [...dismissed, suggestion.key] })}
+                  >
+                    Không cần
+                  </button>
+                </div>
+              </div>
+            )}
+
             {recent.length === 0 ? (
               <div className="console-onboard">
                 <p>
@@ -233,6 +291,7 @@ export function Console({
               {intent.category?.icon ?? '📦'} {intent.category?.name ?? 'Chưa phân loại'}
             </span>
             {intent.parse.reason === 'history' && <span className="tag">theo thói quen</span>}
+            {intent.parse.reason === 'learned' && <span className="tag">app tự đoán</span>}
             {intent.parse.date !== today && <span className="tag">{formatDateLong(intent.parse.date)}</span>}
           </div>
         )}

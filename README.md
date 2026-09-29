@@ -24,18 +24,32 @@ Không tab, không menu, không nút cộng. Mở app ra chỉ có **một con s
 
 Trong lúc gõ, app hiện luôn nó sắp làm gì — nên không bao giờ lỡ tay ghi nhầm một câu hỏi thành khoản chi.
 
-## Mở rộng theo AI mà không phá cam kết riêng tư
+## AI: chạy trên máy, và chỉ để giảm công nhập liệu
 
-Tầng trợ lý (`src/lib/ask.ts`) được thiết kế để cắm rút, ba bậc — bậc sau chỉ cần trả về cùng kiểu `Answer`,
-**giao diện không đổi một dòng nào**:
+Mọi thứ dưới đây chạy **hoàn toàn trên thiết bị**. Không gọi mạng, không tải mô hình, không một byte dữ liệu tài chính
+nào rời khỏi máy. Và mỗi thứ phải trả lời được câu hỏi *"nó giảm công nhập liệu hay giữ số liệu đúng khi người dùng
+lười?"* — không trả lời được thì không làm.
+
+**Phân loại tự học** (`src/lib/learn.ts`) — một bộ Naive Bayes huấn luyện trên chính ghi chú của bạn. Ghi `học tiếng anh`
+vài lần, sau đó gõ `tiếng anh 300k` là nó tự xếp vào Giáo dục dù không từ khoá nào khớp. Quan trọng hơn: **nó im lặng
+khi không có bằng chứng** thay vì đoán bừa — ghi sai danh mục còn tệ hơn để trống. Thứ tự ưu tiên là ghi chú từng dùng →
+đã học → từ khoá → chưa phân loại, và app luôn hiện nó dựa vào đâu.
+
+**Phát hiện khoản định kỳ** — tìm những khoản lặp đều để đề xuất tự động hoá. Điều kiện khắt khe (ít nhất 3 lần, khoảng
+cách lệch không quá 25%, số tiền lệch không quá 20%) vì đề xuất sai nghĩa là tự động ghi nhầm tiền của người ta. Một
+chạm là khoản đó không bao giờ phải nhập tay nữa.
+
+### Còn lại, theo đúng thứ tự
 
 | Bậc | Chạy ở đâu | Dữ liệu ra ngoài | Trạng thái |
 |---|---|---|---|
-| 1 · bộ hiểu tất định | trên máy | không | **đang chạy** |
-| 2 · OCR biên lai (ML Kit) | trên máy | không | chưa làm |
-| 3 · mô hình ngôn ngữ (Gemini Nano hoặc khoá API của bạn) | tuỳ chọn | có — phải nói rõ và do bạn bật | chưa làm |
+| Phân loại tự học · phát hiện định kỳ | trên máy | không | **xong** |
+| Nhập Excel/CSV | trên máy | không | **xong** |
+| OCR ảnh biên lai (ML Kit, model tải sau khi cài) | trên máy | không | đang làm |
+| Giọng nói (SpeechRecognizer, ưu tiên offline) | trên máy | không | đang làm |
+| Online · đồng bộ nhiều thiết bị | — | — | **chỉ cân nhắc khi offline đã hoàn chỉnh** |
 
-Bậc 1 đã phủ được phần lớn nhu cầu mà không cần mạng, không cần tài khoản, không tốn tiền.
+Model của ML Kit **không nhồi vào APK** — tải qua Google Play Services lần đầu dùng, nên bản cài vẫn ~4 MB.
 
 ---
 
@@ -82,7 +96,7 @@ Tệp và văn bản được xử lý ngay trên máy, không gửi đi đâu.
 ```bash
 npm install
 npm run dev        # http://localhost:5173
-npm test           # 53 test: phần lõi, bộ hiểu ngôn ngữ, và render thật app trên jsdom
+npm test           # 70 test: phần lõi, bộ hiểu ngôn ngữ, và render thật app trên jsdom
 npm run build      # xuất ra dist/
 ```
 
@@ -178,13 +192,15 @@ src/
     actions.ts       ghi giao dịch, đối soát, phím tắt tự học
     stats.ts         tổng hợp số liệu cho báo cáo
     backup.ts        sao lưu JSON, xuất CSV
-    ask.ts           tầng trợ lý: phân loại ý định + trả lời câu hỏi (bậc 1)
+    ask.ts           tầng trợ lý: phân loại ý định + trả lời câu hỏi
+    learn.ts         phân loại tự học + phát hiện khoản định kỳ (chạy trên máy)
+    xlsx.ts          đọc Excel không cần thư viện ngoài
     timerange.ts     đọc 'tuần này', 'tháng 8', '7 ngày qua'
     demo.ts          sinh dữ liệu mẫu 3 tháng để dùng thử
   components/        ô trả lời, biên lai, đối soát, sao kê, biểu đồ
   pages/Console.tsx  màn hình duy nhất — ô nhập làm tất cả
   pages/             Ngân sách · Báo cáo · Lịch sử · Cài đặt (mở bằng lệnh)
-tests/               53 test: phần lõi, bộ hiểu, và tích hợp trên jsdom
+tests/               70 test: phần lõi, bộ hiểu, và tích hợp trên jsdom
 ```
 
 ## Về biểu đồ

@@ -7,7 +7,7 @@ const outdir = 'tests/.out'
 rmSync(outdir, { recursive: true, force: true })
 
 await build({
-  entryPoints: ['tests/core.test.ts', 'tests/ask.test.ts', 'tests/xlsx.test.ts', 'tests/app.test.tsx'],
+  entryPoints: ['tests/core.test.ts', 'tests/ask.test.ts', 'tests/xlsx.test.ts', 'tests/learn.test.ts', 'tests/app.test.tsx'],
   outdir,
   bundle: true,
   platform: 'node',
@@ -19,7 +19,7 @@ await build({
 
 const result = spawnSync(
   process.execPath,
-  ['--test', '--test-force-exit', `${outdir}/core.test.js`, `${outdir}/ask.test.js`, `${outdir}/xlsx.test.js`, `${outdir}/app.test.js`],
+  ['--test', '--test-force-exit', `${outdir}/core.test.js`, `${outdir}/ask.test.js`, `${outdir}/xlsx.test.js`, `${outdir}/learn.test.js`, `${outdir}/app.test.js`],
   { stdio: 'inherit' },
 )
 process.exit(result.status ?? 1)

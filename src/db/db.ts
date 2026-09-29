@@ -61,6 +61,7 @@ export const DEFAULT_SETTINGS: Settings = {
   gapWindowDays: 14,
   nudgeAfterGapDays: 3,
   reconcileEveryDays: 7,
+  dismissedSuggestions: [],
 }
 
 /** Tao du lieu mac dinh o lan chay dau tien. An toan khi goi nhieu lan. */

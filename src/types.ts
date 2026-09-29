@@ -117,6 +117,8 @@ export interface Settings {
   nudgeAfterGapDays: number
   /** so ngay giua hai lan nhac doi soat so du (0 = tat) */
   reconcileEveryDays: number
+  /** khoa cua cac de xuat dinh ky nguoi dung da tu choi, de khong hoi lai */
+  dismissedSuggestions?: string[]
 }
 
 export interface BackupFile {

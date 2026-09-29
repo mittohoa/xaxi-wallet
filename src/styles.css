@@ -1459,3 +1459,45 @@ textarea.input {
     padding-bottom: 13px;
   }
 }
+
+/* ---------- De xuat tu dong hoa ---------- */
+.suggest {
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--border));
+  background: color-mix(in srgb, var(--accent) 7%, var(--surface-1));
+  border-radius: var(--radius);
+  padding: 14px;
+  margin-top: 16px;
+}
+
+.suggest-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.suggest-badge {
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--accent);
+  border: 1px solid color-mix(in srgb, var(--accent) 45%, transparent);
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+
+.suggest-count {
+  font-size: 11.5px;
+  color: var(--text-muted);
+}
+
+.suggest-body {
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--text-secondary);
+}
+
+.suggest-body b {
+  color: var(--text-primary);
+}

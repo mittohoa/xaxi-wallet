@@ -34,9 +34,17 @@ export interface QuickParse {
   date: string
   note: string
   categoryId: number | null
-  /** cach doan ra danh muc, de hien cho nguoi dung biet */
-  reason: 'history' | 'keyword' | 'none'
+  /** cach doan ra danh muc, de hien cho nguoi dung biet may dua vao dau */
+  reason: 'history' | 'learned' | 'keyword' | 'none'
 }
+
+/** Bo phan loai da hoc tu lich su; truyen vao de tranh huan luyen lai moi lan go */
+export interface CategoryGuesser {
+  predict(note: string, kind: TxKind): { categoryId: number; confidence: number } | null
+}
+
+/** Duoi muc nay thi doan khong du chac de dung thay cho tu khoa */
+const LEARNED_THRESHOLD = 0.3
 
 const AMOUNT_RE = /(?:^|\s)([+-]?\d[\d.,]*)\s*(k|nghin|tr|trieu|m|ty|d|vnd)?(?=\s|$)/gi
 
@@ -94,7 +102,12 @@ function matchDate(folded: string): DateHit | null {
  * Vi du: 'ca phe 35k', '+15tr luong thang 9', 'xang 100k hom qua'
  * Tra ve null neu khong tim thay so tien hop le.
  */
-export function parseQuickEntry(input: string, categories: Category[], history: Transaction[]): QuickParse | null {
+export function parseQuickEntry(
+  input: string,
+  categories: Category[],
+  history: Transaction[],
+  guesser?: CategoryGuesser,
+): QuickParse | null {
   const trimmed = input.trim()
   if (!trimmed) return null
 
@@ -149,6 +162,15 @@ export function parseQuickEntry(input: string, categories: Category[], history: 
     if (sameNote) {
       categoryId = sameNote.categoryId
       reason = 'history'
+    }
+  }
+
+  // Bo phan loai da hoc tu chinh lich su nguoi dung — dat truoc tu khoa cung
+  if (categoryId === null && note && guesser) {
+    const guess = guesser.predict(note, kind)
+    if (guess && guess.confidence >= LEARNED_THRESHOLD && categories.some((c) => c.id === guess.categoryId)) {
+      categoryId = guess.categoryId
+      reason = 'learned'
     }
   }
 

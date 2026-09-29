@@ -10,7 +10,7 @@
  * ma khong doi giao dien: chung chi can tra ve cung kieu `Answer`.
  */
 import type { Budget, Category, DayMark, Transaction, TxKind, Wallet } from '../types'
-import { containsWord, normalize, parseQuickEntry, type QuickParse } from './quickadd'
+import { containsWord, normalize, parseQuickEntry, type CategoryGuesser, type QuickParse } from './quickadd'
 import { defaultRange, extractTimeRange, type TimeRange } from './timerange'
 import { byCategory, inRange, sumTotals, walletBalances, type CategorySlice, type Totals } from './stats'
 import { computeCoverage, firstActivity } from './coverage'
@@ -78,6 +78,8 @@ export interface AskContext {
   budgets: Budget[]
   dayMarks: DayMark[]
   gapWindowDays: number
+  /** bo phan loai da hoc tu lich su; khong co thi rot ve tu khoa */
+  guesser?: CategoryGuesser
 }
 
 /* ---------------- nhan dien tu khoa ---------------- */
@@ -141,7 +143,7 @@ export function interpret(input: string, ctx: AskContext): Intent {
   }
 
   if (!looksLikeQuestion) {
-    const parse = parseQuickEntry(trimmed, ctx.categories, ctx.transactions)
+    const parse = parseQuickEntry(trimmed, ctx.categories, ctx.transactions, ctx.guesser)
     if (parse) {
       const category = ctx.categories.find((c) => c.id === parse.categoryId)
       return { type: 'entry', parse, category }
