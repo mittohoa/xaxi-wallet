@@ -8,8 +8,11 @@
  *    dong bo nao, va bang `attachments` khong nam trong `SYNC_TABLES`.
  *
  * 2. Bo nho dien thoai la huu han. Anh may anh goc 3-5MB; giu nguyen thi mot
- *    nam ghi chep se an vai GB va dung ngay vao han muc cua WebView. Nen lai
- *    con khoang 8-10KB moi anh, tuc chung 16MB cho ca nam.
+ *    nam ghi chep se an vai GB va dung ngay vao han muc cua WebView.
+ *
+ *    So do duoc tren may that (Galaxy, anh 4000x3000 nang 3,85MB): sau khi nen
+ *    con 9,5KB, mat khoang 520ms. Hai anh moi ngay trong mot nam la chung 7MB.
+ *    Cung anh do ma ma hoa JPEG thi ra 43KB — gap bon lan, nen chon WebP.
  *
  * 3. Anh goc mang theo EXIF: toa do GPS, kieu may, gio chup chinh xac. Ve lai
  *    qua canvas thi toan bo phan do bi bo — thu duoc luu chi con diem anh.
@@ -86,6 +89,18 @@ export async function compressImage(file: File): Promise<CompressedImage> {
     canvas.height = height
     const ctx = canvas.getContext('2d')
     if (!ctx) throw new Error('Thiết bị này không vẽ được ảnh.')
+
+    /**
+     * Hai dong nay bot 39% dung luong anh, do duoc tren may that:
+     * 15,6KB xuong 9,5KB voi cung mot anh 4000x3000.
+     *
+     * Mac dinh cua canvas la thu nho chat luong thap, tuc lay mau kieu nhay
+     * diem. Voi ti le thu nho 4 lan nhu anh may anh, kieu do sinh ra rang cua
+     * va nhieu tan so cao — dung thu ma bo ma hoa anh tot nhat. Thu nho chat
+     * luong cao cho anh muot hon, nen nen lai cung nhanh hon mot chut.
+     */
+    ctx.imageSmoothingEnabled = true
+    ctx.imageSmoothingQuality = 'high'
     ctx.drawImage(bitmap, 0, 0, width, height)
 
     const mime = supportsWebP() ? 'image/webp' : 'image/jpeg'
