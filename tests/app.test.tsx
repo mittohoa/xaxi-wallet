@@ -27,6 +27,9 @@ g.getComputedStyle = dom.window.getComputedStyle
 g.requestAnimationFrame = (cb: FrameRequestCallback) => setTimeout(() => cb(Date.now()), 0) as unknown as number
 g.cancelAnimationFrame = (id: number) => clearTimeout(id)
 g.IS_REACT_ACT_ENVIRONMENT = true
+// jsdom chua co URL.createObjectURL — dai anh bien lai goi toi no
+dom.window.URL.createObjectURL = (() => 'blob:thu-nghiem') as unknown as typeof URL.createObjectURL
+dom.window.URL.revokeObjectURL = (() => undefined) as unknown as typeof URL.revokeObjectURL
 
 // jsdom chua co ResizeObserver / matchMedia — bieu do va chu de sang toi can chung
 class ResizeObserverStub {
@@ -147,25 +150,100 @@ test('gõ một câu hỏi thì trả lời ngay tại chỗ, không tạo giao 
   assert.ok(container.querySelector('.answer-close'), 'phải có lối quay lại')
 })
 
-test('gõ một lệnh thì mở màn hình phụ', async () => {
+/**
+ * Mọi lệnh phải mở được màn hình của nó.
+ *
+ * Bài kiểm này sinh ra từ ba lần hỏng giống nhau: bỏ thanh tab đi thì
+ * GapFiller, hộp chờ phân loại và biểu mẫu ghi đầy đủ lần lượt mất lối vào —
+ * mã vẫn còn nguyên, chỉ là không còn nút nào mở được nữa. Không có gì bắt
+ * được loại lỗi đó, vì mọi bài kiểm khác đều gọi thẳng vào hàm.
+ *
+ * `EXPECTED` phải liệt kê ĐỦ mọi lệnh, và có một khẳng định so nó với
+ * `COMMANDS`. Thêm lệnh mới mà quên nối vào màn hình thì bài kiểm đỏ ngay.
+ */
+test('mọi lệnh đều mở được màn hình của nó', async () => {
+  const { COMMANDS } = await import('../src/lib/ask')
+
+  /** tên lệnh -> nhãn cửa sổ nó phải mở ra; null nghĩa là trả lời ngay tại chỗ */
+  const EXPECTED: Record<string, string | null> = {
+    settings: 'Cài đặt',
+    budgets: 'Ngân sách',
+    reports: 'Báo cáo',
+    receipt: 'Dán biên lai',
+    reconcile: 'Đối soát số dư',
+    statement: 'Nhập sao kê',
+    history: 'Lịch sử giao dịch',
+    gaps: 'Lấp khoảng trống',
+    transfer: 'Chuyển tiền giữa ví',
+    newEntry: 'Giao dịch mới',
+    help: null,
+  }
+
+  assert.deepEqual(
+    Object.keys(EXPECTED).sort(),
+    COMMANDS.map((c) => c.name).sort(),
+    'có lệnh chưa được liệt kê ở đây — thêm lệnh thì phải khai cả màn hình nó mở',
+  )
+
   const input = container.querySelector('.composer-input') as HTMLInputElement
 
-  await act(async () => {
-    type(input, 'ngân sách')
-  })
-  await act(async () => {
-    pressEnter(input)
-  })
-  await waitFor(() => Boolean(dom.window.document.querySelector('.full-sheet')))
+  for (const command of COMMANDS) {
+    const trigger = command.triggers[0]
+    const expected = EXPECTED[command.name]
 
-  const sheet = dom.window.document.querySelector('.full-sheet')!
-  assert.ok((sheet.textContent ?? '').includes('Ngân sách'))
+    await act(async () => {
+      type(input, trigger)
+    })
+    await act(async () => {
+      pressEnter(input)
+    })
 
-  const close = sheet.querySelector('.icon-btn') as HTMLButtonElement
-  await act(async () => {
-    close.click()
-  })
-  await waitFor(() => !dom.window.document.querySelector('.full-sheet'))
+    if (expected === null) {
+      await waitFor(() => Boolean(container.querySelector('.answer-close')))
+      assert.ok(
+        container.querySelector('.answer-close'),
+        `lệnh "${trigger}" phải trả lời ngay tại chỗ`,
+      )
+      const close = container.querySelector('.answer-close') as HTMLButtonElement
+      await act(async () => {
+        close.click()
+      })
+      continue
+    }
+
+    await waitFor(() => Boolean(dom.window.document.querySelector('[role="dialog"]')))
+    const dialog = dom.window.document.querySelector('[role="dialog"]')!
+    assert.equal(
+      dialog.getAttribute('aria-label'),
+      expected,
+      `lệnh "${trigger}" phải mở màn hình "${expected}"`,
+    )
+    assert.ok((dialog.textContent ?? '').trim().length > 0, `màn hình "${expected}" mở ra rỗng`)
+
+    // Ca hai loại cửa sổ đều đóng bằng Escape
+    await act(async () => {
+      dom.window.document.dispatchEvent(new dom.window.KeyboardEvent('keydown', { key: 'Escape', bubbles: true }))
+    })
+    await waitFor(() => !dom.window.document.querySelector('[role="dialog"]'), 3000)
+
+    await act(async () => {
+      type(input, '')
+    })
+  }
+})
+
+/**
+ * Những lối vào không gõ lệnh cũng phải còn.
+ * Chúng từng biến mất mà không bài kiểm nào kêu.
+ */
+test('các nút mở màn hình trên trang chính vẫn còn', async () => {
+  assert.ok(container.querySelector('.console-gear'), 'mất nút bánh răng thì không vào được Cài đặt')
+
+  const chips = [...container.querySelectorAll('.chip')].map((c) => c.textContent ?? '')
+  assert.ok(
+    chips.some((t) => t.includes('Ghi đầy đủ')),
+    'mất chip Ghi đầy đủ thì không mở được biểu mẫu chọn ví / danh mục / ngày',
+  )
 
   await act(async () => {
     root.unmount()
