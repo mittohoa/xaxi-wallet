@@ -10,7 +10,7 @@ import { guessCategory } from '../src/lib/quickadd'
 import { parseCSV, parseStatement } from '../src/lib/statement'
 import { computeCoverage } from '../src/lib/coverage'
 import { advance, firstDueDate } from '../src/lib/recurring'
-import { byCategory, comparableRange, dailySeries, isTransfer, monthlySeries, percentChange, spendable, sumTotals, walletBalances } from '../src/lib/stats'
+import { byCategory, byWeekday, comparableRange, dailySeries, fixedSplit, heaviestWeekday, isTransfer, monthlySeries, percentChange, spendable, sumTotals, walletBalances } from '../src/lib/stats'
 import { suggestShortcuts } from '../src/lib/actions'
 import type { Category, Recurring, Transaction, Wallet } from '../src/types'
 
@@ -551,4 +551,53 @@ test('bộ chọn danh mục loại bỏ danh mục hệ thống', () => {
   assert.equal(chon.includes('Chi chưa rõ'), false, 'đây là chênh lệch do đối soát sinh ra, không phải khoản người dùng tiêu')
   assert.equal(chon.includes('Chi khác'), true, '"Chi khác" vẫn được tính vào tổng chi nên giữ lại')
   assert.equal(chon.includes('Ăn uống'), true)
+})
+
+/* ================= chi cố định · thứ trong tuần ================= */
+
+test('tách chi cố định khỏi chi biến đổi', () => {
+  const data = [
+    tx({ kind: 'expense', amount: 4_500_000, date: '2026-09-03', source: 'recurring' }),
+    tx({ kind: 'expense', amount: 220_000, date: '2026-09-05', source: 'recurring' }),
+    tx({ kind: 'expense', amount: 1_000_000, date: '2026-09-06' }),
+    tx({ kind: 'income', amount: 18_000_000, date: '2026-09-05' }),
+    tx({ kind: 'expense', amount: 9_000_000, date: '2026-09-07', transferId: 'ck' }),
+  ]
+  const r = fixedSplit(data)
+  assert.equal(r.fixed, 4_720_000)
+  assert.equal(r.variable, 1_000_000, 'khoản thu và khoản chuyển tiền không được tính')
+  assert.equal(Math.round(r.share * 100), 83)
+})
+
+test('chưa chi gì thì tỉ lệ cố định bằng 0, không phải NaN', () => {
+  assert.equal(fixedSplit([]).share, 0)
+})
+
+test('đọc thứ trong tuần theo UTC, không theo múi giờ máy', () => {
+  // 2026-09-29 là thứ Ba ở mọi múi giờ nếu đọc đúng
+  const r = byWeekday([tx({ kind: 'expense', amount: 100_000, date: '2026-09-29' })])
+  assert.equal(r[2].amount, 100_000)
+  assert.equal(r[2].count, 1)
+})
+
+test('không kết luận thứ tiêu nhiều nhất khi chưa đủ dữ liệu', () => {
+  const it = Array.from({ length: 5 }, (_, i) => tx({ kind: 'expense', amount: 100_000, date: `2026-09-0${i + 1}` }))
+  assert.equal(heaviestWeekday(it), null, 'dưới hai tuần thì đó chỉ là một bữa nhậu')
+})
+
+test('không kết luận khi không thứ nào nhô lên rõ rệt', () => {
+  const deu = Array.from({ length: 28 }, (_, i) =>
+    tx({ kind: 'expense', amount: 100_000, date: `2026-09-${String(i + 1).padStart(2, '0')}` }),
+  )
+  assert.equal(heaviestWeekday(deu), null, 'tiêu đều thì không có gì để nói')
+})
+
+test('chỉ ra thứ tiêu nhiều nhất khi nó thật sự nhô lên', () => {
+  const data = Array.from({ length: 28 }, (_, i) => {
+    const date = `2026-09-${String(i + 1).padStart(2, '0')}`
+    const thu = new Date(`${date}T00:00:00Z`).getUTCDay()
+    return tx({ kind: 'expense', amount: thu === 6 ? 900_000 : 50_000, date })
+  })
+  const top = heaviestWeekday(data)
+  assert.equal(top?.day, 6, 'thứ Bảy')
 })

@@ -1,9 +1,18 @@
 import { useMemo, useState } from 'react'
 import { MonthlyBars } from '../components/charts'
-import { Empty, Segmented } from '../components/ui'
-import { currentMonth, monthLabel, monthRange, shiftMonth, MONTH_NAMES } from '../lib/date'
+import { Delta, Empty, Segmented } from '../components/ui'
+import { currentMonth, monthLabel, monthRange, shiftMonth, todayISO, MONTH_NAMES, WEEKDAY_NAMES } from '../lib/date'
 import { formatMoney } from '../lib/format'
-import { byCategory, inRange, monthlySeries, sumTotals } from '../lib/stats'
+import {
+  byCategory,
+  comparableRange,
+  fixedSplit,
+  heaviestWeekday,
+  inRange,
+  monthlySeries,
+  percentChange,
+  sumTotals,
+} from '../lib/stats'
 import { useApp } from '../store'
 import type { TxKind } from '../types'
 
@@ -18,6 +27,27 @@ export function Reports() {
   const monthTx = useMemo(() => inRange(transactions, range.start, range.end), [transactions, range.start, range.end])
   const slices = useMemo(() => byCategory(monthTx, categories, kind), [monthTx, categories, kind])
   const totals = sumTotals(monthTx)
+
+  /** Cùng danh mục, cùng số ngày đã trôi qua, ở kỳ trước — để so cho công bằng */
+  const prevByCategory = useMemo(() => {
+    const prev = monthRange(shiftMonth(month, -1), settings.startDayOfMonth)
+    const cut = comparableRange(range, prev, todayISO())
+    const slices = byCategory(inRange(transactions, cut.start, cut.end), categories, kind)
+    return new Map(slices.map((s) => [s.category.id, s.amount]))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [transactions, categories, kind, month, range.start, range.end, settings.startDayOfMonth])
+
+  const split = useMemo(() => fixedSplit(monthTx), [monthTx])
+
+  /**
+   * Thứ tiêu nhiều nhất, tính trên 90 ngày chứ không phải một tháng.
+   *
+   * Một tháng chỉ có bốn lần mỗi thứ — một bữa nhậu là đủ làm lệch kết luận.
+   */
+  const topDay = useMemo(() => {
+    const from = new Date(Date.now() - 90 * 86_400_000).toISOString().slice(0, 10)
+    return heaviestWeekday(inRange(transactions, from, todayISO()))
+  }, [transactions])
 
   const avg = series.reduce((s, m) => s + m.expense, 0) / Math.max(series.length, 1)
   const estimatedCount = monthTx.filter((t) => t.estimated).length
@@ -107,6 +137,25 @@ export function Reports() {
           Còn lại <b>{formatMoney(totals.net)}</b>
           {estimatedCount > 0 && ` · ${estimatedCount} khoản là số ước tính`}
         </div>
+
+        {split.fixed > 0 && (
+          <>
+            <div className="meter split-meter" style={{ marginTop: 16 }}>
+              <i style={{ width: `${Math.round(split.share * 100)}%` }} />
+            </div>
+            <div className="hint" style={{ marginTop: 8 }}>
+              <b>{Math.round(split.share * 100)}%</b> chi tiêu tháng này là khoản cố định —{' '}
+              {formatMoney(split.fixed)} định kỳ, {formatMoney(split.variable)} còn lại là do bạn quyết mỗi ngày.
+            </div>
+          </>
+        )}
+
+        {topDay && (
+          <div className="hint" style={{ marginTop: 10 }}>
+            Ba tháng gần đây bạn tiêu nhiều nhất vào <b>{WEEKDAY_NAMES[topDay.day]}</b> —{' '}
+            {formatMoney(topDay.amount)} trong {topDay.count} khoản.
+          </div>
+        )}
       </div>
 
       <div className="card">
@@ -135,6 +184,12 @@ export function Reports() {
                   <span className="rank-pct">
                     {Math.round(slice.share * 100)}% · {slice.count} khoản
                   </span>
+                  {/* `quiet`: danh sách dài nên chỉ nói khi có gì để nói */}
+                  <Delta
+                    percent={percentChange(slice.amount, prevByCategory.get(slice.category.id) ?? 0)}
+                    invert={kind === 'expense'}
+                    quiet
+                  />
                 </span>
                 <span className="rank-value">{formatMoney(slice.amount)}</span>
                 <span className="rank-track">

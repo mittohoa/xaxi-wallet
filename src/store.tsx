@@ -18,8 +18,19 @@ export interface AppData {
   ready: boolean
 }
 
+/**
+ * Việc kèm theo một thông báo — gần như luôn là "Hoàn tác".
+ *
+ * Có nó thì những thao tác một chạm mới dám làm ngay thay vì hỏi lại. Hỏi lại
+ * biến một chạm thành ba chạm, mà ba chạm thì đã không còn là đường tắt nữa.
+ */
+export interface ToastAction {
+  label: string
+  run: () => void | Promise<void>
+}
+
 interface Ctx extends AppData {
-  toast: (message: string) => void
+  toast: (message: string, action?: ToastAction) => void
 }
 
 /** Ban thiet lap dung tam khi chua doc duoc tu CSDL */
@@ -28,13 +39,14 @@ const FALLBACK_SETTINGS: Settings = { ...DEFAULT_SETTINGS, id: 'pending', update
 const AppCtx = createContext<Ctx | null>(null)
 
 export function AppProvider({ children }: { children: ReactNode }) {
-  const [message, setMessage] = useState<string | null>(null)
+  const [note, setNote] = useState<{ message: string; action?: ToastAction } | null>(null)
   const timer = useRef<number | undefined>(undefined)
 
-  const toast = useCallback((next: string) => {
-    setMessage(next)
+  const toast = useCallback((message: string, action?: ToastAction) => {
+    setNote({ message, action })
     window.clearTimeout(timer.current)
-    timer.current = window.setTimeout(() => setMessage(null), 2800)
+    // Có nút thì để lâu hơn: phải đủ thời gian đọc rồi mới với tay tới được
+    timer.current = window.setTimeout(() => setNote(null), action ? 6000 : 2800)
   }, [])
 
   useEffect(() => () => window.clearTimeout(timer.current), [])
@@ -102,9 +114,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
   return (
     <AppCtx.Provider value={value}>
       {children}
-      {message && (
+      {note && (
         <div className="toast" role="status" aria-live="polite">
-          {message}
+          <span>{note.message}</span>
+          {note.action && (
+            <button
+              type="button"
+              className="toast-action"
+              onClick={() => {
+                const run = note.action?.run
+                setNote(null)
+                window.clearTimeout(timer.current)
+                run?.()
+              }}
+            >
+              {note.action.label}
+            </button>
+          )}
         </div>
       )}
     </AppCtx.Provider>

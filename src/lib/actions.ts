@@ -246,3 +246,30 @@ export function selectableCategories(categories: Category[], kind: TxKind): Cate
   const cam: CategorySlug[] = ['transfer-out', 'transfer-in', 'reconcile-expense', 'reconcile-income']
   return categories.filter((c) => c.kind === kind && !(c.slug && cam.includes(c.slug)))
 }
+
+/**
+ * Ghi lại một khoản đã có, mang ngày hôm nay.
+ *
+ * "Hôm nay lại đúng như hôm qua" là trường hợp rất hay gặp — cà phê sáng, gửi
+ * xe, ăn trưa cùng quán. Gõ lại từ đầu mỗi ngày chính là loại công sức mà cả
+ * app này sinh ra để cắt.
+ *
+ * KHÔNG chép `transferId`, `recurringId` và cờ `estimated`. Chép một VẾ của
+ * lần chuyển tiền sẽ tạo ra nửa cặp liên kết: số dư hai ví lệch nhau ngay, và
+ * mọi phép tính thu/chi vẫn loại nó ra nên không con số nào lộ ra sai. Đây là
+ * kiểu hỏng im lặng tệ nhất, nên chặn thẳng ở đây.
+ */
+export async function duplicateTransaction(source: Transaction): Promise<Id> {
+  if (source.transferId !== undefined) {
+    throw new Error('Không nhân bản được một vế của lần chuyển tiền.')
+  }
+  return addTransaction({
+    kind: source.kind,
+    amount: source.amount,
+    categoryId: source.categoryId,
+    walletId: source.walletId,
+    date: todayISO(),
+    note: source.note,
+    source: 'quick',
+  })
+}

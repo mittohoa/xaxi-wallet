@@ -165,11 +165,25 @@ export function ConfirmButton({
  * `invert` dành cho khoản chi: chi nhiều hơn kỳ trước là tin xấu, nên phải tô
  * màu ngược lại với thu.
  */
-export function Delta({ percent, invert }: { percent: number | null; invert?: boolean }) {
+/** Dưới mức này thì coi như không đổi — dao động thường ngày, không phải tín hiệu */
+const DELTA_DEAD_ZONE = 5
+
+export function Delta({
+  percent,
+  invert,
+  quiet,
+}: {
+  percent: number | null
+  invert?: boolean
+  /** không đổi thì im hẳn thay vì hiện "≈ như kỳ trước" — dùng trong danh sách dài */
+  quiet?: boolean
+}) {
   if (percent === null || !Number.isFinite(percent)) return null
 
   const rounded = Math.round(percent)
-  if (rounded === 0) return <span className="delta flat">≈ như kỳ trước</span>
+  if (Math.abs(rounded) < DELTA_DEAD_ZONE) {
+    return quiet ? null : <span className="delta flat">≈ như kỳ trước</span>
+  }
 
   const tang = rounded > 0
   const tone = tang === !invert ? 'up' : 'down'

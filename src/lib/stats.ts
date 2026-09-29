@@ -170,3 +170,75 @@ export function percentChange(now: number, before: number): number | null {
   if (!Number.isFinite(now) || !Number.isFinite(before) || before === 0) return null
   return ((now - before) / before) * 100
 }
+
+/* ---------------- chi cố định và chi biến đổi ---------------- */
+
+export interface FixedSplit {
+  /** khoản do quy tắc định kỳ tự sinh ra */
+  fixed: number
+  /** khoản người dùng chủ động ghi */
+  variable: number
+  /** tỉ lệ cố định trên tổng, 0–1; bằng 0 khi chưa chi gì */
+  share: number
+}
+
+/**
+ * Tách chi tiêu thành phần cố định và phần biến đổi.
+ *
+ * Con số này đổi cách người ta nghĩ về chính chi tiêu của mình: phần cố định
+ * không cắt được bằng ý chí — tiền nhà không giảm vì hôm nay quyết tâm tiết
+ * kiệm. Biết tỉ lệ mới biết còn bao nhiêu chỗ để xoay.
+ *
+ * Không đòi nhập thêm gì: `source === 'recurring'` đã phân sẵn từ lúc ghi.
+ */
+export function fixedSplit(txs: Transaction[]): FixedSplit {
+  let fixed = 0
+  let variable = 0
+  for (const t of txs) {
+    if (t.kind !== 'expense' || isTransfer(t)) continue
+    if (t.source === 'recurring') fixed += t.amount
+    else variable += t.amount
+  }
+  const total = fixed + variable
+  return { fixed, variable, share: total > 0 ? fixed / total : 0 }
+}
+
+/* ---------------- chi theo thứ trong tuần ---------------- */
+
+export interface WeekdayPoint {
+  /** 0 = Chủ nhật … 6 = Thứ bảy */
+  day: number
+  amount: number
+  count: number
+}
+
+/**
+ * Tổng chi theo thứ trong tuần.
+ *
+ * Đọc ngày bằng giờ UTC chứ không phải giờ máy: chuỗi 'YYYY-MM-DD' không mang
+ * múi giờ, và `new Date('2026-09-29')` ở múi giờ âm sẽ lùi về ngày hôm trước —
+ * đủ để cả biểu đồ lệch đi một thứ.
+ */
+export function byWeekday(txs: Transaction[]): WeekdayPoint[] {
+  const out: WeekdayPoint[] = Array.from({ length: 7 }, (_, day) => ({ day, amount: 0, count: 0 }))
+  for (const t of txs) {
+    if (t.kind !== 'expense' || isTransfer(t)) continue
+    const day = new Date(`${t.date}T00:00:00Z`).getUTCDay()
+    out[day].amount += t.amount
+    out[day].count++
+  }
+  return out
+}
+
+/** Thứ tiêu nhiều nhất, hoặc null khi chưa đủ dữ liệu để nói điều gì */
+export function heaviestWeekday(txs: Transaction[], minCount = 14): WeekdayPoint | null {
+  const days = byWeekday(txs)
+  const total = days.reduce((s, d) => s + d.count, 0)
+  // Dưới hai tuần dữ liệu thì "thứ bảy tiêu nhiều nhất" chỉ là một bữa nhậu
+  if (total < minCount) return null
+
+  const top = days.reduce((a, b) => (b.amount > a.amount ? b : a))
+  const average = days.reduce((s, d) => s + d.amount, 0) / 7
+  // Phải nhô lên rõ rệt mới đáng nói; nhỉnh hơn một chút thì là ngẫu nhiên
+  return top.amount > average * 1.3 ? top : null
+}

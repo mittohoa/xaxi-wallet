@@ -342,7 +342,7 @@ và khó phát hiện nhất về sau.
 
 Đúng tinh thần *giữ số liệu đúng*: rẻ nhất là chặn sai ngay lúc nhập.
 
-### 7.4 Nhân bản khoản gần nhất — ★★ rẻ
+### 7.4 Nhân bản khoản gần nhất — **✅ xong**
 
 Nhấn giữ một dòng trong danh sách → "Ghi lại y hệt, hôm nay". Một chạm.
 
@@ -360,7 +360,7 @@ bản tóm tắt nhỏ ra `SharedPreferences` mỗi lần đổi dữ liệu.
 
 Không xin thêm quyền nào.
 
-### 7.6 Chi cố định và chi biến đổi — ★★
+### 7.6 Chi cố định và chi biến đổi — **✅ xong**
 
 *"68% chi tiêu tháng này là khoản cố định."*
 
@@ -379,7 +379,7 @@ Nhưng nó **đòi nhập liệu** (đặt mục tiêu, gán tiến độ), nên
 tiến độ **tự tính** từ số dư ví thay vì bắt người dùng cập nhật tay. Gán một ví
 cho một mục tiêu, tiến độ chạy theo số dư ví đó.
 
-### 7.8 So sánh kỳ trước ở mọi con số — ★★ đang làm dở (xong phần ô Thu/Chi)
+### 7.8 So sánh kỳ trước ở mọi con số — **✅ xong**
 
 Đã làm cho hai ô Thu/Chi trên màn hình chính. Còn thiếu: mỗi danh mục trong
 Báo cáo.
@@ -388,7 +388,7 @@ Lưu ý đã cài sẵn trong `comparableRange`: phải so **cùng số ngày đ
 So tháng mới đi mười hai ngày với cả tháng trước thì tháng nào cũng ra "giảm
 mạnh" — một con số luôn sai theo cùng một hướng dạy người dùng bỏ qua chỗ đó.
 
-### 7.9 Ngày nào trong tuần tiêu nhiều nhất — ★ nhỏ
+### 7.9 Ngày nào trong tuần tiêu nhiều nhất — **✅ xong**
 
 Thuần suy ra từ dữ liệu có sẵn. Thường ra kết quả người dùng không ngờ (cuối
 tuần, hoặc đúng ngày nhận lương).
@@ -406,4 +406,4 @@ tuần, hoặc đúng ngày nhận lương).
 | Gói trả phí, "Get Pro" | Không có |
 | Theo dõi đầu tư, danh mục cổ phiếu | Bài toán khác hẳn, kéo theo dữ liệu thời gian thực từ mạng |
 | Thông báo thường trú để ghi nhanh | Hiệu quả, nhưng phiền — trái với "app không làm phiền người dùng" |
-,---,,## 8. Ghi chú khi làm 7.1–7.3,,Ba tính năng này đều nói với người dùng một con số mà họ không tự tính được.,Nên phần khó không phải là tính ra số, mà là **biết khi nào phải im lặng** —,một con số sai trong app tài chính tệ hơn là không có con số nào.,,**Dự báo im lặng khi:** chưa đủ năm ngày trong kỳ · còn dưới ba ngày là hết kỳ,(lúc đó dự báo gần bằng số đã chi, đúng nhưng vô dụng, mà một ô vô dụng chiếm,chỗ thì lần sau người dùng thôi nhìn vào đó) · độ phủ dữ liệu dưới 50% · chưa,ghi khoản nào.,,**Dự báo tách chi định kỳ khỏi chi biến đổi trước khi suy ra nhịp.** Không tách,thì tiền nhà ghi ngày mùng 3 bị nhân lên cho cả tháng và dự báo phóng đại gấp,mấy lần.,,**Cảnh báo số tiền có ba điều kiện cùng lúc**, trong đó điều kiện thứ ba quan,trọng nhất: số tiền phải lớn hơn **mọi khoản từng ghi** trong danh mục đó thêm,một nửa nữa. Không có nó thì một bữa nhậu 500k trong danh mục Ăn uống thường,50k sẽ bị hỏi lại mỗi lần — và một cảnh báo hay báo nhầm thì chỉ vài lần là bị,bấm bỏ qua theo phản xạ, đúng lúc nó báo đúng cũng bị bỏ qua nốt.,,Đo trên dữ liệu mẫu thật (141 khoản Ăn uống, trung vị 73k, lớn nhất 118k):,,| Gõ vào | Kết quả |,|---|---|,| `cà phê 73k` | im lặng |,| `cà phê 150k` | im lặng — gấp đôi vẫn là bữa đắt, không phải lỗi |,| `cà phê 350k` | im lặng — gấp 4,8 lần, dưới ngưỡng 5 |,| `cà phê 730k` | *"Nghi thừa một số 0 — danh mục này thường quanh 73.000 ₫"* |,| `xăng 2tr` | *"Lớn gấp 42 lần mức thường gặp (48.000 ₫)"* |,| `tiền nhà 4tr5` | im lặng — đúng mức thường của danh mục đó |,,Cảnh báo **không chặn**. Nhấn Enter là vẫn ghi. App hỏi lại, không phán xét.,
+,---,,## 8. Ghi chú khi làm 7.1–7.3,,Ba tính năng này đều nói với người dùng một con số mà họ không tự tính được.,Nên phần khó không phải là tính ra số, mà là **biết khi nào phải im lặng** —,một con số sai trong app tài chính tệ hơn là không có con số nào.,,**Dự báo im lặng khi:** chưa đủ năm ngày trong kỳ · còn dưới ba ngày là hết kỳ,(lúc đó dự báo gần bằng số đã chi, đúng nhưng vô dụng, mà một ô vô dụng chiếm,chỗ thì lần sau người dùng thôi nhìn vào đó) · độ phủ dữ liệu dưới 50% · chưa,ghi khoản nào.,,**Dự báo tách chi định kỳ khỏi chi biến đổi trước khi suy ra nhịp.** Không tách,thì tiền nhà ghi ngày mùng 3 bị nhân lên cho cả tháng và dự báo phóng đại gấp,mấy lần.,,**Cảnh báo số tiền có ba điều kiện cùng lúc**, trong đó điều kiện thứ ba quan,trọng nhất: số tiền phải lớn hơn **mọi khoản từng ghi** trong danh mục đó thêm,một nửa nữa. Không có nó thì một bữa nhậu 500k trong danh mục Ăn uống thường,50k sẽ bị hỏi lại mỗi lần — và một cảnh báo hay báo nhầm thì chỉ vài lần là bị,bấm bỏ qua theo phản xạ, đúng lúc nó báo đúng cũng bị bỏ qua nốt.,,Đo trên dữ liệu mẫu thật (141 khoản Ăn uống, trung vị 73k, lớn nhất 118k):,,| Gõ vào | Kết quả |,|---|---|,| `cà phê 73k` | im lặng |,| `cà phê 150k` | im lặng — gấp đôi vẫn là bữa đắt, không phải lỗi |,| `cà phê 350k` | im lặng — gấp 4,8 lần, dưới ngưỡng 5 |,| `cà phê 730k` | *"Nghi thừa một số 0 — danh mục này thường quanh 73.000 ₫"* |,| `xăng 2tr` | *"Lớn gấp 42 lần mức thường gặp (48.000 ₫)"* |,| `tiền nhà 4tr5` | im lặng — đúng mức thường của danh mục đó |,,Cảnh báo **không chặn**. Nhấn Enter là vẫn ghi. App hỏi lại, không phán xét.,,---,,## 9. Ghi chú khi làm 7.4, 7.6, 7.8, 7.9,,**Nhân bản bằng nhấn giữ.** Ghi ngay chứ không hỏi lại — hỏi lại biến một chạm,thành ba chạm, mà ba chạm thì đã không còn là đường tắt nữa. Cái đỡ là nút,"Hoàn tác" trên thông báo, nên thông báo giờ nhận được một việc kèm theo.,,Không chép `transferId`. Chép một vế của lần chuyển tiền sẽ tạo ra nửa cặp liên,kết: số dư hai ví lệch nhau ngay, mà mọi phép tính thu/chi vẫn loại nó ra nên,không con số nào lộ ra sai. Đó là kiểu hỏng im lặng tệ nhất.,,**Nhãn so sánh có vùng chết 5%.** Dưới mức đó là dao động thường ngày, không,phải tín hiệu. Trong danh sách dài thì im hẳn thay vì hiện "≈ như kỳ trước" —,một nhãn không nói gì vẫn chiếm chỗ và vẫn bắt mắt phải đọc.,,**Thứ tiêu nhiều nhất tính trên 90 ngày, không phải một tháng.** Một tháng chỉ,có bốn lần mỗi thứ; một bữa nhậu là đủ làm lệch kết luận. Và chỉ nói khi thứ đó,nhô lên trên 30% so với mức trung bình — tiêu đều thì không có gì để nói.,,Đọc ngày bằng giờ UTC chứ không phải giờ máy: chuỗi `YYYY-MM-DD` không mang múi,giờ, và `new Date('2026-09-29')` ở múi giờ âm sẽ lùi về hôm trước — đủ để cả,kết luận lệch đi một thứ.,,**Hai lỗi có sẵn lộ ra khi làm:**,,- Thông báo bị bó vào nửa màn hình. `left: 50%` làm khối chứa chỉ còn một nửa bề,  ngang, nên thông báo dài xuống dòng vô cớ dù còn thừa chỗ; phép `transform`,  chỉ dời nó về giữa khi VẼ, không trả lại phần bề ngang đã mất lúc dàn trang.,- Nút trên thông báo không thể dùng chữ màu: nền thông báo là `--text-primary`,  nên nó đảo màu theo chế độ sáng/tối, và chữ màu đặt lên đó chắc chắn hỏng,  tương phản ở một trong hai. Phải là viên thuốc mang nền riêng.,

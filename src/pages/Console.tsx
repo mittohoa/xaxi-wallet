@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { AnswerView } from '../components/AnswerView'
 import { Avatar, Figure, Money, Tile } from '../components/ui'
-import { addTransaction, markNoSpend, suggestShortcuts, systemCategory } from '../lib/actions'
+import { addTransaction, duplicateTransaction, markNoSpend, suggestShortcuts, systemCategory } from '../lib/actions'
 import { checkAmount, detectRecurring, trainClassifier } from '../lib/learn'
 import { db, stamp, touch } from '../db/db'
 import { listenOnce, stopListening, voiceReady } from '../lib/native/voice'
@@ -97,6 +97,48 @@ export function Console({
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [transactions, recurring, categories, settings.dismissedSuggestions],
   )
+
+  /**
+   * Nhấn giữ một dòng để ghi lại y hệt, hôm nay.
+   *
+   * "Hôm nay lại đúng như hôm qua" là trường hợp rất hay gặp. Ghi ngay chứ
+   * không hỏi lại — hỏi lại biến một chạm thành ba chạm, mà ba chạm thì đã
+   * không còn là đường tắt nữa. Cái đỡ là nút Hoàn tác trên thông báo.
+   *
+   * `pressed` chặn lần chạm thường bắn ngay sau khi nhả tay: Android gửi cả
+   * `pointerup` lẫn `click`, nếu không chặn thì vừa ghi bản sao vừa mở màn
+   * hình sửa của bản gốc.
+   */
+  const holdTimer = useRef<number | undefined>(undefined)
+  const pressed = useRef(false)
+
+  async function duplicate(t: Transaction) {
+    try {
+      const id = await duplicateTransaction(t)
+      haptic('heavy')
+      toast(`Đã ghi lại ${formatMoney(t.amount)} · hôm nay`, {
+        label: 'Hoàn tác',
+        run: () => db.transactions.delete(id),
+      })
+    } catch (e) {
+      toast(e instanceof Error ? e.message : 'Không ghi lại được')
+    }
+  }
+
+  function startHold(t: Transaction) {
+    pressed.current = false
+    window.clearTimeout(holdTimer.current)
+    holdTimer.current = window.setTimeout(() => {
+      pressed.current = true
+      duplicate(t)
+    }, 550)
+  }
+
+  function endHold() {
+    window.clearTimeout(holdTimer.current)
+  }
+
+  useEffect(() => () => window.clearTimeout(holdTimer.current), [])
 
   const intent = useMemo(() => interpret(text, askContext), [text, askContext])
 
@@ -457,7 +499,20 @@ export function Console({
                   {recent.map((t) => {
                     const cat = catById.get(t.categoryId)
                     return (
-                      <button key={t.id} type="button" className="row" onClick={() => onEditTransaction(t)}>
+                      <button
+                        key={t.id}
+                        type="button"
+                        className="row"
+                        onClick={() => {
+                          if (pressed.current) return
+                          onEditTransaction(t)
+                        }}
+                        onPointerDown={() => startHold(t)}
+                        onPointerUp={endHold}
+                        onPointerLeave={endHold}
+                        onPointerCancel={endHold}
+                        onContextMenu={(e) => e.preventDefault()}
+                      >
                         <Avatar icon={cat?.icon ?? '❓'} color={cat?.color ?? '#898781'} />
                         <span className="body">
                           <span className="name">{t.note || cat?.name || 'Không rõ'}</span>

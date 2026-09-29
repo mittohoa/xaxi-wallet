@@ -853,11 +853,20 @@ textarea.input {
   background: var(--warning-soft);
 }
 
+/*
+   Căn giữa bằng lề tự động, KHÔNG bằng left:50% + transform.
+
+   Với left:50% thì khối chứa chỉ còn một nửa bề ngang màn hình, nên thông báo
+   dài bị xuống dòng vô cớ dù còn thừa chỗ. Phép transform chỉ dời nó về giữa
+   khi VẼ, không trả lại phần bề ngang đã mất lúc dàn trang.
+*/
 .toast {
   position: fixed;
-  left: 50%;
+  left: var(--s-4);
+  right: var(--s-4);
   bottom: calc(100px + var(--safe-b));
-  transform: translateX(-50%);
+  width: fit-content;
+  margin: 0 auto;
   z-index: var(--z-toast);
   background: var(--text-primary);
   color: var(--page);
@@ -867,7 +876,6 @@ textarea.input {
   font-weight: var(--w-semi);
   box-shadow: var(--lift-3);
   animation: toast-in var(--dur-slow) var(--ease-out);
-  max-width: calc(100vw - 32px);
 }
 
 /* ============================================================
@@ -949,4 +957,58 @@ textarea.input {
 .photo-zoom-actions {
   display: flex;
   gap: var(--s-3);
+}
+
+/**
+ * Nút kèm theo thông báo — gần như luôn là "Hoàn tác".
+ *
+ * Mang màu nhấn trên nền tối của thông báo, và vùng chạm phải đủ lớn: đây là
+ * thứ người ta với tay tới trong hai giây, thường bằng ngón cái, thường lúc
+ * đang đi.
+ */
+.toast {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+}
+
+/*
+   Viên thuốc chanh chữ mực, KHÔNG phải chữ màu trên nền trong suốt.
+
+   Nền của thông báo là --text-primary, tức nó đảo màu theo chế độ sáng/tối.
+   Chữ màu đặt lên đó thì chắc chắn hỏng tương phản ở một trong hai chế độ.
+   Viên thuốc mang nền riêng nên tự đứng vững: 15,7:1 ở cả hai.
+*/
+.toast-action {
+  border: 0;
+  background: var(--accent);
+  color: var(--accent-ink);
+  border-radius: var(--r-pill);
+  font-weight: var(--w-bold);
+  font-size: var(--t-xs);
+  cursor: pointer;
+  padding: var(--s-2) var(--s-3);
+  margin: calc(var(--s-1) * -1) calc(var(--s-2) * -1) calc(var(--s-1) * -1) 0;
+  min-height: 34px;
+  white-space: nowrap;
+}
+
+.toast-action:active {
+  opacity: 0.6;
+}
+
+/**
+ * Thanh tỉ lệ chi cố định.
+ *
+ * Phần tô là phần KHÔNG cắt được bằng ý chí — tiền nhà không giảm vì hôm nay
+ * quyết tâm tiết kiệm. Phần trống mới là chỗ còn xoay được.
+ */
+.split-meter > i {
+  background: var(--accent-text);
+}
+
+/* Nhãn danh mục có thêm nhãn so sánh nên phải xuống dòng được thay vì tràn */
+.rank-label {
+  flex-wrap: wrap;
+  row-gap: var(--s-1);
 }
