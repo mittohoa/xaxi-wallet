@@ -9,6 +9,7 @@ import { useApp } from '../store'
 import type { Id } from '../types'
 import { ConfirmButton, Empty } from './ui'
 import { DateField } from './DateField'
+import { Icon } from './Icon'
 
 /**
  * Mục tiêu tiết kiệm.
@@ -33,7 +34,7 @@ export function GoalsView() {
       {states.length === 0 && !adding && (
         <div className="card">
           <Empty
-            icon="🎯"
+            icon="target"
             title="Chưa có mục tiêu nào"
             hint="Gắn một mục tiêu với một ví, rồi tiến độ tự chạy theo số dư ví đó — không phải cập nhật tay."
           />
@@ -64,7 +65,15 @@ export function GoalsView() {
 
           <div className="budget-foot">
             <span>{Math.round(s.ratio * 100)}%</span>
-            <span>{s.done ? '✓ đã đạt' : `còn ${formatMoney(s.remaining)}`}</span>
+            <span>
+              {s.done ? (
+                <>
+                  <Icon name="check" className="ok" /> đã đạt
+                </>
+              ) : (
+                `còn ${formatMoney(s.remaining)}`
+              )}
+            </span>
           </div>
 
           <div className="hint" style={{ marginTop: 8 }}>
@@ -110,7 +119,7 @@ export function GoalsView() {
         <GoalForm onDone={() => setAdding(false)} />
       ) : (
         <button type="button" className="btn primary" style={{ marginTop: 12 }} onClick={() => setAdding(true)}>
-          ＋ Mục tiêu mới
+          <Icon name="plus" /> Mục tiêu mới
         </button>
       )}
     </>

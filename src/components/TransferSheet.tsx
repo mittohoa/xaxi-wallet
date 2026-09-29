@@ -8,6 +8,7 @@ import type { Id } from '../types'
 import { Sheet } from './ui'
 import { DateField } from './DateField'
 import { haptic } from '../lib/native/shell'
+import { Icon } from './Icon'
 
 /**
  * Chuyen tien giua hai vi.
@@ -83,7 +84,7 @@ export function TransferSheet({ onClose }: { onClose: () => void }) {
         </div>
 
         <button type="button" className="icon-btn transfer-swap" onClick={swap} aria-label="Đổi chiều">
-          ⇅
+          <Icon name="swap" />
         </button>
 
         <div className="field" style={{ marginBottom: 0 }}>

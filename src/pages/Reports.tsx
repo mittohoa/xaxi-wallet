@@ -173,7 +173,7 @@ export function Reports() {
         </div>
 
         {slices.length === 0 ? (
-          <Empty icon="📊" title="Chưa có dữ liệu trong tháng này" />
+          <Empty icon="chart" title="Chưa có dữ liệu trong tháng này" />
         ) : (
           <div className="rank">
             {slices.map((slice) => (

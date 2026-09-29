@@ -7,6 +7,7 @@ import { formatMoney, parseAmount } from '../lib/format'
 import { byCategory, inRange } from '../lib/stats'
 import { useApp } from '../store'
 import type { Id } from '../types'
+import { Icon } from '../components/Icon'
 
 /** Mau canh bao theo muc do dung ngan sach — luon di kem nhan chu, khong chi dua vao mau */
 function statusOf(ratio: number, paceRatio: number): { color: string; label: string } {
@@ -143,7 +144,7 @@ export function Budgets() {
       {view === 'categories' && (
       <div className="card">
         <div className="card-title">Hạn mức theo danh mục</div>
-        {expenseCategories.length === 0 && <Empty icon="🎯" title="Chưa có danh mục chi nào" />}
+        {expenseCategories.length === 0 && <Empty icon="target" title="Chưa có danh mục chi nào" />}
         {expenseCategories.map((c) => {
           const budget = monthBudgets.find((b) => b.categoryId === c.id)
           const spent = spendByCategory.get(c.id) ?? 0
@@ -181,7 +182,12 @@ export function Budgets() {
                       {formatMoney(spent)} / {formatMoney(budget.limit)}
                     </span>
                     <span style={{ color: status.color }}>
-                      {ratio > 1 ? '⚠ ' : ''}
+                      {/* Không tự đặt màu — thẻ cha đã tô cả dòng theo trạng thái */}
+                      {ratio > 1 && (
+                        <>
+                          <Icon name="warning" />{' '}
+                        </>
+                      )}
                       {status.label}
                     </span>
                   </div>

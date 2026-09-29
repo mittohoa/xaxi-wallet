@@ -12,6 +12,7 @@ import type { Id } from '../types'
 import { ocrSupported, recognizeImage } from '../lib/native/ocr'
 import { attachPhoto } from '../lib/attachments'
 import { formatBytes } from '../lib/storage'
+import { Icon } from './Icon'
 
 /**
  * Ghi giao dich tu doan van ban bien lai NGUOI DUNG tu dan vao.
@@ -120,7 +121,7 @@ export function ReceiptSheet({ initialText = '', onClose }: { initialText?: stri
               onClick={() => cameraInput.current?.click()}
               disabled={scanning}
             >
-              📷 {scanning ? 'Đang đọc ảnh…' : 'Chụp biên lai'}
+              <Icon name="camera" /> {scanning ? 'Đang đọc ảnh…' : 'Chụp biên lai'}
             </button>
             <span className="hint">ảnh được đọc ngay trên máy, không gửi đi đâu</span>
           </div>

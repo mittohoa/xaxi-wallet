@@ -196,7 +196,78 @@ phận để đè lên được mà không cần `!important`.
 
 ---
 
-## 10. Rà trên máy thật
+## 10. Biểu tượng: vector cho thứ app vẽ, emoji cho thứ người dùng chọn
+
+Cả bộ biểu tượng giao diện nằm trong `src/components/Icon.tsx`: nét chứ không tô
+đặc, lưới 24, `currentColor`, cỡ theo `1em`.
+
+### Vì sao emoji sai chỗ trong giao diện
+
+Emoji do **hệ điều hành** vẽ, không phải app. Cùng một ký tự ⚙️ ra bốn hình khác
+nhau trên Samsung, Windows, macOS và Tauri. Một bộ thiết kế kiểm soát tới từng
+token màu mà lại để hệ điều hành chọn hộ hình dạng của chính cái nút thì mâu
+thuẫn với chính nó.
+
+Nặng hơn: emoji là hình nhiều màu cố định. Chúng không nghe `currentColor`, nên
+không đổi theo nền sáng/tối, không nhạt đi khi nút bị khoá, và đâm thẳng vào bộ
+tám màu đã đo đạc ở §1.
+
+Và có một lỗi âm thầm đã nằm sẵn trong mã trước khi làm việc này: các ký tự
+`⚠ ⬇ ⬆ 🗜` không kèm dấu chọn kiểu hiển thị, nên nền tảng tự quyết vẽ chúng
+thành chữ đen trắng hay thành emoji nhiều màu. Trên cùng một màn hình Cài đặt,
+có biểu tượng ra đen trắng còn biểu tượng ngay cạnh ra đầy màu — tuỳ máy. Không
+ai thấy lỗi này trên máy của người viết mã.
+
+### Ranh giới
+
+| | Vẽ bằng gì | Vì sao |
+|---|---|---|
+| Nút, thanh, nhãn trạng thái, trạng thái rỗng | vector | app vẽ, app chịu trách nhiệm |
+| Danh mục, ví, mục tiêu, sáu hũ | emoji | **dữ liệu** — người dùng tự chọn, nằm trong IndexedDB |
+
+Đổi nhóm thứ hai sang vector nghĩa là lấy mất quyền chọn của người dùng và phải
+di trú dữ liệu cũ. Kết quả trên màn hình lại hoá ra đẹp hơn dự tính: emoji nhiều
+màu chỉ xuất hiện ở cột dữ liệu, còn toàn bộ khung giao diện đơn sắc — nhìn ra
+ngay đâu là thứ mình nhập vào.
+
+Có một chỗ bị ép giữ emoji vì lý do kỹ thuật chứ không phải thiết kế: biểu tượng
+loại ví nằm trong thẻ `<option>`, mà `<option>` chỉ nhận chữ, không vẽ được SVG.
+
+### Ba luật được canh bằng bài kiểm
+
+`tests/icons.test.ts` giữ những điều dưới đây, vì bằng mắt thì không thấy — trên
+máy của người viết mã nó vẫn đẹp.
+
+1. **Không emoji nào lọt vào giao diện.** Bài kiểm chỉ bắt *hình vẽ*, không bắt
+   dấu câu: mũi tên trong một câu văn là dấu câu thật, đôi khi nằm trong cả
+   thông báo toast — nơi không đặt được thẻ SVG. Nhưng một ký tự **đứng một mình
+   trên một dòng** thì không phải dấu câu, đó là toàn bộ nội dung của một cái
+   nút, và chỗ đó bị cấm.
+2. **Không hình nào viết cứng mã màu.** Cả bộ đi theo `currentColor`, nên nút bị
+   khoá thì nhạt, dòng cảnh báo thì đỏ theo, nền tối thì sáng lên. Một hình lỡ
+   ghi mã màu sẽ đứng im giữa tất cả những thứ đó và chỉ lộ ra khi có người mở
+   nền tối.
+3. **Không biểu tượng nào vẽ ra mà không có nơi dùng.** Luật này bắt được ngay
+   bốn hình loại ví vừa vẽ xong đã thành mã chết vì `<option>`.
+
+### Biểu tượng tự đặt màu là sai, trừ khi nó đứng một mình
+
+Trong hầu hết trường hợp thẻ cha đã tô cả dòng theo trạng thái rồi — thêm màu
+cho riêng biểu tượng là ghi đè lên chính màu đó. `currentColor` lo phần này.
+Chỉ dùng `.icon.ok` khi biểu tượng đứng một mình không có dòng chữ nào mang màu
+sẵn — và đó là lớp phủ màu duy nhất còn lại, vì `.icon.warn` viết ra xong thì
+không chỗ nào cần tới.
+
+### Chỗ duy nhất biểu tượng phải có nhãn
+
+Mũi tên tăng/giảm trong `<Delta>` tồn tại để **không phải dựa vào màu** (§3).
+Nếu đặt `aria-hidden` cho nó thì người dùng trình đọc màn hình chỉ nghe thấy
+"12%" mà không biết 12% theo hướng nào — tức là mất đúng thông tin mà cái mũi
+tên sinh ra để mang. Nên nó là biểu tượng duy nhất trong app có `aria-label`.
+
+---
+
+## 11. Rà trên máy thật
 
 ```
 npm run device:check

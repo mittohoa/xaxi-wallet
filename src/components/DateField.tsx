@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { formatDateLong } from '../lib/date'
 import { nativeDateAvailable, pickNativeDate } from '../lib/native/shell'
+import { Icon } from './Icon'
 
 /**
  * O chon ngay.
@@ -51,7 +52,7 @@ export function DateField({
       >
         <span>{formatDateLong(value)}</span>
         <span className="date-icon" aria-hidden="true">
-          📅
+          <Icon name="calendar" />
         </span>
       </button>
     </div>

@@ -445,7 +445,44 @@ textarea.input {
   font-size: 40px;
   display: block;
   margin-bottom: var(--s-3);
-  opacity: 0.75;
+  opacity: 0.55;
+}
+
+/* ============================================================
+   BIỂU TƯỢNG VECTOR
+   ============================================================ */
+
+/*
+ * Cỡ theo chữ chứ không theo pixel, nên biểu tượng lớn nhỏ cùng phần tử chứa nó
+ * — kể cả khi người dùng phóng cỡ chữ của hệ thống lên.
+ *
+ * 1.15em chứ không phải 1em: chữ cái thường chỉ cao bằng chiều cao chữ x, còn
+ * biểu tượng chiếm trọn ô vuông. Bằng nhau về số đo thì nhìn biểu tượng lại nhỏ
+ * hơn chữ bên cạnh.
+ */
+.icon {
+  width: 1.15em;
+  height: 1.15em;
+  flex: none;
+  /* Kéo xuống cho tâm biểu tượng trùng tâm chữ, không phải trùng đường chân chữ */
+  vertical-align: -0.2em;
+}
+
+/* Biểu tượng đứng riêng trong nút tròn thì to hơn, vì không có chữ để dựa vào */
+.icon-btn .icon {
+  width: 1.3em;
+  height: 1.3em;
+  vertical-align: 0;
+}
+
+/*
+ * Chỉ dùng khi biểu tượng đứng một mình, không có dòng chữ nào mang màu sẵn.
+ *
+ * Ở phần lớn chỗ thì thẻ cha đã tô cả dòng theo trạng thái rồi — đặt màu riêng
+ * cho biểu tượng chính là ghi đè lên màu đó. `currentColor` lo phần ấy.
+ */
+.icon.ok {
+  color: var(--good);
 }
 
 /* ============================================================

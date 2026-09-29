@@ -1,6 +1,7 @@
 import { useEffect, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
 import { splitMoney } from '../lib/format'
+import { Icon, type IconName } from './Icon'
 
 export function Sheet({
   title,
@@ -88,11 +89,11 @@ export function Money({ value, kind, signed }: { value: number; kind?: 'income' 
   )
 }
 
-export function Empty({ icon, title, hint }: { icon: string; title: string; hint?: string }) {
+export function Empty({ icon, title, hint }: { icon: IconName; title: string; hint?: string }) {
   return (
     <div className="empty">
       <span className="ico" aria-hidden="true">
-        {icon}
+        <Icon name={icon} />
       </span>
       <div style={{ fontWeight: 600, color: 'var(--text-secondary)' }}>{title}</div>
       {hint && <div style={{ marginTop: 4, fontSize: 13 }}>{hint}</div>}
@@ -189,7 +190,10 @@ export function Delta({
   const tone = tang === !invert ? 'up' : 'down'
   return (
     <span className={`delta ${tone}`}>
-      {tang ? '↑' : '↓'} {Math.abs(rounded)}%
+      {/* Có nhãn chứ không ẩn: mũi tên này là kênh THỨ HAI thay cho màu, nên
+          người dùng trình đọc màn hình cũng phải nghe được chiều tăng hay giảm.
+          Ẩn nó đi thì họ chỉ nghe thấy "12%" mà không biết 12% theo hướng nào. */}
+      <Icon name={tang ? 'up' : 'down'} label={tang ? 'tăng' : 'giảm'} /> {Math.abs(rounded)}%
     </span>
   )
 }

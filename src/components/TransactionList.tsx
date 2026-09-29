@@ -37,7 +37,7 @@ export function TransactionList({
   const days = useMemo(() => groupByDay(transactions), [transactions])
 
   if (transactions.length === 0) {
-    return <Empty icon="🧾" title="Chưa có giao dịch nào" hint={emptyHint ?? 'Nhấn nút + để ghi khoản đầu tiên.'} />
+    return <Empty icon="receipt" title="Chưa có giao dịch nào" hint={emptyHint ?? 'Nhấn nút + để ghi khoản đầu tiên.'} />
   }
 
   return (

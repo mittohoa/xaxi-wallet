@@ -12,7 +12,7 @@
     "android:add": "npm run build && cap add android && node scripts/patch-android-manifest.mjs && node scripts/sync-native.mjs",
     "android:sync": "npm run build && cap sync android && node scripts/patch-android-manifest.mjs && node scripts/sync-native.mjs",
     "android:apk": "npm run android:sync && node scripts/gradle.mjs assembleDebug",
-    "android:install": "npm run android:apk && adb install -r android/app/build/outputs/apk/debug/app-debug.apk",
+    "android:install": "npm run android:apk && node scripts/install-apk.mjs",
     "android:release": "npm run android:sync && node scripts/gradle.mjs assembleRelease",
     "android:open": "npm run android:sync && cap open android",
     "tauri": "tauri",
@@ -20,7 +20,8 @@
     "desktop:build": "tauri build",
     "test": "node tests/build-and-run.mjs",
     "device:check": "node scripts/device-check.mjs",
-    "bank:inbox": "node scripts/bank-inbox.mjs"
+    "bank:inbox": "node scripts/bank-inbox.mjs",
+    "icons:sheet": "node scripts/icon-sheet.mjs"
   },
   "dependencies": {
     "@capacitor/core": "^6.2.0",

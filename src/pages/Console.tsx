@@ -16,6 +16,7 @@ import { formatMoney } from '../lib/format'
 import { comparableRange, inRange, percentChange, sumTotals, walletBalances } from '../lib/stats'
 import { useApp, useLookups } from '../store'
 import type { Transaction } from '../types'
+import { Icon } from '../components/Icon'
 
 const PLACEHOLDERS = [
   'cà phê 35k',
@@ -339,7 +340,7 @@ export function Console({
       <div className="console-scroll">
         <header className="console-hero">
           <button type="button" className="icon-btn console-gear" onClick={() => onCommand('settings')} aria-label="Cài đặt">
-            ⚙️
+            <Icon name="settings" />
           </button>
           <div className="hero-figure"><Figure value={netWorth} /></div>
           <div className="hero-sub">
@@ -369,7 +370,7 @@ export function Console({
         {answer ? (
           <section className="console-body">
             <button type="button" className="btn ghost sm answer-close" onClick={() => setAnswer(null)}>
-              ← quay lại
+              <Icon name="back" /> quay lại
             </button>
             <AnswerView answer={answer} onPick={ask} />
           </section>
@@ -460,7 +461,7 @@ export function Console({
                   {soonest.map((u) => (
                     <div key={u.rule.id} className="row" style={{ cursor: 'default' }}>
                       <span className="avatar" style={{ background: 'var(--surface-2)' }} aria-hidden="true">
-                        🔁
+                        <Icon name="repeat" />
                       </span>
                       <span className="body">
                         <span className="name">{u.rule.name}</span>
@@ -613,12 +614,16 @@ export function Console({
         )}
         {intent.type === 'command' && (
           <div className="composer-preview">
-            <span className="tag">↩ mở</span> {intent.label}
+            <span className="tag">
+              <Icon name="enter" /> mở
+            </span> {intent.label}
           </div>
         )}
         {intent.type === 'query' && text.trim().length > 0 && (
           <div className="composer-preview">
-            <span className="tag">↩ hỏi</span> {intent.answer.title}
+            <span className="tag">
+              <Icon name="enter" /> hỏi
+            </span> {intent.answer.title}
           </div>
         )}
 
@@ -645,7 +650,7 @@ export function Console({
               onClick={speak}
               aria-label={listening ? 'Đang nghe, chạm để dừng' : 'Nói để ghi'}
             >
-              {listening ? '⏹' : '🎙'}
+              <Icon name={listening ? 'stop' : 'mic'} />
             </button>
           )}
           <button
@@ -655,14 +660,14 @@ export function Console({
             disabled={intent.type === 'empty'}
             aria-label="Thực hiện"
           >
-            ↩
+            <Icon name="enter" />
           </button>
         </div>
 
         {!text && (
           <div className="composer-chips">
             <button type="button" className="chip" onClick={() => onCommand('newEntry')}>
-              ＋ Ghi đầy đủ
+              <Icon name="plus" /> Ghi đầy đủ
             </button>
             {shortcuts.map((s, i) => (
               <button key={s.key} type="button" className="chip" onClick={() => runShortcut(i)}>

@@ -26,6 +26,7 @@ import { Settings } from './pages/Settings'
 import { Transactions } from './pages/Transactions'
 import { AppProvider, useApp } from './store'
 import type { Transaction } from './types'
+import { Icon } from './components/Icon'
 
 /**
  * Van ban chia se den qua duong WEB (PWA share target).
@@ -71,7 +72,7 @@ function FullSheet({ title, onClose, children }: { title: string; onClose: () =>
     <div className="full-sheet" role="dialog" aria-modal="true" aria-label={title}>
       <header className="full-sheet-top">
         <button type="button" className="icon-btn" onClick={onClose} aria-label="Đóng">
-          ✕
+          <Icon name="close" />
         </button>
         <h1>{title}</h1>
       </header>

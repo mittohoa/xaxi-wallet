@@ -6,6 +6,7 @@ import { JARS, incomeBase, jarStates, totalPercent } from '../lib/jars'
 import { inRange } from '../lib/stats'
 import { saveSettings, useApp } from '../store'
 import type { Id } from '../types'
+import { Icon } from './Icon'
 
 /**
  * Sáu hũ — chia thu nhập theo tỷ lệ.
@@ -111,13 +112,21 @@ export function JarsView({ month }: { month: string }) {
                   {formatMoney(jar.spent)} / {formatMoney(jar.limit)}
                 </span>
                 <span style={{ color: vuot ? 'var(--critical)' : conNguyen ? 'var(--good)' : undefined }}>
-                  {jar.limit === 0
-                    ? '—'
-                    : vuot
-                      ? `⚠ vượt ${formatMoney(jar.spent - jar.limit)}`
-                      : conNguyen
-                        ? `✓ giữ được ${formatMoney(jar.limit)}`
-                        : `còn ${formatMoney(jar.remaining)}`}
+                  {/* Biểu tượng không tự đặt màu: thẻ cha đã tô cả dòng theo trạng
+                      thái, và `currentColor` cho nó đi theo đúng màu đó. */}
+                  {jar.limit === 0 ? (
+                    '—'
+                  ) : vuot ? (
+                    <>
+                      <Icon name="warning" /> vượt {formatMoney(jar.spent - jar.limit)}
+                    </>
+                  ) : conNguyen ? (
+                    <>
+                      <Icon name="check" /> giữ được {formatMoney(jar.limit)}
+                    </>
+                  ) : (
+                    `còn ${formatMoney(jar.remaining)}`
+                  )}
                 </span>
               </div>
 

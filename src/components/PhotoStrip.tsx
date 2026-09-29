@@ -3,6 +3,7 @@ import { attachPhoto, deleteAttachment, listAttachments } from '../lib/attachmen
 import { formatBytes } from '../lib/storage'
 import type { Attachment, Id } from '../types'
 import { haptic } from '../lib/native/shell'
+import { Icon } from './Icon'
 
 /**
  * Dai anh bien lai cua mot giao dich.
@@ -85,7 +86,7 @@ export function PhotoStrip({ transactionId }: { transactionId: Id }) {
         ))}
 
         <button type="button" className="photo-add" onClick={() => picker.current?.click()} disabled={busy}>
-          {busy ? '…' : '＋'}
+          {busy ? '…' : <Icon name="plus" />}
           <span>{busy ? 'Đang nén' : 'Thêm ảnh'}</span>
         </button>
       </div>

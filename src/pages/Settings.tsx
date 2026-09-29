@@ -13,6 +13,7 @@ import { nativeShareAvailable } from '../lib/native/shell'
 import { nextCategoryColor } from '../lib/palette'
 import { saveSettings, useApp } from '../store'
 import type { Id, Recurring, Settings as SettingsType, TxKind, WalletKind } from '../types'
+import { Icon } from '../components/Icon'
 
 const FREQ_LABEL: Record<Recurring['freq'], string> = {
   daily: 'Hàng ngày',
@@ -242,19 +243,19 @@ export function Settings() {
           Khoản định kỳ
           <span className="spacer" />
           <button type="button" className="btn sm" onClick={() => setEditingRule('new')}>
-            ＋ Thêm
+            <Icon name="plus" /> Thêm
           </button>
         </div>
         <div className="hint" style={{ marginBottom: 10 }}>
           Tiền nhà, internet, lương… app tự ghi khi tới ngày, bạn không phải nhớ.
         </div>
         {recurring.length === 0 ? (
-          <Empty icon="🔁" title="Chưa có khoản định kỳ nào" hint="Mỗi khoản thêm vào là một việc bớt phải nhớ." />
+          <Empty icon="repeat" title="Chưa có khoản định kỳ nào" hint="Mỗi khoản thêm vào là một việc bớt phải nhớ." />
         ) : (
           recurring.map((r) => (
             <button key={r.id} type="button" className="row" onClick={() => setEditingRule(r)}>
               <span className="avatar" style={{ background: 'color-mix(in srgb, var(--accent) 16%, transparent)' }}>
-                🔁
+                <Icon name="repeat" />
               </span>
               <span className="body">
                 <span className="name">{r.name}</span>
@@ -348,7 +349,7 @@ export function Settings() {
                         onClick={() => removeCategory(c.id)}
                         aria-label={`Xoá danh mục ${c.name}`}
                       >
-                        ×
+                        <Icon name="close" />
                       </button>
                     )}
                   </span>
@@ -516,7 +517,7 @@ export function Settings() {
 
         <div className="btn-row">
           <button type="button" className="btn" onClick={exportPhotos} disabled={!photos?.count}>
-            🗜 Xuất ảnh ra tệp ZIP
+            <Icon name="archive" /> Xuất ảnh ra tệp ZIP
           </button>
           <ConfirmButton
             label="Xoá toàn bộ ảnh"
@@ -543,16 +544,16 @@ export function Settings() {
         </div>
         <div className="btn-row">
           <button type="button" className="btn" onClick={exportJSON}>
-            ⬇ Xuất bản sao lưu (JSON)
+            <Icon name="download" /> Xuất bản sao lưu (JSON)
           </button>
           <button type="button" className="btn" onClick={() => restoreInput.current?.click()}>
-            ⬆ Khôi phục từ JSON
+            <Icon name="upload" /> Khôi phục từ JSON
           </button>
           <button type="button" className="btn" onClick={exportCSV}>
-            📄 Xuất CSV (Excel)
+            <Icon name="file" /> Xuất CSV (Excel)
           </button>
           <button type="button" className="btn" onClick={() => setSheet('statement')}>
-            🏦 Nhập sao kê CSV
+            <Icon name="bank" /> Nhập sao kê CSV
           </button>
         </div>
         <input
