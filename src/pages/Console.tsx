@@ -446,6 +446,9 @@ export function Console({
 
         {!text && (
           <div className="composer-chips">
+            <button type="button" className="chip" onClick={() => onCommand('newEntry')}>
+              ＋ Ghi đầy đủ
+            </button>
             {shortcuts.map((s, i) => (
               <button key={s.key} type="button" className="chip" onClick={() => runShortcut(i)}>
                 <Money value={s.amount} kind={s.kind} signed />

@@ -28,6 +28,7 @@ export type CommandName =
   | 'history'
   | 'gaps'
   | 'transfer'
+  | 'newEntry'
   | 'help'
 
 interface CommandSpec {
@@ -40,6 +41,7 @@ interface CommandSpec {
 
 export const COMMANDS: CommandSpec[] = [
   { name: 'receipt', triggers: ['dan bien lai', 'bien lai', 'dan tin nhan', 'sms'], label: 'Dán biên lai', hint: 'dán tin nhắn biến động số dư' },
+  { name: 'newEntry', triggers: ['ghi day du', 'nhap day du', 'giao dich moi', 'them giao dich'], label: 'Ghi đầy đủ', hint: 'chọn ví, danh mục và ngày cụ thể' },
   { name: 'transfer', triggers: ['chuyen tien', 'chuyen khoan noi bo', 'rut tien', 'chuyen vi'], label: 'Chuyển tiền giữa ví', hint: 'không tính vào thu hay chi' },
   { name: 'reconcile', triggers: ['doi soat', 'so du that', 'kiem ke'], label: 'Đối soát số dư', hint: 'gõ một con số, app tự bù phần chưa ghi' },
   { name: 'budgets', triggers: ['ngan sach', 'han muc'], label: 'Ngân sách', hint: 'đặt hạn mức theo danh mục' },

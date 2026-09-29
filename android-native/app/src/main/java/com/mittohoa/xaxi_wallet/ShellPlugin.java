@@ -1,5 +1,6 @@
 package com.mittohoa.xaxi_wallet;
 
+import android.app.DatePickerDialog;
 import android.graphics.Color;
 import android.os.Build;
 import android.os.VibrationEffect;
@@ -10,6 +11,8 @@ import android.view.Window;
 import android.view.WindowManager;
 
 import androidx.core.view.WindowInsetsControllerCompat;
+
+import java.util.Calendar;
 
 import com.getcapacitor.JSObject;
 import com.getcapacitor.Plugin;
@@ -66,6 +69,66 @@ public class ShellPlugin extends Plugin {
         } else {
             vibrator.vibrate(ms);
         }
+    }
+
+    /**
+     * Mo bo chon ngay CUA HE DIEU HANH thay vi <input type="date"> cua web.
+     *
+     * Day la cho khac biet ro nhat giua app va trang web: bo chon cua web tren
+     * Android la mot o be ti voi ba o so, con bo chon he thong la lich thang
+     * quen thuoc, vuot chuyen thang duoc, va ton trong dinh dang ngay cua may.
+     *
+     * Tra ve chuoi 'YYYY-MM-DD', hoac cancelled=true neu nguoi dung bo qua.
+     */
+    @PluginMethod
+    public void pickDate(PluginCall call) {
+        String initial = call.getString("date");
+        Calendar calendar = Calendar.getInstance();
+        if (initial != null && initial.length() >= 10) {
+            try {
+                calendar.set(
+                    Integer.parseInt(initial.substring(0, 4)),
+                    Integer.parseInt(initial.substring(5, 7)) - 1,
+                    Integer.parseInt(initial.substring(8, 10))
+                );
+            } catch (NumberFormatException e) {
+                // Ngay khong doc duoc thi mo o hom nay, khong phai loi dang bao
+            }
+        }
+
+        call.setKeepAlive(true);
+        bridge.saveCall(call);
+
+        getActivity().runOnUiThread(() -> {
+            DatePickerDialog dialog = new DatePickerDialog(
+                getActivity(),
+                (view, year, month, day) -> {
+                    JSObject result = new JSObject();
+                    result.put("date", String.format(java.util.Locale.US, "%04d-%02d-%02d", year, month + 1, day));
+                    result.put("cancelled", false);
+                    call.resolve(result);
+                    bridge.releaseCall(call);
+                },
+                calendar.get(Calendar.YEAR),
+                calendar.get(Calendar.MONTH),
+                calendar.get(Calendar.DAY_OF_MONTH)
+            );
+
+            // Bo qua cung phai tra ve, khong thi lop web cho mai
+            dialog.setOnCancelListener(d -> {
+                JSObject result = new JSObject();
+                result.put("cancelled", true);
+                call.resolve(result);
+                bridge.releaseCall(call);
+            });
+
+            // Khong cho chon ngay tuong lai qua xa: ghi chi tieu cho nam sau la vo nghia
+            Calendar limit = Calendar.getInstance();
+            limit.add(Calendar.YEAR, 1);
+            dialog.getDatePicker().setMaxDate(limit.getTimeInMillis());
+
+            dialog.show();
+        });
     }
 
     /**

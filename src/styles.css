@@ -1734,3 +1734,23 @@ textarea.input {
   font-weight: 550;
   color: var(--text-primary);
 }
+
+/* ---------- Ô chọn ngày gọi bộ chọn của hệ thống ---------- */
+.date-button {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  text-align: left;
+  cursor: pointer;
+  font-weight: 550;
+}
+
+.date-button:active {
+  background: var(--surface-3);
+}
+
+.date-icon {
+  opacity: 0.55;
+  font-size: 15px;
+}

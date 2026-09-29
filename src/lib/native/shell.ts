@@ -10,6 +10,7 @@ import { Capacitor, registerPlugin } from '@capacitor/core'
 interface ShellPlugin {
   haptic(options: { style: 'light' | 'heavy' }): Promise<void>
   applyTheme(options: { dark: boolean; background: string }): Promise<{ applied: boolean }>
+  pickDate(options: { date: string }): Promise<{ date?: string; cancelled: boolean }>
 }
 
 const Shell = registerPlugin<ShellPlugin>('Shell')
@@ -28,4 +29,31 @@ export function haptic(style: 'light' | 'heavy' = 'light'): void {
 export function applySystemTheme(dark: boolean, background: string): void {
   if (!available()) return
   Shell.applyTheme({ dark, background }).catch(() => undefined)
+}
+
+interface DatePickResult {
+  date?: string
+  cancelled: boolean
+}
+
+/**
+ * Mo bo chon ngay cua he dieu hanh.
+ * Tra ve null khi nguoi dung bo qua, hoac khi may khong ho tro (lop web se
+ * tu rot ve <input type="date">).
+ */
+export async function pickNativeDate(current: string): Promise<string | null> {
+  if (!available()) return null
+  try {
+    const result = (await (Shell as unknown as {
+      pickDate(o: { date: string }): Promise<DatePickResult>
+    }).pickDate({ date: current })) as DatePickResult
+    return result.cancelled || !result.date ? null : result.date
+  } catch {
+    return null
+  }
+}
+
+/** Co dung duoc bo chon ngay native khong */
+export function nativeDateAvailable(): boolean {
+  return available()
 }

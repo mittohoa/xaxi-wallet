@@ -6,6 +6,7 @@ import { walletBalances } from '../lib/stats'
 import { useApp } from '../store'
 import type { Id } from '../types'
 import { Sheet } from './ui'
+import { DateField } from './DateField'
 import { haptic } from '../lib/native/shell'
 
 /**
@@ -126,10 +127,7 @@ export function TransferSheet({ onClose }: { onClose: () => void }) {
       )}
 
       <div className="grid-2">
-        <div className="field">
-          <label htmlFor="tf-date">Ngày</label>
-          <input id="tf-date" className="input" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
-        </div>
+        <DateField id="tf-date" label="Ngày" value={date} onChange={setDate} />
         <div className="field">
           <label htmlFor="tf-note">Ghi chú</label>
           <input

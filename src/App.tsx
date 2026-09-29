@@ -39,6 +39,7 @@ const SHEET_TITLE: Record<Exclude<CommandName, 'help'>, string> = {
   history: 'Lịch sử giao dịch',
   gaps: 'Lấp khoảng trống',
   transfer: 'Chuyển tiền giữa ví',
+  newEntry: 'Ghi đầy đủ',
 }
 
 /** Tam truot chiem ca man hinh, dung cho cac man hinh phu mo bang lenh */
@@ -106,7 +107,10 @@ function Shell() {
 
   return (
     <>
-      <Console onCommand={setScreen} onEditTransaction={setEditing} />
+      <Console
+        onCommand={(command) => (command === 'newEntry' ? setEditing('new') : setScreen(command))}
+        onEditTransaction={setEditing}
+      />
 
       {screen === 'settings' && (
         <FullSheet title={SHEET_TITLE.settings} onClose={close}>

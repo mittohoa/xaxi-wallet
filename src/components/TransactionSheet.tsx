@@ -5,6 +5,7 @@ import { todayISO } from '../lib/date'
 import { useApp } from '../store'
 import type { Id, Transaction, TxKind } from '../types'
 import { ConfirmButton, Segmented, Sheet } from './ui'
+import { DateField } from './DateField'
 
 export function TransactionSheet({ editing, onClose }: { editing: Transaction | 'new'; onClose: () => void }) {
   const { categories, wallets, toast } = useApp()
@@ -132,10 +133,7 @@ export function TransactionSheet({ editing, onClose }: { editing: Transaction | 
             ))}
           </select>
         </div>
-        <div className="field">
-          <label htmlFor="tx-date">Ngày</label>
-          <input id="tx-date" className="input" type="date" value={date} onChange={(e) => setDate(e.target.value)} />
-        </div>
+        <DateField id="tx-date" label="Ngày" value={date} onChange={setDate} />
       </div>
 
       <div className="field">
