@@ -140,23 +140,6 @@ export function Reports() {
           {estimatedCount > 0 && ` · ${estimatedCount} khoản là số ước tính`}
         </div>
 
-        {/*
-          Thẻ mực LỒNG trong thẻ tháng.
-
-          Biểu đồ phải nằm trên nền mực ở cả hai chế độ sáng và tối — xem §2 của
-          docs/he-thong-thiet-ke.md. Đặt thẳng vào thẻ tháng thì trên nền sáng
-          nó rơi xuống nền trắng, nơi bộ màu biểu đồ chưa từng được kiểm định.
-
-          Chỉ hiện khi tháng có khoản chi: ba mươi cột rỗng không nói lên gì mà
-          vẫn chiếm chỗ.
-        */}
-        {totals.expense > 0 && (
-          <div className="panel-ink">
-            <div className="card-title">Chi theo ngày</div>
-            <DailySpend data={daily} />
-          </div>
-        )}
-
         {split.fixed > 0 && (
           <>
             <div className="meter split-meter" style={{ marginTop: 16 }}>
@@ -167,6 +150,29 @@ export function Reports() {
               {formatMoney(split.fixed)} định kỳ, {formatMoney(split.variable)} còn lại là do bạn quyết mỗi ngày.
             </div>
           </>
+        )}
+        {/*
+          Thẻ mực LỒNG trong thẻ tháng.
+
+          Biểu đồ phải nằm trên nền mực ở cả hai chế độ sáng và tối — xem §2 của
+          docs/he-thong-thiet-ke.md. Đặt thẳng vào thẻ tháng thì trên nền sáng
+          nó rơi xuống nền trắng, nơi bộ màu biểu đồ chưa từng được kiểm định.
+
+          Đặt SAU cụm 31%, không xen vào giữa. Thanh 31% không có nhãn riêng —
+          nó dựa hẳn vào dòng chữ ngay dưới để nói mình là gì, nên chen một biểu
+          đồ vào giữa "Còn lại" và nó là tách đôi một cặp phải đọc liền.
+
+          Và đứng ngay trước câu về thứ trong tuần thì hai thứ cùng nói về nhịp
+          chi theo thời gian nằm cạnh nhau.
+
+          Chỉ hiện khi tháng có khoản chi: ba mươi cột rỗng không nói lên gì mà
+          vẫn chiếm chỗ.
+        */}
+        {totals.expense > 0 && (
+          <div className="panel-ink">
+            <div className="card-title">Chi theo ngày</div>
+            <DailySpend data={daily} />
+          </div>
         )}
 
         {topDay && (
