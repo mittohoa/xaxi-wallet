@@ -72,15 +72,41 @@ function findDate(text: string): string | null {
   return toISO(d)
 }
 
+/**
+ * Cac nhan thuong dung sau phan mo ta — dung de biet mo ta ket thuc o dau.
+ * Van ban tu OCR khong co dau cau nen khong the chi dua vao dau cham.
+ */
+const NOTE_STOPPERS = [
+  'so du', 'số dư', 'sd:', 'sodu', 'balance', 'available',
+  'ref', 'ma gd', 'mã gd', 'ma giao dich', 'mã giao dịch', 'trace',
+  'so tk', 'số tk', 'luc ', 'lúc ', 'thoi gian', 'thời gian',
+]
+
+/** Cat chuoi tai nhan dau tien gap phai */
+function cutAtStopper(text: string): string {
+  const lower = text.toLowerCase()
+  let end = text.length
+  for (const stopper of NOTE_STOPPERS) {
+    const at = lower.indexOf(stopper)
+    if (at > 0 && at < end) end = at
+  }
+  return text.slice(0, end)
+}
+
 /** Lay phan mo ta giao dich: sau 'ND:', 'tai', 'cho', 'noi dung' */
 function findNote(text: string): string {
   const patterns = [
-    /(?:^|[\s.;|])(?:nd|noi dung|nội dung|content|ct|mo ta|mô tả)\s*[:\-]\s*([^\n.;|]{3,80})/i,
-    /(?:tai|tại|cho|to|at)\s+([A-Za-zÀ-ỹ0-9][^\n.;|]{2,60})/i,
+    /(?:^|[\s.;|])(?:nd|noi dung|nội dung|content|ct|mo ta|mô tả)\s*[:\-]\s*([^\n.;|]{3,120})/i,
+    /(?:tai|tại|cho|to|at)\s+([A-Za-zÀ-ỹ0-9][^\n.;|]{2,120})/i,
   ]
   for (const re of patterns) {
     const m = text.match(re)
-    if (m) return m[1].replace(/\s+/g, ' ').trim()
+    if (!m) continue
+    const note = cutAtStopper(m[1])
+      .replace(/\s+/g, ' ')
+      .replace(/[.,;:\-]+$/, '')
+      .trim()
+    if (note.length >= 2) return note.slice(0, 80)
   }
   return ''
 }

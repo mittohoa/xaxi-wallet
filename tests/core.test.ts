@@ -316,3 +316,33 @@ test('suggestShortcuts bỏ qua giao dịch ngoài cửa sổ thời gian', () =
   ]
   assert.equal(suggestShortcuts(old, CATEGORIES).length, 0)
 })
+
+test('parseReceipt đọc được văn bản OCR nhiều dòng, không dấu câu', () => {
+  // Dang chu ML Kit tra ve khi chup anh man hinh bao ngan hang
+  const ocrText = [
+    'Vietcombank',
+    'TK 0123456789 -45,000VND',
+    'luc 12/09/2026 08:30',
+    'ND: HIGHLANDS COFFEE',
+    'So du: 1,234,567VND',
+  ].join('\n')
+
+  const r = parseReceipt(ocrText)
+  assert.ok(r)
+  assert.equal(r.amount, 45_000)
+  assert.equal(r.kind, 'expense')
+  assert.equal(r.date, '2026-09-12')
+  assert.equal(r.balance, 1_234_567)
+  assert.equal(r.issuer, 'Vietcombank')
+  assert.equal(r.note, 'HIGHLANDS COFFEE')
+})
+
+test('parseReceipt đọc được biên lai ví điện tử dạng nhiều dòng', () => {
+  const ocrText = ['MoMo', 'Thanh toan thanh cong', '120.000d', 'Highlands Coffee', 'So du vi 340.000d'].join('\n')
+  const r = parseReceipt(ocrText)
+  assert.ok(r)
+  assert.equal(r.amount, 120_000)
+  assert.equal(r.kind, 'expense')
+  assert.equal(r.balance, 340_000)
+  assert.equal(r.issuer, 'MoMo')
+})

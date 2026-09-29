@@ -1501,3 +1501,16 @@ textarea.input {
 .suggest-body b {
   color: var(--text-primary);
 }
+
+/* ---------- Chup bien lai ---------- */
+.scan-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.scan-row .btn {
+  width: 100%;
+  min-height: 48px;
+}

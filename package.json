@@ -9,8 +9,8 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "typecheck": "tsc -b --noEmit",
-    "android:add": "npm run build && cap add android && node scripts/patch-android-manifest.mjs",
-    "android:sync": "npm run build && cap sync android && node scripts/patch-android-manifest.mjs",
+    "android:add": "npm run build && cap add android && node scripts/patch-android-manifest.mjs && node scripts/sync-native.mjs",
+    "android:sync": "npm run build && cap sync android && node scripts/patch-android-manifest.mjs && node scripts/sync-native.mjs",
     "android:apk": "npm run android:sync && node scripts/gradle.mjs assembleDebug",
     "android:install": "npm run android:apk && adb install -r android/app/build/outputs/apk/debug/app-debug.apk",
     "android:open": "npm run android:sync && cap open android",
@@ -20,6 +20,7 @@
     "test": "node tests/build-and-run.mjs"
   },
   "dependencies": {
+    "@capacitor/core": "^6.2.0",
     "dexie": "^4.0.10",
     "dexie-react-hooks": "^1.1.7",
     "react": "^18.3.1",
@@ -28,7 +29,6 @@
   "devDependencies": {
     "@capacitor/android": "^6.2.0",
     "@capacitor/cli": "^6.2.0",
-    "@capacitor/core": "^6.2.0",
     "@tauri-apps/cli": "^2.1.0",
     "@types/react": "^18.3.12",
     "@types/react-dom": "^18.3.1",

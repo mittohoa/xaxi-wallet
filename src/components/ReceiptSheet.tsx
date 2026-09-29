@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { addTransaction, reconcileWallet, systemCategory } from '../lib/actions'
 import { formatDate } from '../lib/date'
 import { formatMoney } from '../lib/format'
@@ -6,6 +6,7 @@ import { parseReceipt } from '../lib/receipt'
 import { walletBalances } from '../lib/stats'
 import { useApp } from '../store'
 import { Sheet } from './ui'
+import { ocrSupported, recognizeImage } from '../lib/native/ocr'
 
 /**
  * Ghi giao dich tu doan van ban bien lai NGUOI DUNG tu dan vao.
@@ -17,6 +18,30 @@ export function ReceiptSheet({ initialText = '', onClose }: { initialText?: stri
   const [walletId, setWalletId] = useState<number | null>(wallets.find((w) => !w.archived)?.id ?? null)
   const [categoryId, setCategoryId] = useState<number | null>(null)
   const [alsoReconcile, setAlsoReconcile] = useState(true)
+  const [scanning, setScanning] = useState(false)
+  const [scanError, setScanError] = useState<string | null>(null)
+  const cameraInput = useRef<HTMLInputElement>(null)
+  const canScan = ocrSupported()
+
+  async function scan(file: File | undefined) {
+    if (!file) return
+    setScanning(true)
+    setScanError(null)
+    try {
+      const result = await recognizeImage(file)
+      if (!result.text.trim()) {
+        setScanError('Không thấy chữ nào trong ảnh. Thử chụp gần hơn và đủ sáng.')
+      } else {
+        setText(result.text)
+        setCategoryId(null)
+      }
+    } catch (e) {
+      setScanError(e instanceof Error ? e.message : 'Không đọc được ảnh.')
+    } finally {
+      setScanning(false)
+      if (cameraInput.current) cameraInput.current.value = ''
+    }
+  }
 
   const parsed = useMemo(() => parseReceipt(text), [text])
   const balances = useMemo(() => walletBalances(wallets, transactions), [wallets, transactions])
@@ -55,8 +80,33 @@ export function ReceiptSheet({ initialText = '', onClose }: { initialText?: stri
 
   return (
     <Sheet title="Dán biên lai" onClose={onClose}>
+      {canScan && (
+        <>
+          <div className="scan-row">
+            <button
+              type="button"
+              className="btn"
+              onClick={() => cameraInput.current?.click()}
+              disabled={scanning}
+            >
+              📷 {scanning ? 'Đang đọc ảnh…' : 'Chụp biên lai'}
+            </button>
+            <span className="hint">ảnh được đọc ngay trên máy, không lưu lại, không gửi đi đâu</span>
+          </div>
+          <input
+            ref={cameraInput}
+            type="file"
+            accept="image/*"
+            capture="environment"
+            style={{ display: 'none' }}
+            onChange={(e) => scan(e.target.files?.[0])}
+          />
+          {scanError && <div className="error" style={{ marginBottom: 10 }}>{scanError}</div>}
+        </>
+      )}
+
       <div className="field">
-        <label htmlFor="receipt-text">Dán tin nhắn biến động số dư hoặc thông báo thanh toán</label>
+        <label htmlFor="receipt-text">{canScan ? 'Hoặc dán tin nhắn biến động số dư' : 'Dán tin nhắn biến động số dư hoặc thông báo thanh toán'}</label>
         <textarea
           id="receipt-text"
           className="input"
