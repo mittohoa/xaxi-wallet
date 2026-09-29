@@ -56,15 +56,40 @@ function barPath(x: number, y: number, w: number, h: number): string {
   return `M${x} ${y + h} V${y + r} a${r} ${r} 0 0 1 ${r} ${-r} h${w - 2 * r} a${r} ${r} 0 0 1 ${r} ${r} V${y + h} Z`
 }
 
-/** Thang chia "dep": 1/2/2.5/5 x 10^n */
-function niceTicks(max: number, count = 4): number[] {
+/**
+ * Thang chia "đẹp": 1/2/2.5/5 x 10^n.
+ *
+ * VẠCH TRÊN CÙNG PHẢI LỚN HƠN HOẶC BẰNG GIÁ TRỊ LỚN NHẤT. Bản cũ dừng vòng lặp
+ * ở `v <= max`, nên với max = 18tr và bước 5tr thì vạch cuối là 15tr — cột cao
+ * 120% vùng vẽ, phần ngọn bị mép SVG cắt mất.
+ *
+ * Đó không phải lỗi thẩm mỹ mà là biểu đồ nói sai: 16tr và 18tr đều tràn ra
+ * ngoài nên vẽ ra CAO BẰNG NHAU, và người đọc không có cách nào biết. Gần như
+ * mọi giá trị đều rơi vào trường hợp này — chỉ những số đúng bằng một vạch mới
+ * thoát.
+ */
+export function niceTicks(max: number, count = 4): number[] {
   if (max <= 0) return [0]
   const rough = max / count
   const mag = Math.pow(10, Math.floor(Math.log10(rough)))
   const norm = rough / mag
   const step = (norm <= 1 ? 1 : norm <= 2 ? 2 : norm <= 2.5 ? 2.5 : norm <= 5 ? 5 : 10) * mag
+
+  /*
+   * Làm tròn LÊN tới bội của bước, nên vạch trên cùng luôn chứa được cột cao
+   * nhất.
+   *
+   * Sai số phải đúng nghĩa nhiễu dấu phẩy động chứ không phải một con số cho
+   * dễ nhìn. Bản đầu của chính bản sửa này dùng `- 0.001` trên tỉ lệ, tức là
+   * bỏ qua tới 0,1% của một bước — với bước 2,5 triệu thì nuốt mất 2.500 đ, và
+   * 10.001.697 lại tràn ra ngoài y như cũ. Bài kiểm quét rộng bắt được.
+   */
+  const ratio = max / step
+  const lamTron = Math.round(ratio)
+  const top = (Math.abs(ratio - lamTron) < 1e-9 ? lamTron : Math.ceil(ratio)) * step
+
   const ticks: number[] = []
-  for (let v = 0; v <= max + step * 0.001; v += step) ticks.push(v)
+  for (let v = 0; v <= top + step * 1e-9; v += step) ticks.push(v)
   return ticks
 }
 

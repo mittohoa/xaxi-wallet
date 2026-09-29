@@ -95,6 +95,24 @@ quan tâm, và còn chiếm mất một sắc của bộ tám.
 
 ---
 
+### Vạch trên cùng phải chứa được cột cao nhất
+
+Thang chia làm tròn **lên** tới bội của bước. Nghe như chuyện thẩm mỹ, nhưng
+không phải.
+
+Bản đầu dừng ở vạch cuối cùng không vượt quá dữ liệu: với 18 triệu và bước 5
+triệu thì trần là 15 triệu, cột cao 120% vùng vẽ và phần ngọn bị mép SVG cắt
+mất. Hậu quả là **biểu đồ nói sai**: 16 triệu và 18 triệu đều tràn ra ngoài nên
+vẽ ra cao bằng nhau, người đọc không có cách nào nhận ra. Gần như mọi giá trị
+đều rơi vào trường hợp này — chỉ những số đúng bằng một vạch mới thoát.
+
+`tests/charts.test.ts` quét vài nghìn giá trị để giữ đúng một bất biến: vạch
+trên cùng ≥ giá trị lớn nhất, và không thừa quá một bước. Bài kiểm quét rộng đó
+bắt được cả một sai sót trong chính bản sửa — sai số `0.001` dùng trên tỉ lệ đã
+nuốt mất 2.500 đ khi bước là 2,5 triệu.
+
+---
+
 ## 3. Màu không bao giờ là dấu hiệu duy nhất
 
 Đã thử tìm bộ 5 và 6 sắc vượt qua phép kiểm **mọi cặp** (không chỉ cặp cạnh
@@ -165,6 +183,17 @@ thứ phân biệt cảm giác native với cảm giác trang web — trước c
 đổi.
 
 Ô nhập số tiền để cỡ 16px trở lên, nếu không iOS tự phóng to cả trang khi gõ.
+
+### Trạng thái khoá tô bằng màu, không bằng độ mờ
+
+`opacity` làm nhạt nền và chữ **cùng lúc**, nên cả hai trôi về phía màu trang và
+tương phản giữa chúng sụp xuống. Nút gửi lúc bị khoá từng để `opacity: 0.26`:
+đo trên nền sáng chỉ còn **1,72:1** — dưới cả ngưỡng 3:1 của một hình không phải
+chữ. Trên máy thì mũi tên gần như biến mất, và nút trông như hỏng chứ không phải
+đang chờ.
+
+Đặt thẳng hai màu từ token thì đo được 5,38:1 nền sáng và 5,13:1 nền tối. Quy
+tắc: **trạng thái khoá đổi token màu, không hạ độ mờ.**
 
 ---
 

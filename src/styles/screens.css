@@ -155,8 +155,20 @@
   transform: scale(0.9);
 }
 
+/*
+ * Khoá bằng MÀU, không bằng độ mờ.
+ *
+ * `opacity` làm nhạt cả nút lẫn mũi tên bên trong cùng một lúc, nên hai thứ
+ * cùng trôi về phía màu nền và tương phản giữa chúng sụp xuống. Đo trên nền
+ * sáng: 1,72:1 — dưới cả ngưỡng 3:1 của một hình không phải chữ. Trên máy thì
+ * mũi tên gần như biến mất, và nút trông như bị hỏng chứ không phải đang chờ.
+ *
+ * Đặt thẳng hai màu từ token thì đo được: 5,38:1 nền sáng và 5,13:1 nền tối.
+ * Vẫn giữ sắc lime nhạt nên không lẫn với nút micro màu xám ngay bên cạnh.
+ */
 .composer-send:disabled {
-  opacity: 0.26;
+  background: var(--accent-soft);
+  color: var(--text-secondary);
   cursor: not-allowed;
 }
 
