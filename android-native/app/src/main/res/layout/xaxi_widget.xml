@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Tien ich man hinh chinh.
+
+  Mang nen muc cua logo o CA hai che do sang toi, cung ly do voi the bieu do
+  trong app: mot bo mau duy nhat thi giu dung duoc, hai bo thi som muon mot bo
+  se troi. Widget nam tren hinh nen cua nguoi dung, khong phai tren trang cua
+  app, nen phai tu dung vung bang nen rieng.
+-->
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/widget_root"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@drawable/xaxi_widget_bg"
+    android:padding="16dp">
+
+    <TextView
+        android:id="@+id/widget_label"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="HÔM NAY"
+        android:textColor="#9AA6B4"
+        android:textSize="11sp"
+        android:letterSpacing="0.09"
+        android:textStyle="bold" />
+
+    <TextView
+        android:id="@+id/widget_today"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:text="—"
+        android:textColor="#E7EDF5"
+        android:textSize="26sp"
+        android:textStyle="bold"
+        android:maxLines="1"
+        android:ellipsize="end" />
+
+    <TextView
+        android:id="@+id/widget_sub"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="2dp"
+        android:text="Mở app một lần để bắt đầu"
+        android:textColor="#9AA6B4"
+        android:textSize="12sp"
+        android:maxLines="1"
+        android:ellipsize="end" />
+
+    <TextView
+        android:id="@+id/widget_hint"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:textColor="#F0817C"
+        android:textSize="12sp"
+        android:maxLines="1"
+        android:ellipsize="end"
+        android:visibility="gone" />
+
+    <!-- Day moi la thu nguoi ta cham toi: vung cham to, chu muc tren nen chanh -->
+    <TextView
+        android:id="@+id/widget_add"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:background="@drawable/xaxi_widget_btn"
+        android:gravity="center"
+        android:minHeight="44dp"
+        android:paddingTop="12dp"
+        android:paddingBottom="12dp"
+        android:text="＋ Ghi nhanh"
+        android:textColor="#0D1117"
+        android:textSize="14sp"
+        android:textStyle="bold" />
+</LinearLayout>

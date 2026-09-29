@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  minWidth/minHeight tinh theo cong thuc cua Android: 70*n - 30.
+  180x110 tuong ung o 3x2 — du cho mot con so lon va mot nut cham.
+  previewLayout ve chinh bo cuc that trong bo chon tien ich (Android 12+), con
+  previewImage la ban du phong cho may cu hon — thieu no thi may cu hien o trong.
+
+  updatePeriodMillis = 0: widget KHONG tu lam moi theo gio. Du lieu chi doi khi
+  nguoi dung ghi mot khoan, va luc do lop web goi cap nhat thang. Dat chu ky tu
+  lam moi chi ton pin de ve lai dung con so cu.
+-->
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:minWidth="180dp"
+    android:minHeight="110dp"
+    android:targetCellWidth="3"
+    android:targetCellHeight="2"
+    android:updatePeriodMillis="0"
+    android:initialLayout="@layout/xaxi_widget"
+    android:previewImage="@mipmap/ic_launcher"
+    android:previewLayout="@layout/xaxi_widget"
+    android:description="@string/xaxi_widget_desc"
+    android:resizeMode="horizontal|vertical"
+    android:widgetCategory="home_screen" />

@@ -34,6 +34,9 @@ public class MainActivity extends BridgeActivity {
      */
     static boolean overlayOpen = false;
 
+    /** Nguoi dung vao app tu nut "Ghi nhanh" tren tien ich man hinh chinh */
+    static boolean pendingQuick = false;
+
     /**
      * Nut Back cua Android.
      *
@@ -64,6 +67,7 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(ShellPlugin.class);
         super.onCreate(savedInstanceState);
         captureSharedText(getIntent());
+        captureQuick(getIntent());
         // Dang ky sau super de nam tren cung chuoi xu ly Back
         getOnBackPressedDispatcher().addCallback(this, backCallback);
     }
@@ -76,6 +80,9 @@ public class MainActivity extends BridgeActivity {
     public void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
         setIntent(intent);
+        if (captureQuick(intent) && getBridge() != null) {
+            getBridge().triggerWindowJSEvent("xaxiQuick");
+        }
         if (captureSharedText(intent) && getBridge() != null) {
             // Lop web dang song: bao cho no biet co van ban moi, khong phai doi
             getBridge().triggerWindowJSEvent("xaxiSharedText");
@@ -88,6 +95,16 @@ public class MainActivity extends BridgeActivity {
         CharSequence text = intent.getCharSequenceExtra(Intent.EXTRA_TEXT);
         if (text == null || text.length() == 0) return false;
         pendingSharedText = text.toString();
+        return true;
+    }
+
+    /** Co bao nguoi dung muon ghi ngay, dat tu tien ich man hinh chinh */
+    private boolean captureQuick(Intent intent) {
+        if (intent == null || !intent.getBooleanExtra(XaxiWidget.EXTRA_QUICK, false)) return false;
+        pendingQuick = true;
+        // Xoa khoi intent: Android giu lai intent cu, nen khong xoa thi lan mo
+        // app tiep theo tu danh sach gan day cung bi coi la "ghi nhanh".
+        intent.removeExtra(XaxiWidget.EXTRA_QUICK);
         return true;
     }
 }

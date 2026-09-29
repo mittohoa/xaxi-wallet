@@ -6,11 +6,12 @@ import { checkAmount, detectRecurring, trainClassifier } from '../lib/learn'
 import { db, stamp, touch } from '../db/db'
 import { listenOnce, stopListening, voiceReady } from '../lib/native/voice'
 import { haptic } from '../lib/native/shell'
+import { QUICK_EVENT, consumeQuickIntent, publishWidgetSummary } from '../lib/native/widget'
 import { saveSettings } from '../store'
 import { helpAnswer, interpret, type Answer, type CommandName } from '../lib/ask'
 import { computeCoverage, firstActivity } from '../lib/coverage'
 import { forecast, upcoming } from '../lib/foresight'
-import { currentMonth, formatDateLong, monthRange, shiftMonth, todayISO } from '../lib/date'
+import { currentMonth, formatDateLong, monthLabel, monthRange, shiftMonth, todayISO } from '../lib/date'
 import { formatMoney } from '../lib/format'
 import { comparableRange, inRange, percentChange, sumTotals, walletBalances } from '../lib/stats'
 import { useApp, useLookups } from '../store'
@@ -140,6 +141,27 @@ export function Console({
 
   useEffect(() => () => window.clearTimeout(holdTimer.current), [])
 
+  /**
+   * Vào app từ nút "Ghi nhanh" trên widget thì đưa thẳng con trỏ vào ô nhập.
+   *
+   * Đây là toàn bộ điều widget làm được: bớt bước tìm app và bước điều hướng.
+   * Ghi mà không mở app thì không làm được — ghi nghĩa là viết vào IndexedDB,
+   * mà chỉ WebView làm được việc đó.
+   */
+  useEffect(() => {
+    const focusInput = () => inputRef.current?.focus()
+    consumeQuickIntent().then((quick) => {
+      if (quick) focusInput()
+    })
+    const onQuick = () => {
+      consumeQuickIntent().then((quick) => {
+        if (quick) focusInput()
+      })
+    }
+    window.addEventListener(QUICK_EVENT, onQuick)
+    return () => window.removeEventListener(QUICK_EVENT, onQuick)
+  }, [])
+
   const intent = useMemo(() => interpret(text, askContext), [text, askContext])
 
   /**
@@ -228,6 +250,28 @@ export function Console({
   const defaultWalletId = wallets.find((w) => !w.archived)?.id ?? null
 
   const nudge = settings.nudgeAfterGapDays > 0 && coverage.currentGapStreak >= settings.nudgeAfterGapDays
+
+  /**
+   * Giữ bản tóm tắt của tiện ích màn hình chính khớp với dữ liệu.
+   *
+   * Chạy lại mỗi khi số liệu đổi. Không cần giảm nhịp gọi: đây chỉ là ghi vài
+   * chuỗi vào SharedPreferences rồi vẽ lại widget, và số liệu chỉ đổi khi người
+   * dùng ghi một khoản — không phải luồng dữ liệu liên tục.
+   */
+  const todaySpent = useMemo(() => {
+    const t = todayISO()
+    return sumTotals(inRange(transactions, t, t)).expense
+  }, [transactions])
+
+  useEffect(() => {
+    publishWidgetSummary({
+      today: formatMoney(todaySpent),
+      month: formatMoney(monthTotals.expense),
+      monthLabel: monthLabel(month),
+      hint: nudge ? `Đã ${coverage.currentGapStreak} ngày chưa ghi gì` : '',
+    })
+  }, [todaySpent, monthTotals.expense, month, nudge, coverage.currentGapStreak])
+
 
   async function submit() {
     if (intent.type === 'empty') return

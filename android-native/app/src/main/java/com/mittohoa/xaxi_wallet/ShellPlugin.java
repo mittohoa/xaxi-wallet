@@ -1,7 +1,9 @@
 package com.mittohoa.xaxi_wallet;
 
 import android.app.DatePickerDialog;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.util.Base64;
 import android.graphics.Color;
@@ -276,5 +278,46 @@ public class ShellPlugin extends Plugin {
         } catch (Exception e) {
             call.reject("Không lưu được tệp: " + e.getMessage());
         }
+    }
+
+    /**
+     * Ghi ban tom tat cho tien ich man hinh chinh.
+     *
+     * Widget chay trong tien trinh cua launcher va KHONG doc duoc IndexedDB cua
+     * WebView. Nen lop web phai ghi san vai con so ra SharedPreferences moi lan
+     * du lieu doi; widget chi doc lai. Mot noi ghi, mot noi doc — ban tom tat co
+     * the cu vai giay nhung khong bao gio mau thuan.
+     *
+     * Chi nhan CHUOI DA DINH DANG san. Dinh dang tien te nam o lop web (locale,
+     * don vi, dau phan cach); lam lai o day la co hai cho cung dinh dang mot thu
+     * va som muon chung lech nhau.
+     */
+    @PluginMethod
+    public void updateWidget(PluginCall call) {
+        SharedPreferences prefs = getContext().getSharedPreferences(XaxiWidget.PREFS, Context.MODE_PRIVATE);
+        prefs
+            .edit()
+            .putString(XaxiWidget.KEY_TODAY, call.getString("today", "—"))
+            .putString(XaxiWidget.KEY_MONTH, call.getString("month", ""))
+            .putString(XaxiWidget.KEY_MONTH_LABEL, call.getString("monthLabel", ""))
+            .putString(XaxiWidget.KEY_HINT, call.getString("hint", ""))
+            .apply();
+
+        XaxiWidget.refresh(getContext());
+        call.resolve();
+    }
+
+    /**
+     * Nguoi dung vao app tu nut "Ghi nhanh" tren widget hay khong.
+     *
+     * Xoa co ngay sau khi tra ve: khong thi moi lan mo app sau do deu bat ban
+     * phim len, ke ca khi nguoi dung chi muon xem bao cao.
+     */
+    @PluginMethod
+    public void consumeQuickIntent(PluginCall call) {
+        JSObject result = new JSObject();
+        result.put("quick", MainActivity.pendingQuick);
+        MainActivity.pendingQuick = false;
+        call.resolve(result);
     }
 }

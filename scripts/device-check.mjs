@@ -390,17 +390,37 @@ const CHECKS = [
 
         await lenh('chuyển tiền');
         d = await wait(() => $('[role="dialog"]'));
-        const sang = d.querySelector('#tf-to');
-        Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value').set.call(sang, vi.id);
-        sang.dispatchEvent(new Event('change', { bubbles: true }));
+        // Phải đặt CẢ hai đầu. Danh sách ví không có thứ tự xác định — Dexie trả
+        // về theo thứ tự UUID — nên ví nguồn mặc định có thể rơi trúng chính ví
+        // của mục tiêu, và lúc đó nút Chuyển bị tắt vì hai đầu trùng nhau.
+        const doiSelect = (el, v) => {
+          Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value').set.call(el, v);
+          el.dispatchEvent(new Event('change', { bubbles: true }));
+        };
+        const khac = s0.wallets.find((w) => w.id !== vi.id && !w.archived);
+        if (!khac) { await dong(); return '✗ chỉ có một ví, không chuyển tiền được' }
+        doiSelect(d.querySelector('#tf-from'), khac.id);
+        doiSelect(d.querySelector('#tf-to'), vi.id);
+        await sleep(300);
         setValue(d.querySelector('#tf-amount'), '2500000'); await sleep(500);
         click([...d.querySelectorAll('button')].find((b) => b.textContent.trim() === 'Chuyển'));
         await sleep(1800);
 
         await lenh('mục tiêu');
         await wait(() => $('.goal-card'));
-        await sleep(600);
-        const sau = $('.goal-card .budget-foot span')?.textContent?.trim() ?? '';
+        // Chờ ĐIỀU KIỆN, không chờ theo đồng hồ: truy vấn sống của Dexie có thể
+        // mất vài trăm mili giây tới vài giây tuỳ máy đang bận gì, và một phép
+        // kiểm chập chờn còn tệ hơn không có — vài lần đỏ vô cớ là người ta thôi
+        // tin cả bộ rà.
+        let sau = '';
+        try {
+          sau = await wait(() => {
+            const v = $('.goal-card .budget-foot span')?.textContent?.trim();
+            return v && v !== '0%' ? v : null;
+          }, 8000);
+        } catch {
+          sau = $('.goal-card .budget-foot span')?.textContent?.trim() ?? '(trống)';
+        }
         await dong();
 
         if (dau !== '0%') return '✗ mục tiêu mới phải bắt đầu từ 0%, đang là ' + dau;
@@ -534,6 +554,23 @@ function launch() {
 const topPackage = () => (adb(['shell', 'dumpsys', 'activity', 'activities']).match(/topResumedActivity=\S+ u0 ([^/\s]+)/) ?? [])[1] ?? '?'
 
 const SHELL_CHECKS = [
+  {
+    name: 'bản tóm tắt cho tiện ích màn hình chính',
+    async run() {
+      launch()
+      await sleep(7000)
+      // Widget chạy trong tiến trình của launcher và KHÔNG đọc được IndexedDB.
+      // Lớp web phải ghi sẵn vài chuỗi ra SharedPreferences; đây là kiểm tra
+      // rằng đường ghi đó còn sống.
+      const xml = adb(['shell', 'run-as', PKG, 'cat', 'shared_prefs/xaxi_widget.xml'])
+      const lay = (k) => (xml.match(new RegExp(`name="${k}">([^<]*)<`)) ?? [])[1]
+      const today = lay('today')
+      const label = lay('monthLabel')
+      if (today === undefined) return '✗ lớp web chưa ghi bản tóm tắt nào'
+      if (!label) return '✗ thiếu nhãn kỳ'
+      return `✓ hôm nay ${today} · ${label}`
+    },
+  },
   {
     name: 'chia sẻ tin nhắn vào app',
     async run() {

@@ -49,6 +49,25 @@ const SPEECH_QUERIES = `    <queries>
     </queries>
 `
 
+/**
+ * Tien ich man hinh chinh.
+ *
+ * `exported="false"` la dung theo tai lieu chinh thuc cho API 31 tro len: he
+ * dieu hanh van gui duoc APPWIDGET_UPDATE, con cac app khac thi khong goi toi
+ * duoc. KHONG them quyen nao.
+ */
+const WIDGET_RECEIVER = `        <receiver
+            android:name=".XaxiWidget"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/xaxi_widget_info" />
+        </receiver>
+`
+
 function copyTree(from, to) {
   const copied = []
   for (const entry of readdirSync(from)) {
@@ -163,6 +182,18 @@ function patchManifestForVoice() {
   return changes
 }
 
+function patchManifestForWidget() {
+  const path = join(TARGET, 'app', 'src', 'main', 'AndroidManifest.xml')
+  let text = readFileSync(path, 'utf8')
+  if (text.includes('.XaxiWidget')) return false
+
+  const close = text.lastIndexOf('</application>')
+  if (close < 0) throw new Error('AndroidManifest.xml không có thẻ đóng </application>')
+  text = text.slice(0, close) + WIDGET_RECEIVER + text.slice(close)
+  writeFileSync(path, text, 'utf8')
+  return true
+}
+
 function patchManifestForMlKit() {
   const path = join(TARGET, 'app', 'src', 'main', 'AndroidManifest.xml')
   if (!existsSync(path)) throw new Error('Không tìm thấy AndroidManifest.xml')
@@ -197,6 +228,12 @@ console.log(
   patchManifestForMlKit()
     ? 'Đã khai báo tải sẵn mô hình OCR qua Google Play Services.'
     : 'Manifest đã khai báo tải mô hình OCR.',
+)
+
+console.log(
+  patchManifestForWidget()
+    ? 'Đã đăng ký tiện ích màn hình chính.'
+    : 'Manifest đã có tiện ích màn hình chính.',
 )
 
 const signingChanges = patchGradleSigning()
