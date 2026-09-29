@@ -40,6 +40,16 @@ export interface Category extends Syncable {
   color: string
   /** khong cho xoa: danh muc he thong ma logic app phu thuoc vao */
   builtin?: boolean
+  /**
+   * Moc tao, dung lam THU TU HIEN THI.
+   *
+   * Khong co truong nay thi Dexie tra ve theo thu tu UUID — tuc ngau nhien.
+   * Xem lib/order.ts.
+   *
+   * Tuy chon vi du lieu tu ban cu chua co; `backfillOrder()` gan lai luc mo app.
+   */
+  createdAt?: number
+
   /** ma dinh danh on dinh cho cac danh muc he thong */
   slug?: CategorySlug
   /** tu khoa de o nhap nhanh doan ra danh muc nay */
@@ -62,6 +72,16 @@ export interface Wallet extends Syncable {
   kind: WalletKind
   icon: string
   color: string
+  /**
+   * Moc tao, dung lam THU TU HIEN THI.
+   *
+   * Khong co truong nay thi Dexie tra ve theo thu tu UUID — tuc ngau nhien.
+   * Xem lib/order.ts.
+   *
+   * Tuy chon vi du lieu tu ban cu chua co; `backfillOrder()` gan lai luc mo app.
+   */
+  createdAt?: number
+
   /** so du ban dau, khong bao gom giao dich */
   openingBalance: number
   archived?: boolean

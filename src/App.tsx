@@ -4,7 +4,7 @@ import { ReconcileSheet } from './components/ReconcileSheet'
 import { StatementSheet } from './components/StatementSheet'
 import { TransactionSheet } from './components/TransactionSheet'
 import { TransferSheet } from './components/TransferSheet'
-import { refreshCategoryColors, seedIfEmpty } from './db/db'
+import { backfillOrder, refreshCategoryColors, seedIfEmpty } from './db/db'
 import { migrateLegacyDatabase } from './db/migrate'
 import { runAttachmentHousekeeping } from './lib/attachments'
 import type { CommandName } from './lib/ask'
@@ -231,6 +231,8 @@ export default function App() {
       .then(() => seedIfEmpty())
       // Đổi màu danh mục còn mang bộ màu cũ chưa qua kiểm định
       .then(() => refreshCategoryColors())
+      // Gán thứ tự hiển thị cho ví và danh mục từ bản cũ chưa có mốc tạo
+      .then(() => backfillOrder())
       .then(() => setSeeded(true))
       // Don anh bien lai mo coi / qua han; khong chan man hinh dau tien
       .then(() => runAttachmentHousekeeping())

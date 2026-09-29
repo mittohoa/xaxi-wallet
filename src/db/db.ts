@@ -159,8 +159,13 @@ export const DEFAULT_SETTINGS: Seed<Settings> = {
 /** Tao du lieu mac dinh o lan chay dau tien. An toan khi goi nhieu lan. */
 export async function seedIfEmpty(): Promise<void> {
   await db.transaction('rw', db.categories, db.wallets, db.settings, async () => {
-    if ((await db.categories.count()) === 0) await db.categories.bulkAdd(DEFAULT_CATEGORIES.map(stamp))
-    if ((await db.wallets.count()) === 0) await db.wallets.bulkAdd(DEFAULT_WALLETS.map(stamp))
+    // `createdAt` la chi so trong bo hat giong, khong phai moc thoi gian that.
+    // So nho nen chung luon dung truoc ban ghi nguoi dung tu tao sau nay
+    // (Date.now() cỡ 1,7 nghìn tỷ). Xem lib/order.ts.
+    if ((await db.categories.count()) === 0)
+      await db.categories.bulkAdd(DEFAULT_CATEGORIES.map((c, i) => stamp({ ...c, createdAt: i })))
+    if ((await db.wallets.count()) === 0)
+      await db.wallets.bulkAdd(DEFAULT_WALLETS.map((w, i) => stamp({ ...w, createdAt: i })))
     if ((await db.settings.count()) === 0) await db.settings.add(stamp(DEFAULT_SETTINGS))
 
     // Du lieu chuyen sang tu ban cu chua co hai danh muc chuyen tien
@@ -168,7 +173,11 @@ export async function seedIfEmpty(): Promise<void> {
     const missing = DEFAULT_CATEGORIES.filter(
       (c) => (c.slug === 'transfer-out' || c.slug === 'transfer-in') && !slugs.has(c.slug),
     )
-    if (missing.length) await db.categories.bulkAdd(missing.map(stamp))
+    if (missing.length) {
+      await db.categories.bulkAdd(
+        missing.map((c) => stamp({ ...c, createdAt: DEFAULT_CATEGORIES.indexOf(c) })),
+      )
+    }
   })
 }
 
@@ -205,6 +214,49 @@ export async function refreshCategoryColors(): Promise<number> {
 
   for (const { row, color } of changes) await db.categories.update(row.id, { ...touch(), color })
   return changes.length
+}
+
+/**
+ * Gan thu tu hien thi cho ban ghi cu chua co `createdAt`.
+ *
+ * Truoc ban nay, vi va danh muc khong mang thu tu nao, nen moi cho hien thi
+ * deu xep theo UUID — ngau nhien. Ham nay gan lai mot lan:
+ *
+ *   · ban ghi trung ten voi bo hat giong lay dung chi so trong bo do, nen thu
+ *     tu quen thuoc duoc dung lai y nguyen (Tien mat, Ngan hang, Vi dien tu)
+ *   · ban ghi nguoi dung tu them xep sau, theo `updatedAt`
+ *
+ * Chay nhieu lan khong sao: lan sau khong con ban ghi nao thieu `createdAt`.
+ */
+export async function backfillOrder(): Promise<number> {
+  let changed = 0
+
+  const fix = async <T extends { id: Id; name: string; createdAt?: number; updatedAt: number }>(
+    table: Table<T, Id>,
+    seedNames: string[],
+  ) => {
+    const rows = await table.toArray()
+    const missing = rows.filter((r) => typeof r.createdAt !== 'number')
+    if (missing.length === 0) return
+
+    missing.sort((a, b) => {
+      const ia = seedNames.indexOf(a.name)
+      const ib = seedNames.indexOf(b.name)
+      const ka = ia < 0 ? Number.MAX_SAFE_INTEGER : ia
+      const kb = ib < 0 ? Number.MAX_SAFE_INTEGER : ib
+      if (ka !== kb) return ka - kb
+      return a.updatedAt - b.updatedAt
+    })
+
+    for (const [i, row] of missing.entries()) {
+      await table.update(row.id, { ...touch(), createdAt: i } as never)
+      changed++
+    }
+  }
+
+  await fix(db.categories, DEFAULT_CATEGORIES.map((c) => c.name))
+  await fix(db.wallets, DEFAULT_WALLETS.map((w) => w.name))
+  return changed
 }
 
 export async function wipeAll(): Promise<void> {

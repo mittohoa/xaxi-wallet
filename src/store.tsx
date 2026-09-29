@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { useLiveQuery } from 'dexie-react-hooks'
 import { DEFAULT_SETTINGS, db, stamp, touch } from './db/db'
 import { configureFormat } from './lib/format'
+import { ordered } from './lib/order'
 import { applySystemTheme } from './lib/native/shell'
 import type { Budget, Category, DayMark, Goal, Id, Recurring, Settings, Template, Transaction, Wallet } from './types'
 
@@ -65,8 +66,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
       db.settings.toArray(),
     ])
     return {
-      categories,
-      wallets,
+      /**
+       * Sắp thứ tự NGAY Ở ĐÂY, một lần, thay vì để từng màn hình tự lo.
+       *
+       * Dexie trả về theo thứ tự UUID — ngẫu nhiên. Nếu mỗi màn hình tự sắp thì
+       * sớm muộn sẽ có màn hình quên, và người dùng thấy cùng một danh sách ví
+       * xếp hai kiểu ở hai chỗ.
+       */
+      categories: ordered(categories),
+      wallets: ordered(wallets),
       transactions,
       budgets,
       dayMarks,

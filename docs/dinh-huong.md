@@ -406,4 +406,262 @@ tuần, hoặc đúng ngày nhận lương).
 | Gói trả phí, "Get Pro" | Không có |
 | Theo dõi đầu tư, danh mục cổ phiếu | Bài toán khác hẳn, kéo theo dữ liệu thời gian thực từ mạng |
 | Thông báo thường trú để ghi nhanh | Hiệu quả, nhưng phiền — trái với "app không làm phiền người dùng" |
-,---,,## 8. Ghi chú khi làm 7.1–7.3,,Ba tính năng này đều nói với người dùng một con số mà họ không tự tính được.,Nên phần khó không phải là tính ra số, mà là **biết khi nào phải im lặng** —,một con số sai trong app tài chính tệ hơn là không có con số nào.,,**Dự báo im lặng khi:** chưa đủ năm ngày trong kỳ · còn dưới ba ngày là hết kỳ,(lúc đó dự báo gần bằng số đã chi, đúng nhưng vô dụng, mà một ô vô dụng chiếm,chỗ thì lần sau người dùng thôi nhìn vào đó) · độ phủ dữ liệu dưới 50% · chưa,ghi khoản nào.,,**Dự báo tách chi định kỳ khỏi chi biến đổi trước khi suy ra nhịp.** Không tách,thì tiền nhà ghi ngày mùng 3 bị nhân lên cho cả tháng và dự báo phóng đại gấp,mấy lần.,,**Cảnh báo số tiền có ba điều kiện cùng lúc**, trong đó điều kiện thứ ba quan,trọng nhất: số tiền phải lớn hơn **mọi khoản từng ghi** trong danh mục đó thêm,một nửa nữa. Không có nó thì một bữa nhậu 500k trong danh mục Ăn uống thường,50k sẽ bị hỏi lại mỗi lần — và một cảnh báo hay báo nhầm thì chỉ vài lần là bị,bấm bỏ qua theo phản xạ, đúng lúc nó báo đúng cũng bị bỏ qua nốt.,,Đo trên dữ liệu mẫu thật (141 khoản Ăn uống, trung vị 73k, lớn nhất 118k):,,| Gõ vào | Kết quả |,|---|---|,| `cà phê 73k` | im lặng |,| `cà phê 150k` | im lặng — gấp đôi vẫn là bữa đắt, không phải lỗi |,| `cà phê 350k` | im lặng — gấp 4,8 lần, dưới ngưỡng 5 |,| `cà phê 730k` | *"Nghi thừa một số 0 — danh mục này thường quanh 73.000 ₫"* |,| `xăng 2tr` | *"Lớn gấp 42 lần mức thường gặp (48.000 ₫)"* |,| `tiền nhà 4tr5` | im lặng — đúng mức thường của danh mục đó |,,Cảnh báo **không chặn**. Nhấn Enter là vẫn ghi. App hỏi lại, không phán xét.,,---,,## 9. Ghi chú khi làm 7.4, 7.6, 7.8, 7.9,,**Nhân bản bằng nhấn giữ.** Ghi ngay chứ không hỏi lại — hỏi lại biến một chạm,thành ba chạm, mà ba chạm thì đã không còn là đường tắt nữa. Cái đỡ là nút,"Hoàn tác" trên thông báo, nên thông báo giờ nhận được một việc kèm theo.,,Không chép `transferId`. Chép một vế của lần chuyển tiền sẽ tạo ra nửa cặp liên,kết: số dư hai ví lệch nhau ngay, mà mọi phép tính thu/chi vẫn loại nó ra nên,không con số nào lộ ra sai. Đó là kiểu hỏng im lặng tệ nhất.,,**Nhãn so sánh có vùng chết 5%.** Dưới mức đó là dao động thường ngày, không,phải tín hiệu. Trong danh sách dài thì im hẳn thay vì hiện "≈ như kỳ trước" —,một nhãn không nói gì vẫn chiếm chỗ và vẫn bắt mắt phải đọc.,,**Thứ tiêu nhiều nhất tính trên 90 ngày, không phải một tháng.** Một tháng chỉ,có bốn lần mỗi thứ; một bữa nhậu là đủ làm lệch kết luận. Và chỉ nói khi thứ đó,nhô lên trên 30% so với mức trung bình — tiêu đều thì không có gì để nói.,,Đọc ngày bằng giờ UTC chứ không phải giờ máy: chuỗi `YYYY-MM-DD` không mang múi,giờ, và `new Date('2026-09-29')` ở múi giờ âm sẽ lùi về hôm trước — đủ để cả,kết luận lệch đi một thứ.,,**Hai lỗi có sẵn lộ ra khi làm:**,,- Thông báo bị bó vào nửa màn hình. `left: 50%` làm khối chứa chỉ còn một nửa bề,  ngang, nên thông báo dài xuống dòng vô cớ dù còn thừa chỗ; phép `transform`,  chỉ dời nó về giữa khi VẼ, không trả lại phần bề ngang đã mất lúc dàn trang.,- Nút trên thông báo không thể dùng chữ màu: nền thông báo là `--text-primary`,  nên nó đảo màu theo chế độ sáng/tối, và chữ màu đặt lên đó chắc chắn hỏng,  tương phản ở một trong hai. Phải là viên thuốc mang nền riêng.,,---,,## 10. Sáu hũ — bốn quyết định và lý do,,Bốn câu hỏi treo ở §5 giờ đã có câu trả lời, và chúng được ghi thẳng vào mã.,,### Hũ là lớp TRÊN của danh mục, không thay thế,,Mỗi danh mục thuộc nhiều nhất một hũ. Ngân sách theo danh mục vẫn chạy song,song ở tab bên cạnh cho ai muốn chi tiết hơn. Màn hình mở mặc định ở sáu hũ vì,đó là cách nhìn trả lời được câu hỏi lớn — *tháng này mình đang phân bổ thế,nào* — còn hạn mức từng danh mục là lớp chi tiết.,,### Mọi hũ đều là khoản ĐƯỢC PHÉP TIÊU, kể cả hũ tiết kiệm,,Phương pháp gốc bảo chuyển tiền thật sang từng hũ. Làm vậy đòi người dùng thao,tác thêm mỗi tháng — đúng thứ app này sinh ra để cắt.,,Ở đây hũ tiết kiệm là khoản **không được tiêu**, và "còn nguyên" nghĩa là đã,giữ lại được. Màn hình nói thẳng: *"✓ giữ được 900.000 ₫"*. Không đòi nhập gì,thêm, và con số vẫn đúng.,,### Vượt hũ thì cảnh báo, không chặn,,App không phán xét người dùng. Chặn một khoản chi có thật chỉ khiến người ta,ngừng ghi, và dữ liệu thủng thì mọi con số khác cũng hỏng theo.,,### Không bao giờ hiện hạn mức 0₫ chỉ vì lương chưa về,,Đây là chỗ dễ làm hỏng nhất. Nửa đầu tháng, trước khi lương về, thu nhập của kỳ,bằng 0 — lấy thẳng con số đó thì mọi hũ hiện hạn mức 0₫, tức tính năng chết,đúng nửa tháng, mỗi tháng.,,Nên khi kỳ này chưa có thu nhập, nền lấy **trung vị của tối đa ba kỳ gần nhất**,có thu nhập, và màn hình hiện dấu `≈` cùng câu giải thích. Trung vị chứ không,phải trung bình: một tháng có thưởng Tết sẽ kéo trung bình lên và làm hạn mức,mọi hũ phồng theo suốt mấy tháng sau.,,### Ánh xạ mặc định,,| Hũ | Tỷ lệ | Danh mục mặc định |,|---|---|---|,| Thiết yếu | 55% | Ăn uống · Đi lại · Nhà cửa · Hoá đơn · Sức khoẻ |,| Giáo dục | 10% | Giáo dục |,| Hưởng thụ | 10% | Mua sắm · Giải trí |,| Tiết kiệm dài hạn | 10% | — (để dành) |,| Tự do tài chính | 10% | — (để dành) |,| Cho đi | 5% | — (để dành) |,,Tỷ lệ sửa được từng hũ, lưu ngay khi gõ. Tổng **không bị ép** phải bằng 100 —,người dùng có thể cố ý để 90 và giữ 10 ngoài hệ thống; màn hình chỉ nói ra con,số để họ biết mình đang ở đâu.,,---,,## 11. Mục tiêu tiết kiệm — điều kiện đã đặt ra và cách giữ nó,,Ở §7.7 điều kiện là: **chỉ đáng làm nếu tiến độ tự tính**, không bắt người dùng,cập nhật tay. Điều kiện đó được giữ.,,Mỗi mục tiêu gắn với **một ví**, và tiến độ chính là số dư ví đó. Người dùng,chuyển tiền vào ví — việc họ vốn đã làm — là tiến độ tự chạy. Sau khi đặt xong,,mục tiêu không đòi thêm một thao tác nào nữa.,,Cách thông thường là lưu một con số "đã góp được" riêng. Làm vậy là có hai nguồn,sự thật phải tự giữ khớp nhau bằng tay, và người quên ghi chi tiêu thì cũng quên,cập nhật tiến độ — một thanh tiến độ đứng yên ba tháng còn tệ hơn không có, vì,nó trông như thật.,,### Ba con số suy ra, không nhập,,| Con số | Suy từ |,|---|---|,| Đã có | số dư ví |,| Nhịp góp mỗi tháng | dòng tiền ròng vào ví, ba kỳ **đã hoàn tất** gần nhất |,| Dự kiến đạt | phần còn thiếu chia cho nhịp góp |,,Kỳ đang chạy dở **không** được tính vào nhịp: kỳ mới đi được ba ngày sẽ kéo,trung bình xuống và làm ngày dự kiến đạt lùi ra hàng năm.,,Ở đây chuyển tiền giữa ví **có** được tính — khác mọi phép tính thu/chi khác,trong app. Chuyển 2 triệu từ ví chính sang ví tiết kiệm chính là hành động tiết,kiệm; loại nó ra thì mọi mục tiêu sẽ mãi mãi đứng ở 0.,,### Khi nào im lặng,,Không dự đoán ngày đạt khi chưa có kỳ nào hoàn tất để đo, hoặc khi nhịp góp,đang bằng 0 hoặc âm. Bịa ra một ngày đạt trong trường hợp đó là nói dối về,chính tiền của người dùng.,,### Hai chỗ chặn lỗi ngay trong giao diện,,- **Tạo ví mới ngay tại chỗ.** Không có nó thì người dùng gặp ngõ cụt: muốn đặt,  mục tiêu nhưng chưa có ví riêng, phải thoát ra Cài đặt tạo ví rồi quay lại —,  đủ để bỏ dở.,- **Ví đã có mục tiêu khác thì không chọn được nữa.** Hai mục tiêu cùng một ví,  sẽ hiện cùng một số dư; cả hai đều sai và không có gì báo.,,---,,## 12. Tiện ích màn hình chính — và điều nó KHÔNG làm được,,### Ràng buộc thật,,Dữ liệu của app nằm trong IndexedDB của WebView, và **không một đoạn mã native,nào đọc được nó**. Widget chạy trong tiến trình của launcher, cách WebView hai,lớp, nên nó không bao giờ được phép "hỏi" app xem hôm nay tiêu bao nhiêu.,,Cách giải: lớp web **ghi sẵn** một bản tóm tắt rất nhỏ ra SharedPreferences mỗi,lần dữ liệu đổi; widget chỉ đọc lại. Một nơi ghi, một nơi đọc — bản tóm tắt có,thể cũ vài giây nhưng không bao giờ mâu thuẫn.,,Chỉ gửi **chuỗi đã định dạng**. Định dạng tiền tệ (locale, đơn vị, dấu phân,cách) sống ở lớp web; làm lại ở lớp native là có hai chỗ cùng định dạng một thứ,,và sớm muộn chúng sẽ lệch nhau ở một trường hợp biên.,,### Điều widget này không làm: ghi một khoản mà không mở app,,Ghi được nghĩa là phải viết vào IndexedDB, mà chỉ WebView làm được. Chạm vào,widget sẽ mở app với **ô nhập đã sẵn sàng** — bớt được bước tìm app và bước điều,hướng, chứ không bỏ được bước mở app. Nói khác đi là nói quá.,,Muốn ghi mà không mở app thì phải nhân đôi kho dữ liệu sang lớp native, và lúc,đó có hai nguồn sự thật phải hợp nhất — cái giá đó lớn hơn nhiều so với một,bước chạm tiết kiệm được.,,### Ghi nhận khi làm,,- `updatePeriodMillis = 0`: widget **không** tự làm mới theo giờ. Số liệu chỉ đổi,  khi người dùng ghi một khoản, và lúc đó lớp web gọi cập nhật thẳng. Đặt chu kỳ,  tự làm mới chỉ tốn pin để vẽ lại đúng con số cũ.,- Hai `PendingIntent` khác nhau phải có `requestCode` khác nhau, không thì Android,  coi là một và cả hai nút cùng làm một việc.,- Cờ "ghi nhanh" phải được **xoá khỏi intent** sau khi đọc: Android giữ lại intent,  cũ, nên không xoá thì lần mở app tiếp theo từ danh sách gần đây cũng bị coi là,  ghi nhanh và tự bật bàn phím lên.,- `previewLayout` vẽ chính bố cục thật trong bộ chọn tiện ích (Android 12+);,  `previewImage` là bản dự phòng cho máy cũ hơn.,,### Việc còn lại cho người dùng,,Cắm widget lên màn hình chính là thao tác thủ công: nhấn giữ màn hình chính →,Tiện ích → XAXI → kéo ra. Không tự động hoá được bằng adb vì mỗi lệnh `input` là,một lần chạm riêng, không thành một cử chỉ kéo liên tục.,,### Một điều nhỏ phát hiện được, chưa sửa,,Danh sách ví **không có thứ tự xác định**: Dexie trả về theo thứ tự UUID, nên ví,mặc định trong mọi bộ chọn là ngẫu nhiên (ổn định với một bộ dữ liệu, nhưng tuỳ,tiện). Sửa thì phải chọn một khoá sắp xếp, và việc đó đổi luôn ví mặc định của ô,nhập nhanh — một thay đổi hành vi, nên để lại quyết định.,
+
+---
+
+## 8. Ghi chú khi làm 7.1–7.3
+
+Ba tính năng này đều nói với người dùng một con số mà họ không tự tính được.
+Nên phần khó không phải là tính ra số, mà là **biết khi nào phải im lặng** —
+một con số sai trong app tài chính tệ hơn là không có con số nào.
+
+**Dự báo im lặng khi:** chưa đủ năm ngày trong kỳ · còn dưới ba ngày là hết kỳ
+(lúc đó dự báo gần bằng số đã chi, đúng nhưng vô dụng, mà một ô vô dụng chiếm
+chỗ thì lần sau người dùng thôi nhìn vào đó) · độ phủ dữ liệu dưới 50% · chưa
+ghi khoản nào.
+
+**Dự báo tách chi định kỳ khỏi chi biến đổi trước khi suy ra nhịp.** Không tách
+thì tiền nhà ghi ngày mùng 3 bị nhân lên cho cả tháng và dự báo phóng đại gấp
+mấy lần.
+
+**Cảnh báo số tiền có ba điều kiện cùng lúc**, trong đó điều kiện thứ ba quan
+trọng nhất: số tiền phải lớn hơn **mọi khoản từng ghi** trong danh mục đó thêm
+một nửa nữa. Không có nó thì một bữa nhậu 500k trong danh mục Ăn uống thường
+50k sẽ bị hỏi lại mỗi lần — và một cảnh báo hay báo nhầm thì chỉ vài lần là bị
+bấm bỏ qua theo phản xạ, đúng lúc nó báo đúng cũng bị bỏ qua nốt.
+
+Đo trên dữ liệu mẫu thật (141 khoản Ăn uống, trung vị 73k, lớn nhất 118k):
+
+| Gõ vào | Kết quả |
+|---|---|
+| `cà phê 73k` | im lặng |
+| `cà phê 150k` | im lặng — gấp đôi vẫn là bữa đắt, không phải lỗi |
+| `cà phê 350k` | im lặng — gấp 4,8 lần, dưới ngưỡng 5 |
+| `cà phê 730k` | *"Nghi thừa một số 0 — danh mục này thường quanh 73.000 ₫"* |
+| `xăng 2tr` | *"Lớn gấp 42 lần mức thường gặp (48.000 ₫)"* |
+| `tiền nhà 4tr5` | im lặng — đúng mức thường của danh mục đó |
+
+Cảnh báo **không chặn**. Nhấn Enter là vẫn ghi. App hỏi lại, không phán xét.
+
+---
+
+## 9. Ghi chú khi làm 7.4, 7.6, 7.8, 7.9
+
+**Nhân bản bằng nhấn giữ.** Ghi ngay chứ không hỏi lại — hỏi lại biến một chạm
+thành ba chạm, mà ba chạm thì đã không còn là đường tắt nữa. Cái đỡ là nút
+"Hoàn tác" trên thông báo, nên thông báo giờ nhận được một việc kèm theo.
+
+Không chép `transferId`. Chép một vế của lần chuyển tiền sẽ tạo ra nửa cặp liên
+kết: số dư hai ví lệch nhau ngay, mà mọi phép tính thu/chi vẫn loại nó ra nên
+không con số nào lộ ra sai. Đó là kiểu hỏng im lặng tệ nhất.
+
+**Nhãn so sánh có vùng chết 5%.** Dưới mức đó là dao động thường ngày, không
+phải tín hiệu. Trong danh sách dài thì im hẳn thay vì hiện "≈ như kỳ trước" —
+một nhãn không nói gì vẫn chiếm chỗ và vẫn bắt mắt phải đọc.
+
+**Thứ tiêu nhiều nhất tính trên 90 ngày, không phải một tháng.** Một tháng chỉ
+có bốn lần mỗi thứ; một bữa nhậu là đủ làm lệch kết luận. Và chỉ nói khi thứ đó
+nhô lên trên 30% so với mức trung bình — tiêu đều thì không có gì để nói.
+
+Đọc ngày bằng giờ UTC chứ không phải giờ máy: chuỗi `YYYY-MM-DD` không mang múi
+giờ, và `new Date('2026-09-29')` ở múi giờ âm sẽ lùi về hôm trước — đủ để cả
+kết luận lệch đi một thứ.
+
+**Hai lỗi có sẵn lộ ra khi làm:**
+
+- Thông báo bị bó vào nửa màn hình. `left: 50%` làm khối chứa chỉ còn một nửa bề
+  ngang, nên thông báo dài xuống dòng vô cớ dù còn thừa chỗ; phép `transform`
+  chỉ dời nó về giữa khi VẼ, không trả lại phần bề ngang đã mất lúc dàn trang.
+- Nút trên thông báo không thể dùng chữ màu: nền thông báo là `--text-primary`
+  nên nó đảo màu theo chế độ sáng/tối, và chữ màu đặt lên đó chắc chắn hỏng
+  tương phản ở một trong hai. Phải là viên thuốc mang nền riêng.
+
+---
+
+## 10. Sáu hũ — bốn quyết định và lý do
+
+Bốn câu hỏi treo ở §5 giờ đã có câu trả lời, và chúng được ghi thẳng vào mã.
+
+### Hũ là lớp TRÊN của danh mục, không thay thế
+
+Mỗi danh mục thuộc nhiều nhất một hũ. Ngân sách theo danh mục vẫn chạy song
+song ở tab bên cạnh cho ai muốn chi tiết hơn. Màn hình mở mặc định ở sáu hũ vì
+đó là cách nhìn trả lời được câu hỏi lớn — *tháng này mình đang phân bổ thế
+nào* — còn hạn mức từng danh mục là lớp chi tiết.
+
+### Mọi hũ đều là khoản ĐƯỢC PHÉP TIÊU, kể cả hũ tiết kiệm
+
+Phương pháp gốc bảo chuyển tiền thật sang từng hũ. Làm vậy đòi người dùng thao
+tác thêm mỗi tháng — đúng thứ app này sinh ra để cắt.
+
+Ở đây hũ tiết kiệm là khoản **không được tiêu**, và "còn nguyên" nghĩa là đã
+giữ lại được. Màn hình nói thẳng: *"✓ giữ được 900.000 ₫"*. Không đòi nhập gì
+thêm, và con số vẫn đúng.
+
+### Vượt hũ thì cảnh báo, không chặn
+
+App không phán xét người dùng. Chặn một khoản chi có thật chỉ khiến người ta
+ngừng ghi, và dữ liệu thủng thì mọi con số khác cũng hỏng theo.
+
+### Không bao giờ hiện hạn mức 0₫ chỉ vì lương chưa về
+
+Đây là chỗ dễ làm hỏng nhất. Nửa đầu tháng, trước khi lương về, thu nhập của kỳ
+bằng 0 — lấy thẳng con số đó thì mọi hũ hiện hạn mức 0₫, tức tính năng chết
+đúng nửa tháng, mỗi tháng.
+
+Nên khi kỳ này chưa có thu nhập, nền lấy **trung vị của tối đa ba kỳ gần nhất**
+có thu nhập, và màn hình hiện dấu `≈` cùng câu giải thích. Trung vị chứ không
+phải trung bình: một tháng có thưởng Tết sẽ kéo trung bình lên và làm hạn mức
+mọi hũ phồng theo suốt mấy tháng sau.
+
+### Ánh xạ mặc định
+
+| Hũ | Tỷ lệ | Danh mục mặc định |
+|---|---|---|
+| Thiết yếu | 55% | Ăn uống · Đi lại · Nhà cửa · Hoá đơn · Sức khoẻ |
+| Giáo dục | 10% | Giáo dục |
+| Hưởng thụ | 10% | Mua sắm · Giải trí |
+| Tiết kiệm dài hạn | 10% | — (để dành) |
+| Tự do tài chính | 10% | — (để dành) |
+| Cho đi | 5% | — (để dành) |
+
+Tỷ lệ sửa được từng hũ, lưu ngay khi gõ. Tổng **không bị ép** phải bằng 100 —
+người dùng có thể cố ý để 90 và giữ 10 ngoài hệ thống; màn hình chỉ nói ra con
+số để họ biết mình đang ở đâu.
+
+---
+
+## 11. Mục tiêu tiết kiệm — điều kiện đã đặt ra và cách giữ nó
+
+Ở §7.7 điều kiện là: **chỉ đáng làm nếu tiến độ tự tính**, không bắt người dùng
+cập nhật tay. Điều kiện đó được giữ.
+
+Mỗi mục tiêu gắn với **một ví**, và tiến độ chính là số dư ví đó. Người dùng
+chuyển tiền vào ví — việc họ vốn đã làm — là tiến độ tự chạy. Sau khi đặt xong
+
+mục tiêu không đòi thêm một thao tác nào nữa.
+
+Cách thông thường là lưu một con số "đã góp được" riêng. Làm vậy là có hai nguồn
+sự thật phải tự giữ khớp nhau bằng tay, và người quên ghi chi tiêu thì cũng quên
+cập nhật tiến độ — một thanh tiến độ đứng yên ba tháng còn tệ hơn không có, vì
+nó trông như thật.
+
+### Ba con số suy ra, không nhập
+
+| Con số | Suy từ |
+|---|---|
+| Đã có | số dư ví |
+| Nhịp góp mỗi tháng | dòng tiền ròng vào ví, ba kỳ **đã hoàn tất** gần nhất |
+| Dự kiến đạt | phần còn thiếu chia cho nhịp góp |
+
+Kỳ đang chạy dở **không** được tính vào nhịp: kỳ mới đi được ba ngày sẽ kéo
+trung bình xuống và làm ngày dự kiến đạt lùi ra hàng năm.
+
+Ở đây chuyển tiền giữa ví **có** được tính — khác mọi phép tính thu/chi khác
+trong app. Chuyển 2 triệu từ ví chính sang ví tiết kiệm chính là hành động tiết
+kiệm; loại nó ra thì mọi mục tiêu sẽ mãi mãi đứng ở 0.
+
+### Khi nào im lặng
+
+Không dự đoán ngày đạt khi chưa có kỳ nào hoàn tất để đo, hoặc khi nhịp góp
+đang bằng 0 hoặc âm. Bịa ra một ngày đạt trong trường hợp đó là nói dối về
+chính tiền của người dùng.
+
+### Hai chỗ chặn lỗi ngay trong giao diện
+
+- **Tạo ví mới ngay tại chỗ.** Không có nó thì người dùng gặp ngõ cụt: muốn đặt
+  mục tiêu nhưng chưa có ví riêng, phải thoát ra Cài đặt tạo ví rồi quay lại —
+  đủ để bỏ dở.
+- **Ví đã có mục tiêu khác thì không chọn được nữa.** Hai mục tiêu cùng một ví
+  sẽ hiện cùng một số dư; cả hai đều sai và không có gì báo.
+
+---
+
+## 12. Tiện ích màn hình chính — và điều nó KHÔNG làm được
+
+### Ràng buộc thật
+
+Dữ liệu của app nằm trong IndexedDB của WebView, và **không một đoạn mã native
+nào đọc được nó**. Widget chạy trong tiến trình của launcher, cách WebView hai
+lớp, nên nó không bao giờ được phép "hỏi" app xem hôm nay tiêu bao nhiêu.
+
+Cách giải: lớp web **ghi sẵn** một bản tóm tắt rất nhỏ ra SharedPreferences mỗi
+lần dữ liệu đổi; widget chỉ đọc lại. Một nơi ghi, một nơi đọc — bản tóm tắt có
+thể cũ vài giây nhưng không bao giờ mâu thuẫn.
+
+Chỉ gửi **chuỗi đã định dạng**. Định dạng tiền tệ (locale, đơn vị, dấu phân
+cách) sống ở lớp web; làm lại ở lớp native là có hai chỗ cùng định dạng một thứ
+
+và sớm muộn chúng sẽ lệch nhau ở một trường hợp biên.
+
+### Điều widget này không làm: ghi một khoản mà không mở app
+
+Ghi được nghĩa là phải viết vào IndexedDB, mà chỉ WebView làm được. Chạm vào
+widget sẽ mở app với **ô nhập đã sẵn sàng** — bớt được bước tìm app và bước điều
+hướng, chứ không bỏ được bước mở app. Nói khác đi là nói quá.
+
+Muốn ghi mà không mở app thì phải nhân đôi kho dữ liệu sang lớp native, và lúc
+đó có hai nguồn sự thật phải hợp nhất — cái giá đó lớn hơn nhiều so với một
+bước chạm tiết kiệm được.
+
+### Ghi nhận khi làm
+
+- `updatePeriodMillis = 0`: widget **không** tự làm mới theo giờ. Số liệu chỉ đổi
+  khi người dùng ghi một khoản, và lúc đó lớp web gọi cập nhật thẳng. Đặt chu kỳ
+  tự làm mới chỉ tốn pin để vẽ lại đúng con số cũ.
+- Hai `PendingIntent` khác nhau phải có `requestCode` khác nhau, không thì Android
+  coi là một và cả hai nút cùng làm một việc.
+- Cờ "ghi nhanh" phải được **xoá khỏi intent** sau khi đọc: Android giữ lại intent
+  cũ, nên không xoá thì lần mở app tiếp theo từ danh sách gần đây cũng bị coi là
+  ghi nhanh và tự bật bàn phím lên.
+- `previewLayout` vẽ chính bố cục thật trong bộ chọn tiện ích (Android 12+);
+  `previewImage` là bản dự phòng cho máy cũ hơn.
+
+### Việc còn lại cho người dùng
+
+Cắm widget lên màn hình chính là thao tác thủ công: nhấn giữ màn hình chính →
+Tiện ích → XAXI → kéo ra. Không tự động hoá được bằng adb vì mỗi lệnh `input` là
+một lần chạm riêng, không thành một cử chỉ kéo liên tục.
+
+### Một điều nhỏ phát hiện được — **đã sửa, xem §13**
+
+---
+
+## 13. Thứ tự hiển thị của ví và danh mục
+
+Dexie trả về theo thứ tự **khoá chính**, mà khoá chính là UUID — tức thứ tự
+ngẫu nhiên. Nó ổn định với một bộ dữ liệu nhất định nên không ai nhận ra ngay,
+nhưng hậu quả thì có thật:
+
+- lưới chip danh mục trong biểu mẫu xếp lộn xộn, không theo logic nào;
+- ví mặc định của ô nhập nhanh là một ví bất kỳ, không phải ví hay dùng;
+- màn hình chuyển tiền có thể mở ra với **ví nguồn trùng ví đích**, và nút
+  Chuyển bị tắt ngay từ đầu.
+
+Cái cuối lộ ra khi viết phép kiểm trên máy — không phải khi dùng app, vì nó chỉ
+xảy ra với một số bộ dữ liệu.
+
+### Cách sửa
+
+Mỗi ví và danh mục mang một mốc `createdAt`, và **store sắp thứ tự một lần** cho
+mọi màn hình. Để từng màn hình tự sắp thì sớm muộn sẽ có màn hình quên, và
+người dùng thấy cùng một danh sách xếp hai kiểu ở hai chỗ.
+
+**Không** sắp theo tên: đổi tên một ví sẽ làm nó nhảy chỗ, và ví mặc định của ô
+nhập nhanh đổi theo — một thao tác vô hại gây hệ quả không ai ngờ.
+
+**Không** sắp theo `updatedAt`: sửa một bản ghi sẽ đẩy nó xuống cuối.
+
+### Di trú
+
+`backfillOrder()` gán mốc cho bản ghi cũ một lần, khi mở app:
+
+- bản ghi **trùng tên** với bộ hạt giống lấy đúng chỉ số trong bộ đó, nên thứ tự
+  quen thuộc được dựng lại y nguyên: Tiền mặt · Ngân hàng · Ví điện tử;
+- bản ghi người dùng tự thêm xếp sau, theo `updatedAt`.
+
+Mốc của bộ hạt giống là số nhỏ (0, 1, 2…) chứ không phải thời gian thật, nên
+bản ghi tạo sau — mang `Date.now()` cỡ 1,7 nghìn tỷ — luôn xếp sau.
+
+Bản ghi chưa qua di trú xuống **cuối** chứ không lên đầu: đẩy chúng lên trước sẽ
+xáo trộn thứ tự người dùng đang quen, đúng vào lúc nâng cấp.

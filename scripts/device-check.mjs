@@ -444,6 +444,26 @@ const CHECKS = [
       `),
   },
   {
+    name: 'thứ tự ví và danh mục xác định',
+    run: (page) =>
+      page.eval(`
+        await lenh('chuyển tiền');
+        const d = await wait(() => $('[role="dialog"]'));
+        const from = d.querySelector('#tf-from');
+        const to = d.querySelector('#tf-to');
+        // KHÔNG dùng biểu thức chính quy để cắt emoji: mã ở đây đi qua hai lớp
+        // chuỗi lồng nhau và dấu gạch chéo được thoát sẽ bị rút gọn trên đường đi.
+        const ten = [...from.options].map((o) => o.textContent.trim());
+        // Hai đầu trùng nhau thì nút Chuyển bị tắt ngay lúc mở màn hình
+        const trung = from.value === to.value;
+        await dong();
+
+        if (trung) return '✗ ví nguồn trùng ví đích ngay khi mở';
+        if (!ten[0].endsWith('Tiền mặt')) return '✗ thứ tự ví không theo lúc tạo: ' + ten.join(' · ');
+        return '✓ ' + ten.join(' · ');
+      `),
+  },
+  {
     name: 'chuyển tiền không đổi tổng chi',
     run: (page) =>
       page.eval(`
