@@ -1,8 +1,41 @@
 # XAXI — Quản lý thu chi cá nhân
 
-Một codebase, chạy trên web (GitHub Pages), Windows, Android; macOS và Linux bật sau mà không phải sửa code.
+**Android là nền tảng gốc.** Web (GitHub Pages) và desktop dùng chung codebase; iOS bật sau mà không phải sửa code.
 
 Dữ liệu nằm hoàn toàn trên thiết bị (IndexedDB). Không tài khoản, không máy chủ, không quảng cáo.
+
+---
+
+## Giao diện: ô nhập là toàn bộ app
+
+Không tab, không menu, không nút cộng. Mở app ra chỉ có **một con số và một ô nhập**. Cùng một ô đó nhận cả ba việc:
+
+| Bạn gõ | App hiểu |
+|---|---|
+| `cà phê 35k` | ghi một khoản chi |
+| `xăng 100k hôm qua` | ghi vào ngày khác |
+| `+15tr lương` | ghi khoản thu |
+| `tháng này ăn uống bao nhiêu` | trả lời ngay tại chỗ |
+| `chi nhiều nhất vào việc gì` | phân bổ theo danh mục |
+| `tuần này so với tuần trước` | so sánh hai kỳ |
+| `còn bao nhiêu tiền` | số dư từng ví |
+| `grab` | tìm trong ghi chú |
+| `ngân sách`, `cài đặt`, `đối soát` | mở màn hình tương ứng |
+
+Trong lúc gõ, app hiện luôn nó sắp làm gì — nên không bao giờ lỡ tay ghi nhầm một câu hỏi thành khoản chi.
+
+## Mở rộng theo AI mà không phá cam kết riêng tư
+
+Tầng trợ lý (`src/lib/ask.ts`) được thiết kế để cắm rút, ba bậc — bậc sau chỉ cần trả về cùng kiểu `Answer`,
+**giao diện không đổi một dòng nào**:
+
+| Bậc | Chạy ở đâu | Dữ liệu ra ngoài | Trạng thái |
+|---|---|---|---|
+| 1 · bộ hiểu tất định | trên máy | không | **đang chạy** |
+| 2 · OCR biên lai (ML Kit) | trên máy | không | chưa làm |
+| 3 · mô hình ngôn ngữ (Gemini Nano hoặc khoá API của bạn) | tuỳ chọn | có — phải nói rõ và do bạn bật | chưa làm |
+
+Bậc 1 đã phủ được phần lớn nhu cầu mà không cần mạng, không cần tài khoản, không tốn tiền.
 
 ---
 
@@ -49,12 +82,12 @@ Tệp và văn bản được xử lý ngay trên máy, không gửi đi đâu.
 ```bash
 npm install
 npm run dev        # http://localhost:5173
-npm test           # 31 test: phần lõi + render thật app trên jsdom
+npm test           # 53 test: phần lõi, bộ hiểu ngôn ngữ, và render thật app trên jsdom
 npm run build      # xuất ra dist/
 ```
 
 Lần đầu mở app sẽ trống. Để xem app trông thế nào khi đã dùng vài tháng:
-*Cài đặt → Dữ liệu → **Nạp dữ liệu mẫu*** (3 tháng chi tiêu, có sẵn ngày trống, khoản chờ phân loại và một bút toán đối soát để bạn thử các cơ chế).
+gõ `cài đặt` → Dữ liệu → **Nạp dữ liệu mẫu** (3 tháng chi tiêu, có sẵn ngày trống, khoản chờ phân loại và một bút toán đối soát để bạn thử các cơ chế).
 
 ## Xuất bản web lên GitHub Pages
 
@@ -145,10 +178,13 @@ src/
     actions.ts       ghi giao dịch, đối soát, phím tắt tự học
     stats.ts         tổng hợp số liệu cho báo cáo
     backup.ts        sao lưu JSON, xuất CSV
+    ask.ts           tầng trợ lý: phân loại ý định + trả lời câu hỏi (bậc 1)
+    timerange.ts     đọc 'tuần này', 'tháng 8', '7 ngày qua'
     demo.ts          sinh dữ liệu mẫu 3 tháng để dùng thử
-  components/        ô ghi nhanh, lấp khoảng trống, biên lai, đối soát, sao kê, biểu đồ
-  pages/             Tổng quan · Giao dịch · Ngân sách · Báo cáo · Cài đặt
-tests/               31 test: phần lõi + tích hợp trên jsdom
+  components/        ô trả lời, biên lai, đối soát, sao kê, biểu đồ
+  pages/Console.tsx  màn hình duy nhất — ô nhập làm tất cả
+  pages/             Ngân sách · Báo cáo · Lịch sử · Cài đặt (mở bằng lệnh)
+tests/               53 test: phần lõi, bộ hiểu, và tích hợp trên jsdom
 ```
 
 ## Về biểu đồ

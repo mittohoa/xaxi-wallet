@@ -60,48 +60,112 @@ async function settle(ms = 60) {
 }
 
 /** Cho toi khi dieu kien dung — IndexedDB gia va live query can vai vong */
-async function waitFor(check: () => boolean, timeoutMs = 5000) {
+async function waitFor(check: () => boolean | Promise<boolean>, timeoutMs = 5000) {
   const deadline = Date.now() + timeoutMs
   while (Date.now() < deadline) {
-    if (check()) return
+    if (await check()) return
     await settle(50)
   }
-  assert.ok(check(), 'hết thời gian chờ mà điều kiện vẫn chưa đúng')
+  assert.ok(await check(), 'hết thời gian chờ mà điều kiện vẫn chưa đúng')
 }
 
-test('app khởi động, tạo dữ liệu mặc định và vẽ được màn hình Tổng quan', async () => {
-  const container = dom.window.document.getElementById('root')!
-  const root = createRoot(container)
+/** Dat gia tri vao input theo dung cach React nhan ra (khong the gan .value truc tiep) */
+function type(input: HTMLInputElement, value: string) {
+  const setter = Object.getOwnPropertyDescriptor(dom.window.HTMLInputElement.prototype, 'value')!.set!
+  setter.call(input, value)
+  input.dispatchEvent(new dom.window.Event('input', { bubbles: true }))
+}
+
+function pressEnter(input: HTMLInputElement) {
+  input.dispatchEvent(new dom.window.KeyboardEvent('keydown', { key: 'Enter', bubbles: true }))
+}
+
+let container: HTMLElement
+let root: ReturnType<typeof createRoot>
+
+test('app khởi động, tạo dữ liệu mặc định và dựng được màn hình một ô nhập', async () => {
+  container = dom.window.document.getElementById('root')!
+  root = createRoot(container)
 
   await act(async () => {
     root.render(createElement(App))
   })
-  await waitFor(() => (container.textContent ?? '').includes('Tổng số dư'))
+  await waitFor(() => Boolean(container.querySelector('.composer-input')))
 
-  const text = container.textContent ?? ''
+  assert.ok(container.querySelector('.hero-figure'), 'phải có con số lớn dẫn dắt')
+  assert.ok(container.querySelector('.composer-input'), 'phải có ô nhập duy nhất')
+  assert.equal(container.querySelectorAll('.nav').length, 0, 'không còn thanh tab')
+  assert.equal(container.querySelectorAll('.fab').length, 0, 'không còn nút FAB')
 
-  assert.ok(text.includes('Tổng số dư'), 'phải hiển thị thẻ tổng số dư')
-  assert.ok(text.includes('Ghi nhanh') || container.querySelector('.quick-row'), 'phải có ô ghi nhanh')
-  assert.ok(text.includes('Dán biên lai'), 'phải có lối vào dán biên lai')
-  assert.ok(text.includes('Đối soát số dư'), 'phải có lối vào đối soát số dư')
-  assert.ok(text.includes('Độ phủ dữ liệu') || text.includes('Lấp khoảng trống'), 'phải có phần độ phủ dữ liệu')
-
-  // Du lieu mac dinh da duoc tao
   assert.equal(await db.wallets.count(), 3)
   assert.ok((await db.categories.count()) >= 10)
   assert.equal(await db.settings.count(), 1)
 
-  // Khong co danh muc he thong nao bi thieu
   const slugs = (await db.categories.toArray()).map((c) => c.slug).filter(Boolean)
   for (const slug of ['uncategorized-expense', 'uncategorized-income', 'reconcile-expense', 'reconcile-income']) {
     assert.ok(slugs.includes(slug as never), `thiếu danh mục hệ thống ${slug}`)
   }
+})
 
-  // Nav day du 5 muc
-  assert.equal(container.querySelectorAll('.nav a').length, 5)
+test('gõ một dòng vào ô nhập thì ghi được giao dịch thật', async () => {
+  const input = container.querySelector('.composer-input') as HTMLInputElement
+  const before = await db.transactions.count()
 
-  // Bieu do theo ngay co mat
-  assert.ok(container.querySelector('.chart') || text.includes('Chi theo ngày'), 'phải có biểu đồ chi theo ngày')
+  await act(async () => {
+    type(input, 'cà phê 35k')
+  })
+  await waitFor(() => (container.querySelector('.composer-preview')?.textContent ?? '').includes('Ăn uống'))
+
+  await act(async () => {
+    pressEnter(input)
+  })
+  await waitFor(async () => (await db.transactions.count()) === before + 1)
+
+  const saved = (await db.transactions.toArray()).at(-1)!
+  assert.equal(saved.amount, 35_000)
+  assert.equal(saved.kind, 'expense')
+  assert.equal(saved.source, 'quick')
+  await waitFor(() => input.value === '')
+  assert.equal(input.value, '', 'ô nhập phải được dọn sau khi ghi')
+})
+
+test('gõ một câu hỏi thì trả lời ngay tại chỗ, không tạo giao dịch', async () => {
+  const input = container.querySelector('.composer-input') as HTMLInputElement
+  const before = await db.transactions.count()
+
+  await act(async () => {
+    type(input, 'tháng này chi bao nhiêu')
+  })
+  await waitFor(() => (container.querySelector('.composer-preview')?.textContent ?? '').includes('hỏi'))
+
+  await act(async () => {
+    pressEnter(input)
+  })
+  await waitFor(() => Boolean(container.querySelector('.answer-figure')))
+
+  assert.equal(await db.transactions.count(), before, 'câu hỏi không được tạo giao dịch')
+  assert.ok(container.querySelector('.answer-close'), 'phải có lối quay lại')
+})
+
+test('gõ một lệnh thì mở màn hình phụ', async () => {
+  const input = container.querySelector('.composer-input') as HTMLInputElement
+
+  await act(async () => {
+    type(input, 'ngân sách')
+  })
+  await act(async () => {
+    pressEnter(input)
+  })
+  await waitFor(() => Boolean(dom.window.document.querySelector('.full-sheet')))
+
+  const sheet = dom.window.document.querySelector('.full-sheet')!
+  assert.ok((sheet.textContent ?? '').includes('Ngân sách'))
+
+  const close = sheet.querySelector('.icon-btn') as HTMLButtonElement
+  await act(async () => {
+    close.click()
+  })
+  await waitFor(() => !dom.window.document.querySelector('.full-sheet'))
 
   await act(async () => {
     root.unmount()

@@ -1,24 +1,18 @@
-import { useEffect, useState } from 'react'
-import { HashRouter, NavLink, Route, Routes, useLocation } from 'react-router-dom'
+import { useEffect, useState, type ReactNode } from 'react'
 import { ReceiptSheet } from './components/ReceiptSheet'
+import { ReconcileSheet } from './components/ReconcileSheet'
+import { StatementSheet } from './components/StatementSheet'
 import { TransactionSheet } from './components/TransactionSheet'
 import { seedIfEmpty } from './db/db'
+import type { CommandName } from './lib/ask'
 import { postDueRecurring } from './lib/recurring'
 import { Budgets } from './pages/Budgets'
-import { Dashboard } from './pages/Dashboard'
+import { Console } from './pages/Console'
 import { Reports } from './pages/Reports'
 import { Settings } from './pages/Settings'
 import { Transactions } from './pages/Transactions'
 import { AppProvider, useApp } from './store'
 import type { Transaction } from './types'
-
-const NAV = [
-  { to: '/', label: 'Tổng quan', icon: '🏠', title: 'Tổng quan' },
-  { to: '/transactions', label: 'Giao dịch', icon: '🧾', title: 'Giao dịch' },
-  { to: '/budgets', label: 'Ngân sách', icon: '🎯', title: 'Ngân sách' },
-  { to: '/reports', label: 'Báo cáo', icon: '📊', title: 'Báo cáo' },
-  { to: '/settings', label: 'Cài đặt', icon: '⚙️', title: 'Cài đặt' },
-]
 
 /** Van ban duoc chia se vao app (PWA share target / Android send intent) */
 function consumeSharedText(): string {
@@ -26,14 +20,47 @@ function consumeSharedText(): string {
   const shared = params.get('text') ?? params.get('shared') ?? ''
   if (shared) {
     // Don sach URL de lan mo sau khong mo lai o dan bien lai
-    window.history.replaceState({}, '', window.location.pathname + window.location.hash)
+    window.history.replaceState({}, '', window.location.pathname)
   }
   return shared
 }
 
+const SHEET_TITLE: Record<Exclude<CommandName, 'help'>, string> = {
+  settings: 'Cài đặt',
+  budgets: 'Ngân sách',
+  reports: 'Báo cáo',
+  receipt: 'Dán biên lai',
+  reconcile: 'Đối soát số dư',
+  statement: 'Nhập sao kê',
+  history: 'Lịch sử giao dịch',
+}
+
+/** Tam truot chiem ca man hinh, dung cho cac man hinh phu mo bang lenh */
+function FullSheet({ title, onClose, children }: { title: string; onClose: () => void; children: ReactNode }) {
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    document.addEventListener('keydown', onKey)
+    return () => document.removeEventListener('keydown', onKey)
+  }, [onClose])
+
+  return (
+    <div className="full-sheet" role="dialog" aria-modal="true" aria-label={title}>
+      <header className="full-sheet-top">
+        <button type="button" className="icon-btn" onClick={onClose} aria-label="Đóng">
+          ✕
+        </button>
+        <h1>{title}</h1>
+      </header>
+      <div className="full-sheet-body">{children}</div>
+    </div>
+  )
+}
+
 function Shell() {
   const { ready, toast } = useApp()
-  const location = useLocation()
+  const [screen, setScreen] = useState<CommandName | null>(null)
   const [editing, setEditing] = useState<Transaction | 'new' | null>(null)
   const [sharedText, setSharedText] = useState('')
 
@@ -49,54 +76,60 @@ function Shell() {
     })
   }, [ready, toast])
 
-  const current = NAV.find((n) => n.to === location.pathname) ?? NAV[0]
+  // Nut Back cua Android dong man hinh phu thay vi thoat app
+  useEffect(() => {
+    if (!screen && !editing) return
+    window.history.pushState({ overlay: true }, '')
+    const onPop = () => {
+      setScreen(null)
+      setEditing(null)
+    }
+    window.addEventListener('popstate', onPop)
+    return () => window.removeEventListener('popstate', onPop)
+  }, [screen, editing])
+
+  if (!ready) {
+    return (
+      <div className="boot">
+        <span>Đang mở dữ liệu…</span>
+      </div>
+    )
+  }
+
+  const close = () => setScreen(null)
 
   return (
-    <div className="app">
-      <nav className="nav">
-        <div className="brand">
-          <span aria-hidden="true">💰</span> XAXI
-        </div>
-        {NAV.map((n) => (
-          <NavLink key={n.to} to={n.to} className={({ isActive }) => (isActive ? 'active' : undefined)} end={n.to === '/'}>
-            <span className="ico" aria-hidden="true">
-              {n.icon}
-            </span>
-            <span>{n.label}</span>
-          </NavLink>
-        ))}
-      </nav>
+    <>
+      <Console onCommand={setScreen} onEditTransaction={setEditing} />
 
-      <div>
-        <header className="topbar">
-          <h1>{current.title}</h1>
-          <span className="spacer" />
-        </header>
+      {screen === 'settings' && (
+        <FullSheet title={SHEET_TITLE.settings} onClose={close}>
+          <Settings />
+        </FullSheet>
+      )}
+      {screen === 'budgets' && (
+        <FullSheet title={SHEET_TITLE.budgets} onClose={close}>
+          <Budgets />
+        </FullSheet>
+      )}
+      {screen === 'reports' && (
+        <FullSheet title={SHEET_TITLE.reports} onClose={close}>
+          <Reports />
+        </FullSheet>
+      )}
+      {screen === 'history' && (
+        <FullSheet title={SHEET_TITLE.history} onClose={close}>
+          <Transactions onEdit={setEditing} />
+        </FullSheet>
+      )}
 
-        <main className="main">
-          {!ready ? (
-            <div className="card">
-              <div className="hint">Đang mở dữ liệu…</div>
-            </div>
-          ) : (
-            <Routes>
-              <Route path="/" element={<Dashboard onEdit={setEditing} onNew={() => setEditing('new')} />} />
-              <Route path="/transactions" element={<Transactions onEdit={setEditing} />} />
-              <Route path="/budgets" element={<Budgets />} />
-              <Route path="/reports" element={<Reports />} />
-              <Route path="/settings" element={<Settings />} />
-            </Routes>
-          )}
-        </main>
-      </div>
-
-      <button type="button" className="fab" onClick={() => setEditing('new')} aria-label="Thêm giao dịch">
-        ＋
-      </button>
+      {screen === 'receipt' && <ReceiptSheet onClose={close} />}
+      {screen === 'reconcile' && <ReconcileSheet onClose={close} />}
+      {screen === 'statement' && <StatementSheet onClose={close} />}
 
       {editing && <TransactionSheet editing={editing} onClose={() => setEditing(null)} />}
       {sharedText && <ReceiptSheet initialText={sharedText} onClose={() => setSharedText('')} />}
-    </div>
+    </>
   )
 }
 
@@ -111,9 +144,7 @@ export default function App() {
 
   return (
     <AppProvider>
-      <HashRouter>
-        <Shell />
-      </HashRouter>
+      <Shell />
     </AppProvider>
   )
 }

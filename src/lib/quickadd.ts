@@ -17,6 +17,17 @@ export function normalize(text: string): string {
   return foldKeepLength(text).replace(/\s+/g, ' ').trim()
 }
 
+/**
+ * Khop tu khoa theo BIEN TU, khong phai chuoi con.
+ * Khong co dieu nay thi tu khoa 'an' se khop trong 'tuan truoc',
+ * lam cau hoi ve thoi gian bi gan nham vao danh muc An uong.
+ */
+export function containsWord(haystack: string, needle: string): boolean {
+  if (!needle) return false
+  const escaped = needle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+  return new RegExp(`(?:^|[^a-z0-9])${escaped}(?:$|[^a-z0-9])`).test(haystack)
+}
+
 export interface QuickParse {
   kind: TxKind
   amount: number
@@ -145,7 +156,7 @@ export function parseQuickEntry(input: string, categories: Category[], history: 
     let best: { id: number; len: number } | null = null
     const consider = (id: number, token: string) => {
       const k = normalize(token)
-      if (k && foldedNote.includes(k) && (!best || k.length > best.len)) best = { id, len: k.length }
+      if (k && containsWord(foldedNote, k) && (!best || k.length > best.len)) best = { id, len: k.length }
     }
     for (const c of categories) {
       if (c.kind !== kind || c.id === undefined) continue

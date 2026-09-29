@@ -91,79 +91,281 @@ textarea {
   color: inherit;
 }
 
-/* ---------- Layout ---------- */
-.app {
-  min-height: 100%;
+/* ---------- Bo cuc man hinh don ---------- */
+.boot {
+  height: 100%;
   display: grid;
-  grid-template-columns: 1fr;
-  padding-bottom: calc(var(--nav-h) + var(--safe-b));
+  place-items: center;
+  color: var(--text-muted);
+  font-size: 14px;
 }
 
-.main {
-  max-width: 1040px;
-  width: 100%;
-  margin: 0 auto;
-  padding: 16px 16px 28px;
-}
-
-.topbar {
-  position: sticky;
-  top: 0;
-  z-index: 20;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 14px 16px;
-  padding-top: calc(14px + env(safe-area-inset-top, 0px));
-  background: color-mix(in srgb, var(--plane) 88%, transparent);
-  backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--border);
-}
-
-.topbar h1 {
-  margin: 0;
-  font-size: 18px;
-  font-weight: 650;
-  letter-spacing: -0.01em;
-}
-
-.topbar .spacer {
-  flex: 1;
-}
-
-/* ---------- Bottom nav ---------- */
-.nav {
-  position: fixed;
-  inset: auto 0 0 0;
-  z-index: 30;
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  background: color-mix(in srgb, var(--surface-1) 94%, transparent);
-  backdrop-filter: blur(14px);
-  border-top: 1px solid var(--border);
-  padding-bottom: var(--safe-b);
-}
-
-.nav a {
+.console {
+  height: 100%;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 3px;
-  height: var(--nav-h);
-  text-decoration: none;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.console-scroll {
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 0 16px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.console-hero {
+  position: relative;
+  text-align: center;
+  padding: calc(28px + env(safe-area-inset-top, 0px)) 8px 22px;
+}
+
+.console-gear {
+  position: absolute;
+  top: calc(12px + env(safe-area-inset-top, 0px));
+  right: 0;
+  opacity: 0.55;
+}
+
+.console-gear:hover {
+  opacity: 1;
+}
+
+.hero-figure {
+  font-size: clamp(30px, 9vw, 44px);
+  font-weight: 700;
+  letter-spacing: -0.025em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+}
+
+.hero-sub {
+  margin-top: 7px;
+  font-size: 12.5px;
   color: var(--text-muted);
+}
+
+.console-body {
+  padding-bottom: 16px;
+}
+
+.console-section {
+  font-size: 11.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin: 18px 0 2px;
+}
+
+.console-onboard {
+  color: var(--text-secondary);
+  font-size: 14.5px;
+  line-height: 1.6;
+  padding: 18px 0;
+}
+
+.console-onboard p {
+  margin: 0 0 10px;
+}
+
+/* ---------- O nhap: trung tam cua app ---------- */
+.composer {
+  flex: none;
+  padding: 10px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+  background: color-mix(in srgb, var(--plane) 92%, transparent);
+  backdrop-filter: blur(14px);
+  border-top: 1px solid var(--border);
+}
+
+.composer-preview {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  padding: 0 2px 9px;
+  min-height: 20px;
+}
+
+.composer-preview .sep {
+  color: var(--text-muted);
+}
+
+.composer-preview .tag {
   font-size: 11px;
-  font-weight: 550;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--text-muted);
+  background: var(--surface-2);
+  border-radius: 6px;
+  padding: 2px 7px;
 }
 
-.nav a .ico {
+.composer-row {
+  display: flex;
+  gap: 9px;
+  align-items: center;
+}
+
+.composer-input {
+  flex: 1;
+  min-width: 0;
+  min-height: 52px;
+  border: 1px solid var(--border-strong);
+  background: var(--surface-1);
+  border-radius: 16px;
+  padding: 13px 16px;
+  font-size: 16px;
+  outline: none;
+}
+
+.composer-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 20%, transparent);
+}
+
+.composer-send {
+  flex: none;
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  border: none;
+  background: var(--accent);
+  color: var(--accent-ink);
   font-size: 20px;
-  line-height: 1;
+  cursor: pointer;
 }
 
-.nav a.active {
-  color: var(--accent);
+.composer-send:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.composer-chips {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding-bottom: 2px;
+}
+
+.composer-chips::-webkit-scrollbar {
+  display: none;
+}
+
+.composer-chips .chip {
+  flex: none;
+  white-space: nowrap;
+}
+
+/* ---------- Cau tra loi ---------- */
+.answer-close {
+  margin: 4px 0 8px;
+}
+
+.answer {
+  padding: 4px 0 8px;
+}
+
+.answer-label {
+  font-size: 11.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.answer-figure {
+  font-size: clamp(28px, 8vw, 38px);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.15;
+}
+
+.answer-meta {
+  margin-top: 6px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.answer-empty {
+  margin-top: 10px;
+  font-size: 14px;
+  color: var(--text-muted);
+  line-height: 1.55;
+}
+
+.compare-delta {
+  margin-top: 12px;
+  font-size: 15px;
+  font-weight: 650;
+  font-variant-numeric: tabular-nums;
+}
+
+.help-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+  margin-top: 6px;
+}
+
+.help-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 9px;
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+
+.help-row code {
+  background: var(--surface-2);
+  border-radius: 7px;
+  padding: 4px 9px;
+  font-size: 12.5px;
+  color: var(--text-primary);
+}
+
+/* ---------- Man hinh phu mo bang lenh ---------- */
+.full-sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  background: var(--plane);
+  display: flex;
+  flex-direction: column;
+  animation: rise 0.18s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.full-sheet-top {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 12px;
+  padding-top: calc(12px + env(safe-area-inset-top, 0px));
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-1);
+}
+
+.full-sheet-top h1 {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 650;
+}
+
+.full-sheet-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 16px calc(28px + env(safe-area-inset-bottom, 0px));
+  max-width: 720px;
+  width: 100%;
+  margin: 0 auto;
 }
 
 /* ---------- Cards ---------- */
@@ -353,27 +555,6 @@ textarea {
 
 .icon-btn:hover {
   background: var(--surface-2);
-}
-
-.fab {
-  position: fixed;
-  right: 18px;
-  bottom: calc(var(--nav-h) + var(--safe-b) + 18px);
-  z-index: 25;
-  width: 58px;
-  height: 58px;
-  border-radius: 50%;
-  border: none;
-  background: var(--accent);
-  color: var(--accent-ink);
-  font-size: 28px;
-  line-height: 1;
-  cursor: pointer;
-  box-shadow: 0 6px 20px -6px color-mix(in srgb, var(--accent) 70%, transparent);
-}
-
-.fab:active {
-  transform: scale(0.95);
 }
 
 /* ---------- Segmented control ---------- */
@@ -854,87 +1035,30 @@ textarea.input {
   animation: rise 0.18s ease;
 }
 
-/* ---------- Desktop ---------- */
+/* ---------- Man hinh rong ---------- */
 @media (min-width: 860px) {
-  .app {
-    padding-bottom: 0;
-    grid-template-columns: 232px 1fr;
+  .console-scroll {
+    padding: 0 24px;
   }
 
-  .nav {
-    position: sticky;
-    top: 0;
-    inset: auto;
-    height: 100vh;
-    grid-template-columns: 1fr;
-    grid-auto-rows: max-content;
-    align-content: start;
-    gap: 4px;
-    padding: 18px 12px;
-    border-top: 0;
-    border-right: 1px solid var(--border);
+  .composer {
+    padding: 12px 24px 18px;
   }
 
-  .nav a {
-    flex-direction: row;
-    justify-content: flex-start;
-    gap: 12px;
-    height: 44px;
-    padding: 0 12px;
-    border-radius: 10px;
-    font-size: 14px;
+  .full-sheet-body {
+    padding: 24px;
   }
 
-  .nav a:hover {
-    background: var(--surface-2);
-  }
-
-  .nav a.active {
-    background: color-mix(in srgb, var(--accent) 12%, transparent);
-  }
-
-  .topbar {
-    padding-top: 16px;
-  }
-
-  .fab {
-    bottom: 26px;
-  }
-
-  .main {
-    padding: 20px 24px 40px;
+  .scrim {
+    align-items: center;
   }
 
   .sheet {
     border-radius: 18px;
     margin-bottom: 6vh;
   }
-
-  .scrim {
-    align-items: center;
-  }
 }
 
-@media (max-width: 859px) {
-  .nav .brand {
-    display: none;
-  }
-}
-
-@media (min-width: 860px) {
-  .nav .brand {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    font-size: 17px;
-    font-weight: 700;
-    padding: 0 12px 16px;
-    letter-spacing: -0.01em;
-  }
-}
-
-/* Chi gay xuong mot cot tren may that su hep — dien thoai pho thong rong ~390-430px
-   van du cho hai o nam canh nhau */
 @media (max-width: 359px) {
   .grid-2 {
     grid-template-columns: 1fr;
