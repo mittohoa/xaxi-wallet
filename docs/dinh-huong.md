@@ -192,7 +192,7 @@ Thiết bị thứ hai nhập cùng cụm mật khẩu là đọc được — k
 | 1 | Thử OCR và giọng nói bằng phần cứng thật | không | còn lại: giọng người thật vào micro, và một biên lai giấy thật |
 | ~~2~~ | ~~Hoàn thiện giao diện~~ | — | **xong** — xem `docs/he-thong-thiet-ke.md` |
 | ~~3~~ | ~~**Sáu hũ**~~ | — | **xong** — xem §10 |
-| 4 | **Công cụ IMAP chạy tại máy** | không | dùng lại bộ đọc sao kê đã có |
+| ~~4~~ | ~~**Công cụ IMAP chạy tại máy**~~ | — | **xong** — xem §14 |
 | 5 | Rung phản hồi, icon vector | không | đánh bóng |
 | 6 | Bot Telegram mức A | có, nhưng có kiểm soát | chỉ sau khi 1–5 xong |
 | 7 | **Đồng bộ đa thiết bị, mã hoá đầu-cuối** | không, nếu làm đúng | mục tiêu đã chốt — xem §3.6 |
@@ -665,3 +665,68 @@ bản ghi tạo sau — mang `Date.now()` cỡ 1,7 nghìn tỷ — luôn xếp s
 
 Bản ghi chưa qua di trú xuống **cuối** chứ không lên đầu: đẩy chúng lên trước sẽ
 xáo trộn thứ tự người dùng đang quen, đúng vào lúc nâng cấp.
+
+## 14. Công cụ đọc email ngân hàng — bốn ràng buộc được ép ở tầng mã
+
+`npm run bank:inbox` đọc email biến động số dư từ hộp thư của chính người dùng
+và xuất ra CSV để nhập vào app. Nó **không** phải một phần của app: app không
+bao giờ hỏi mật khẩu của bất cứ dịch vụ nào, và nguyên tắc đó không đổi vì một
+tính năng tiện.
+
+Bốn ràng buộc dưới đây được ép bằng mã chứ không phải bằng lời hứa trong tài
+liệu, vì công cụ này cầm mật khẩu hộp thư — thứ nhạy cảm nhất mà cả dự án từng
+chạm tới.
+
+**Một — luôn đi qua TLS.** `scripts/imap/client.mjs` chỉ có một đường mở kết
+nối duy nhất là `tls.connect`; không tồn tại nhánh nào nối bằng socket trần.
+Ngoài ra các cổng vốn dành cho giao thức chưa mã hoá (25, 110, 143, 587) bị từ
+chối **trước khi** mở kết nối. Trỏ TLS vào cổng 143 chỉ tạo ra một lỗi bắt tay
+khó hiểu, còn người dùng thì tưởng mình đang nối an toàn.
+
+**Hai — chỉ đọc.** Mở hộp thư bằng `EXAMINE` chứ không phải `SELECT`. Nhờ vậy
+công cụ *không thể* đánh dấu thư đã đọc, không thể xoá, không thể đổi nhãn —
+không phải vì nó chọn không làm, mà vì phiên làm việc không có quyền đó. Một
+công cụ lặng lẽ đánh dấu đã đọc toàn bộ thư ngân hàng là một công cụ hỏng, dù
+nó lấy dữ liệu đúng.
+
+**Ba — không một gói phụ thuộc nào.** Bộ khách IMAP và bộ giải mã MIME đều tự
+viết, tổng cộng dưới 400 dòng. Mỗi gói thêm vào là một cửa nữa mà mật khẩu có
+thể đi ra, và một chuỗi cập nhật nữa phải theo dõi. Phần IMAP cần cho việc đọc
+vài chục thư nhỏ hơn nhiều so với cái giá đó.
+
+**Bốn — mật khẩu không bao giờ được in ra.** Lệnh `LOGIN` mang mật khẩu, nên
+khi nó bị từ chối thì thông báo lỗi chỉ ghi `LOGIN bị từ chối` chứ không in lại
+lệnh. Có một bài kiểm riêng cho đúng điều này: nó đăng nhập bằng mật khẩu
+`mat-khau-rat-bi-mat` vào một máy chủ luôn trả lời `NO`, rồi khẳng định chuỗi đó
+không xuất hiện trong thông báo lỗi.
+
+### Dùng lại đúng bộ đọc của app, không viết bản thứ hai
+
+Công cụ biên dịch thẳng `src/lib/receipt.ts` bằng esbuild rồi nạp vào. Viết một
+bộ đọc riêng cho công cụ là có hai bộ luật phải giữ khớp bằng tay, và người dùng
+sẽ gặp trường hợp công cụ đọc ra một số còn app dán tay ra số khác. Biên dịch từ
+nguồn thì hai bên luôn là một, kể cả khi bộ đọc được sửa sau này.
+
+### Vì sao có một máy chủ IMAP giả trong bộ kiểm thử
+
+Giao thức IMAP trả dữ liệu về theo từng mảnh tuỳ ý, và máy chủ được phép chen
+các dòng thông báo không mời mà đến vào giữa phản hồi. Lỗi hay nằm đúng ở chỗ
+ghép các mảnh đó lại — thứ mà đọc lại mã không phát hiện được.
+
+Nên `tests/imap.test.ts` dựng một máy chủ TLS thật (chứng chỉ tự ký sinh ngay
+trong bài kiểm, không có tệp bí mật nào nằm trong repo), cho nó chen dòng
+`* 2 EXISTS` vào giữa phản hồi `EXAMINE`, rồi bắt bộ khách nối tới qua socket
+thật và đi hết một vòng. Bài kiểm còn khẳng định nhật ký lệnh của máy chủ là
+đúng năm lệnh `LOGIN, EXAMINE, SEARCH, FETCH, LOGOUT` — và **không** có `SELECT`.
+Ràng buộc "chỉ đọc" nhờ vậy không thể bị làm hỏng trong im lặng.
+
+### Điều công cụ này KHÔNG làm
+
+Không chạy nền, không hẹn giờ, không tự khởi động. Người dùng gõ lệnh thì nó
+chạy, xong thì nó thoát. Đây là điểm khác biệt duy nhất nhưng quan trọng nhất so
+với một bot thường trực có quyền đọc hộp thư — xem bảng ở §3.2.
+
+Mật khẩu nằm trong `xaxi-imap.json` trên đĩa người dùng, đã có trong
+`.gitignore`. Với Gmail và phần lớn nhà cung cấp, phải dùng **mật khẩu ứng dụng**
+riêng chứ không phải mật khẩu chính — mật khẩu ứng dụng thu hồi được bất cứ lúc
+nào mà không ảnh hưởng tài khoản.

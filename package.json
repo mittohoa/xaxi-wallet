@@ -19,7 +19,8 @@
     "desktop:dev": "tauri dev",
     "desktop:build": "tauri build",
     "test": "node tests/build-and-run.mjs",
-    "device:check": "node scripts/device-check.mjs"
+    "device:check": "node scripts/device-check.mjs",
+    "bank:inbox": "node scripts/bank-inbox.mjs"
   },
   "dependencies": {
     "@capacitor/core": "^6.2.0",
