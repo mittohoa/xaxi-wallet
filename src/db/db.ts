@@ -114,14 +114,14 @@ export function touch(): Pick<Syncable, 'updatedAt' | 'deviceId'> {
 type Seed<T> = Omit<T, 'id' | 'updatedAt' | 'deviceId'>
 
 const DEFAULT_CATEGORIES: Seed<Category>[] = [
-  { name: 'Ăn uống', kind: 'expense', icon: '🍜', color: CATEGORY_COLORS[0], keywords: ['an', 'com', 'pho', 'bun', 'ca phe', 'cafe', 'coffee', 'tra sua', 'an sang', 'an trua', 'an toi', 'nhau', 'quan'] },
-  { name: 'Đi lại', kind: 'expense', icon: '🛵', color: CATEGORY_COLORS[1], keywords: ['xang', 'grab', 'taxi', 'xe bus', 'gui xe', 've xe', 'do xe', 've may bay'] },
-  { name: 'Nhà cửa', kind: 'expense', icon: '🏠', color: CATEGORY_COLORS[2], keywords: ['tien nha', 'thue nha', 'phong tro', 'sua nha', 'noi that'] },
-  { name: 'Hoá đơn', kind: 'expense', icon: '🧾', color: CATEGORY_COLORS[3], keywords: ['dien', 'nuoc', 'internet', 'wifi', 'dien thoai', 'truyen hinh', 'hoa don'] },
-  { name: 'Mua sắm', kind: 'expense', icon: '🛍️', color: CATEGORY_COLORS[4], keywords: ['mua', 'quan ao', 'giay', 'shopee', 'lazada', 'tiki', 'sieu thi'] },
-  { name: 'Sức khoẻ', kind: 'expense', icon: '💊', color: CATEGORY_COLORS[5], keywords: ['thuoc', 'kham', 'benh vien', 'bao hiem', 'nha khoa', 'gym'] },
-  { name: 'Giải trí', kind: 'expense', icon: '🎮', color: CATEGORY_COLORS[6], keywords: ['phim', 'game', 'du lich', 'netflix', 'spotify', 'ca nhac'] },
-  { name: 'Giáo dục', kind: 'expense', icon: '📚', color: CATEGORY_COLORS[7], keywords: ['hoc', 'hoc phi', 'sach', 'khoa hoc'] },
+  { name: 'Ăn uống', kind: 'expense', icon: '🍜', color: CATEGORY_COLORS[0], keywords: ['an', 'com', 'pho', 'bun', 'ca phe', 'cafe', 'coffee', 'tra sua', 'an sang', 'an trua', 'an toi', 'nhau', 'quan'] , jar: 'essentials'},
+  { name: 'Đi lại', kind: 'expense', icon: '🛵', color: CATEGORY_COLORS[1], keywords: ['xang', 'grab', 'taxi', 'xe bus', 'gui xe', 've xe', 'do xe', 've may bay'] , jar: 'essentials'},
+  { name: 'Nhà cửa', kind: 'expense', icon: '🏠', color: CATEGORY_COLORS[2], keywords: ['tien nha', 'thue nha', 'phong tro', 'sua nha', 'noi that'] , jar: 'essentials'},
+  { name: 'Hoá đơn', kind: 'expense', icon: '🧾', color: CATEGORY_COLORS[3], keywords: ['dien', 'nuoc', 'internet', 'wifi', 'dien thoai', 'truyen hinh', 'hoa don'] , jar: 'essentials'},
+  { name: 'Mua sắm', kind: 'expense', icon: '🛍️', color: CATEGORY_COLORS[4], keywords: ['mua', 'quan ao', 'giay', 'shopee', 'lazada', 'tiki', 'sieu thi'] , jar: 'play'},
+  { name: 'Sức khoẻ', kind: 'expense', icon: '💊', color: CATEGORY_COLORS[5], keywords: ['thuoc', 'kham', 'benh vien', 'bao hiem', 'nha khoa', 'gym'] , jar: 'essentials'},
+  { name: 'Giải trí', kind: 'expense', icon: '🎮', color: CATEGORY_COLORS[6], keywords: ['phim', 'game', 'du lich', 'netflix', 'spotify', 'ca nhac'] , jar: 'play'},
+  { name: 'Giáo dục', kind: 'expense', icon: '📚', color: CATEGORY_COLORS[7], keywords: ['hoc', 'hoc phi', 'sach', 'khoa hoc'] , jar: 'education'},
   { name: 'Chi khác', kind: 'expense', icon: '📦', color: SYSTEM_COLOR, builtin: true, slug: 'uncategorized-expense' },
   { name: 'Chi chưa rõ', kind: 'expense', icon: '❔', color: SYSTEM_COLOR, builtin: true, slug: 'reconcile-expense' },
   { name: 'Chuyển đi', kind: 'expense', icon: '↗️', color: SYSTEM_COLOR, builtin: true, slug: 'transfer-out' },

@@ -581,3 +581,83 @@
 .composer-warn b {
   color: var(--text-primary);
 }
+
+/* ============================================================
+   SÁU HŨ
+   ============================================================ */
+
+.jar-base {
+  font-size: var(--t-2xl);
+  font-weight: var(--w-bold);
+  letter-spacing: var(--track-tight);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Dấu xấp xỉ báo đây là số suy ra, không phải thu nhập thật của kỳ này */
+.jar-approx {
+  color: var(--text-muted);
+  font-weight: var(--w-medium);
+  margin-right: 0.15em;
+}
+
+.jar-row {
+  padding: var(--s-4) 0;
+  border-top: 1px solid var(--line);
+}
+
+.jar-row:first-of-type {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.jar-head,
+.jar-assign {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+}
+
+.jar-assign {
+  padding: var(--s-2) 0;
+  border-top: 1px solid var(--line);
+}
+
+.jar-assign:first-of-type {
+  border-top: 0;
+}
+
+.jar-assign select {
+  width: auto;
+  flex: none;
+  min-width: 150px;
+}
+
+.jar-name {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  flex: 1;
+  min-width: 0;
+  font-size: var(--t-sm);
+  font-weight: var(--w-semi);
+}
+
+.jar-name .nm {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.jar-percent {
+  display: flex;
+  align-items: center;
+  gap: var(--s-1);
+  flex: none;
+  color: var(--text-muted);
+  font-size: var(--t-sm);
+}
+
+.jar-percent .input {
+  width: 62px;
+  text-align: right;
+}

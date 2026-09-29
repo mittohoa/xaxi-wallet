@@ -219,11 +219,53 @@ const CHECKS = [
       `),
   },
   {
+    name: 'sáu hũ chia được hạn mức',
+    run: (page) =>
+      page.eval(`
+        await lenh('ngân sách');
+        const d = await wait(() => $('[role="dialog"]'));
+        const nen = d.querySelector('.jar-base')?.textContent?.trim() ?? '';
+        const hang = [...d.querySelectorAll('.jar-row')];
+        if (hang.length !== 6) { await dong(); return '✗ phải có đúng 6 hũ, đang có ' + hang.length }
+        // Hạn mức phải suy ra từ nền thu nhập, không được bằng 0 khi đã có thu nhập
+        // Hạn mức phải suy ra từ nền thu nhập, không được bằng 0 khi đã có thu nhập.
+        // Đọc bằng cắt chuỗi chứ KHÔNG phải biểu thức chính quy: mã ở đây đi qua hai
+        // lớp chuỗi lồng nhau trước khi tới trình duyệt, và dấu gạch chéo được thoát
+        // sẽ bị rút gọn trên đường đi — biểu thức chính quy hoá thành dòng chú thích.
+        const co = hang.filter((r) => {
+          const phan = ((r.querySelector('.budget-foot')?.textContent ?? '').split('/')[1] ?? '').trim();
+          return phan !== '' && !phan.startsWith('0');
+        }).length;
+        await dong();
+        if (!nen) return '✗ không thấy nền thu nhập';
+        return co === 6 ? '✓ nền ' + nen + ', cả 6 hũ có hạn mức' : '✗ ' + (6 - co) + ' hũ có hạn mức 0₫';
+      `),
+  },
+  {
+    name: 'sửa tỷ lệ hũ lưu ngay',
+    run: (page) =>
+      page.eval(`
+        await lenh('ngân sách');
+        const d = await wait(() => $('[role="dialog"]'));
+        const o = [...d.querySelectorAll('input')].find((i) => /tỷ lệ cho hũ/i.test(i.getAttribute('aria-label') || ''));
+        if (!o) { await dong(); return '✗ không thấy ô nhập tỷ lệ' }
+        const truoc = d.querySelector('.jar-row .budget-foot')?.textContent ?? '';
+        setValue(o, '40'); await sleep(1500);
+        const sau = $('.jar-row .budget-foot')?.textContent ?? '';
+        setValue(o, '55'); await sleep(1200);
+        await dong();
+        return truoc !== sau ? '✓ đổi tỷ lệ là hạn mức đổi theo ngay' : '✗ sửa tỷ lệ không đổi được hạn mức';
+      `),
+  },
+  {
     name: 'ngân sách ghi được hạn mức',
     run: (page) =>
       page.eval(`
         await lenh('ngân sách');
         const d = await wait(() => $('[role="dialog"]'));
+        // Màn hình mở mặc định ở sáu hũ; hạn mức theo danh mục nằm ở tab kia
+        const tab = [...d.querySelectorAll('.segmented button')].find((b) => /theo danh mục/i.test(b.textContent || ''));
+        if (tab) { click(tab); await sleep(800) }
         const o = [...d.querySelectorAll('input')].find((i) => /hạn mức cho/i.test(i.getAttribute('aria-label') || ''));
         if (!o) return '✗ không thấy ô nhập hạn mức';
         const truoc = (await soLieu()).budgets.length;
@@ -242,6 +284,8 @@ const CHECKS = [
       page.eval(`
         await lenh('ngân sách');
         const d = await wait(() => $('[role="dialog"]'));
+        const tab = [...d.querySelectorAll('.segmented button')].find((b) => /theo danh mục/i.test(b.textContent || ''));
+        if (tab) { click(tab); await sleep(800) }
         const nhan = [...d.querySelectorAll('input')].map((i) => i.getAttribute('aria-label') || '').join(' | ');
         await dong();
         // Chuyển tiền bị loại khỏi mọi phép tính thu/chi nên ô "đã chi" của nó

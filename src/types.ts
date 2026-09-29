@@ -44,6 +44,14 @@ export interface Category extends Syncable {
   slug?: CategorySlug
   /** tu khoa de o nhap nhanh doan ra danh muc nay */
   keywords?: string[]
+  /**
+   * Hu ma danh muc nay thuoc ve, theo phuong phap sau hu.
+   *
+   * Kieu la chuoi chu khong phai JarSlug nhap tu lib/jars: tep nay la lop du
+   * lieu, khong duoc phu thuoc vao lop tinh toan. Gia tri khong hop le thi
+   * `jarStates` don gian la khong xep no vao hu nao.
+   */
+  jar?: string
 }
 
 export type WalletKind = 'cash' | 'bank' | 'ewallet' | 'credit' | 'saving'
@@ -161,6 +169,12 @@ export interface Settings extends Syncable {
   dismissedSuggestions?: string[]
   /** tu xoa anh bien lai cu hon ngan nay ngay (0 hoac thieu = giu mai) */
   attachmentRetentionDays?: number
+  /**
+   * Ty le phan tram cua tung hu, khoa la JarSlug.
+   *
+   * Thieu hoac khong hop le thi rot ve ty le goc cua phuong phap JARS.
+   */
+  jarPercents?: Record<string, number>
 }
 
 /**

@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
-import { Empty } from '../components/ui'
+import { Empty, Segmented } from '../components/ui'
+import { JarsView } from '../components/JarsView'
 import { db, stamp, touch } from '../db/db'
 import { currentMonth, daysInMonth, monthLabel, monthRange, shiftMonth, todayISO } from '../lib/date'
 import { formatMoney, parseAmount } from '../lib/format'
@@ -19,6 +20,15 @@ export function Budgets() {
   const { budgets, categories, transactions, settings, toast } = useApp()
   const [month, setMonth] = useState(currentMonth())
   const [drafts, setDrafts] = useState<Record<Id, string>>({})
+
+  /**
+   * Sáu hũ là lớp TRÊN của ngân sách theo danh mục, không thay thế nó.
+   *
+   * Mặc định mở ở sáu hũ vì đó là cách nhìn trả lời được câu hỏi lớn — "tháng
+   * này mình đang phân bổ thế nào" — còn hạn mức từng danh mục là lớp chi tiết
+   * cho ai muốn đi sâu.
+   */
+  const [view, setView] = useState<'jars' | 'categories'>('jars')
 
   const range = monthRange(month, settings.startDayOfMonth)
   const monthTx = useMemo(() => inRange(transactions, range.start, range.end), [transactions, range.start, range.end])
@@ -81,7 +91,17 @@ export function Budgets() {
   return (
     <>
       <div className="card">
-        <div className="month-nav">
+        <Segmented
+          wide
+          value={view}
+          onChange={setView}
+          options={[
+            { value: 'jars', label: 'Sáu hũ' },
+            { value: 'categories', label: 'Theo danh mục' },
+          ]}
+        />
+
+        <div className="month-nav" style={{ marginTop: 16 }}>
           <button type="button" className="icon-btn" onClick={() => setMonth((m) => shiftMonth(m, -1))} aria-label="Tháng trước">
             ‹
           </button>
@@ -91,7 +111,7 @@ export function Budgets() {
           </button>
         </div>
 
-        {totalLimit > 0 && (
+        {view === 'categories' && totalLimit > 0 && (
           <>
             <div className="coverage-line" style={{ marginTop: 14 }}>
               <div className="meter" style={{ flex: 1 }}>
@@ -111,11 +131,16 @@ export function Budgets() {
           </>
         )}
 
-        <button type="button" className="btn sm" style={{ marginTop: 12 }} onClick={copyPreviousMonth}>
-          Sao chép hạn mức tháng trước
-        </button>
+        {view === 'categories' && (
+          <button type="button" className="btn sm" style={{ marginTop: 12 }} onClick={copyPreviousMonth}>
+            Sao chép hạn mức tháng trước
+          </button>
+        )}
       </div>
 
+      {view === 'jars' && <JarsView month={month} />}
+
+      {view === 'categories' && (
       <div className="card">
         <div className="card-title">Hạn mức theo danh mục</div>
         {expenseCategories.length === 0 && <Empty icon="🎯" title="Chưa có danh mục chi nào" />}
@@ -166,6 +191,7 @@ export function Budgets() {
           )
         })}
       </div>
+      )}
     </>
   )
 }
