@@ -124,6 +124,17 @@
   color: var(--text-on-ink-muted);
 }
 
+/*
+ * Thẻ mực lồng bên trong một thẻ thường.
+ *
+ * Bóng đổ bỏ đi: nó vốn để tách thẻ khỏi nền trang, mà ở đây thẻ cha đã làm
+ * việc đó rồi — giữ lại thì thành hai lớp bóng chồng nhau.
+ */
+.card .panel-ink {
+  margin-top: var(--s-4);
+  box-shadow: none;
+}
+
 /* ---------- lưới ---------- */
 
 .grid-2 {

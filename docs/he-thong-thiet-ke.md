@@ -95,6 +95,18 @@ quan tâm, và còn chiếm mất một sắc của bộ tám.
 
 ---
 
+### Thẻ mực lồng được trong thẻ thường
+
+Biểu đồ chi theo ngày nằm trong thẻ tháng của Báo cáo — mà thẻ tháng là `.card`,
+tức nền trắng ở chế độ sáng. Đặt thẳng biểu đồ vào đó là đưa bộ màu ra một nền
+chưa từng được kiểm định.
+
+Cách giải: một `.panel-ink` lồng bên trong thẻ. Nó vẫn tối ở cả hai chế độ, nên
+luật trên vẫn đúng, và về mặt nhìn thì thành một khối lõm có chủ ý. Chỉ cần bỏ
+bóng đổ — bóng vốn để tách thẻ khỏi nền trang, mà ở đây thẻ cha đã làm việc đó.
+
+---
+
 ### Vạch trên cùng phải chứa được cột cao nhất
 
 Thang chia làm tròn **lên** tới bội của bước. Nghe như chuyện thẩm mỹ, nhưng

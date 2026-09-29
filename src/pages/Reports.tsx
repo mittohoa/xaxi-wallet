@@ -1,11 +1,12 @@
 import { useMemo, useState } from 'react'
-import { MonthlyBars } from '../components/charts'
+import { DailySpend, MonthlyBars } from '../components/charts'
 import { Delta, Empty, Segmented } from '../components/ui'
 import { currentMonth, monthLabel, monthRange, shiftMonth, todayISO, MONTH_NAMES, WEEKDAY_NAMES } from '../lib/date'
 import { formatMoney } from '../lib/format'
 import {
   byCategory,
   comparableRange,
+  dailySeries,
   fixedSplit,
   heaviestWeekday,
   inRange,
@@ -26,6 +27,7 @@ export function Reports() {
   const range = monthRange(month, settings.startDayOfMonth)
   const monthTx = useMemo(() => inRange(transactions, range.start, range.end), [transactions, range.start, range.end])
   const slices = useMemo(() => byCategory(monthTx, categories, kind), [monthTx, categories, kind])
+  const daily = useMemo(() => dailySeries(monthTx, month), [monthTx, month])
   const totals = sumTotals(monthTx)
 
   /** Cùng danh mục, cùng số ngày đã trôi qua, ở kỳ trước — để so cho công bằng */
@@ -137,6 +139,23 @@ export function Reports() {
           Còn lại <b>{formatMoney(totals.net)}</b>
           {estimatedCount > 0 && ` · ${estimatedCount} khoản là số ước tính`}
         </div>
+
+        {/*
+          Thẻ mực LỒNG trong thẻ tháng.
+
+          Biểu đồ phải nằm trên nền mực ở cả hai chế độ sáng và tối — xem §2 của
+          docs/he-thong-thiet-ke.md. Đặt thẳng vào thẻ tháng thì trên nền sáng
+          nó rơi xuống nền trắng, nơi bộ màu biểu đồ chưa từng được kiểm định.
+
+          Chỉ hiện khi tháng có khoản chi: ba mươi cột rỗng không nói lên gì mà
+          vẫn chiếm chỗ.
+        */}
+        {totals.expense > 0 && (
+          <div className="panel-ink">
+            <div className="card-title">Chi theo ngày</div>
+            <DailySpend data={daily} />
+          </div>
+        )}
 
         {split.fixed > 0 && (
           <>

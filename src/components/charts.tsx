@@ -188,9 +188,17 @@ export function MonthlyBars({ data }: { data: MonthPoint[] }) {
   )
 }
 
-/* ---------------- Bieu do cot theo ngay trong thang ---------------- */
+/* ---------------- Bieu do chi theo tung ngay trong thang ---------------- */
 
-export function DailyBars({ data, kind }: { data: DayPoint[]; kind: 'income' | 'expense' }) {
+/**
+ * Chỉ vẽ khoản CHI, không có tuỳ chọn vẽ khoản thu.
+ *
+ * Bản cũ nhận tham số `kind` để vẽ được cả hai, nhưng thu trong app này gần như
+ * luôn là một hai lần lương: biểu đồ sẽ ra một cột cao và hai mươi chín ô
+ * trống, không nói lên điều gì. Giữ một nhánh mã không ai gọi tới thì đến lúc
+ * đổi phong cách vẫn phải sửa nó, mà không ai từng nhìn thấy kết quả.
+ */
+export function DailySpend({ data }: { data: DayPoint[] }) {
   const { ref, width } = useWidth<HTMLDivElement>()
   const { show, hide, node } = useTooltip()
 
@@ -200,7 +208,7 @@ export function DailyBars({ data, kind }: { data: DayPoint[]; kind: 'income' | '
   const plotW = W - M.left - M.right
   const plotH = H - M.top - M.bottom
 
-  const values = data.map((d) => (kind === 'income' ? d.income : d.expense))
+  const values = data.map((d) => d.expense)
   const max = Math.max(1, ...values)
   const ticks = niceTicks(max, 2)
   const top = ticks[ticks.length - 1]
@@ -217,7 +225,7 @@ export function DailyBars({ data, kind }: { data: DayPoint[]; kind: 'income' | '
           viewBox={`0 0 ${W} ${H}`}
           height={H}
           role="img"
-          aria-label={kind === 'income' ? 'Thu theo từng ngày' : 'Chi theo từng ngày'}
+          aria-label="Chi theo từng ngày"
         >
           {ticks.map((t) => (
             <g key={t}>
@@ -241,7 +249,7 @@ export function DailyBars({ data, kind }: { data: DayPoint[]; kind: 'income' | '
               >
                 <rect className="hit" x={M.left + band * i} y={M.top} width={band} height={plotH} />
                 <g className="marks">
-                  <path className={kind === 'income' ? 'bar-income' : 'bar-expense'} d={barPath(x0, y(v), barW, y(0) - y(v))} />
+                  <path className="bar-expense" d={barPath(x0, y(v), barW, y(0) - y(v))} />
                 </g>
               </g>
             )
