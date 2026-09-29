@@ -41,13 +41,26 @@ chạm là khoản đó không bao giờ phải nhập tay nữa.
 
 ### Còn lại, theo đúng thứ tự
 
-| Bậc | Chạy ở đâu | Dữ liệu ra ngoài | Trạng thái |
+| Tiện ích | Chạy ở đâu | Dữ liệu ra ngoài | Trạng thái |
 |---|---|---|---|
 | Phân loại tự học · phát hiện định kỳ | trên máy | không | **xong** |
-| Nhập Excel/CSV | trên máy | không | **xong** |
-| OCR ảnh biên lai (ML Kit, model tải sau khi cài) | trên máy | không | đang làm |
-| Giọng nói (SpeechRecognizer, ưu tiên offline) | trên máy | không | đang làm |
+| Nhập CSV / Excel (.xlsx) | trên máy | không | **xong** |
+| OCR ảnh biên lai (ML Kit unbundled) | trên máy | không | **xong** |
+| Giọng nói (SpeechRecognizer, ưu tiên offline) | trên máy | không | **xong** |
+| Đọc số tiền nói bằng lời tiếng Việt | trên máy | không | **xong** |
 | Online · đồng bộ nhiều thiết bị | — | — | **chỉ cân nhắc khi offline đã hoàn chỉnh** |
+
+Quyền trên máy thật, kiểm bằng `adb shell dumpsys package app.xaxi.wallet`:
+
+```
+requested permissions:
+  android.permission.INTERNET
+  android.permission.RECORD_AUDIO      <- granted=false, chỉ hỏi lúc bấm micro
+  android.permission.ACCESS_NETWORK_STATE
+```
+
+**Không có quyền CAMERA** — ảnh do app camera của hệ thống chụp hộ qua `<input type="file" capture>`.
+Không SMS, không notification listener, không Accessibility Service.
 
 Model của ML Kit **không nhồi vào APK** — tải qua Google Play Services lần đầu dùng, nên bản cài vẫn ~4 MB.
 

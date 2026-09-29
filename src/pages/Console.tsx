@@ -4,6 +4,7 @@ import { Avatar } from '../components/ui'
 import { addTransaction, markNoSpend, suggestShortcuts, systemCategory } from '../lib/actions'
 import { detectRecurring, trainClassifier } from '../lib/learn'
 import { db } from '../db/db'
+import { listenOnce, stopListening, voiceReady } from '../lib/native/voice'
 import { saveSettings } from '../store'
 import { helpAnswer, interpret, type Answer, type CommandName } from '../lib/ask'
 import { computeCoverage, firstActivity } from '../lib/coverage'
@@ -40,7 +41,37 @@ export function Console({
   const [text, setText] = useState('')
   const [answer, setAnswer] = useState<Answer | null>(null)
   const [placeholderIndex, setPlaceholderIndex] = useState(0)
+  const [micAvailable, setMicAvailable] = useState(false)
+  const [listening, setListening] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
+
+  // Hoi he thong mot lan xem co bo nhan dang giong noi khong
+  useEffect(() => {
+    voiceReady().then(setMicAvailable)
+    return () => {
+      stopListening()
+    }
+  }, [])
+
+  async function speak() {
+    if (listening) {
+      await stopListening()
+      setListening(false)
+      return
+    }
+    setListening(true)
+    try {
+      const heard = await listenOnce()
+      if (heard.trim()) {
+        setText(heard.trim())
+        inputRef.current?.focus()
+      }
+    } catch (e) {
+      toast(e instanceof Error ? e.message : 'Không nhận dạng được giọng nói')
+    } finally {
+      setListening(false)
+    }
+  }
 
   // Goi y doi cho moi vai giay de nguoi dung biet o nhap lam duoc nhung gi
   useEffect(() => {
@@ -311,7 +342,7 @@ export function Console({
             ref={inputRef}
             className="composer-input"
             value={text}
-            placeholder={PLACEHOLDERS[placeholderIndex]}
+            placeholder={listening ? 'Đang nghe…' : PLACEHOLDERS[placeholderIndex]}
             onChange={(e) => setText(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === 'Enter') submit()
@@ -322,6 +353,16 @@ export function Console({
             autoCapitalize="none"
             spellCheck={false}
           />
+          {micAvailable && !text && (
+            <button
+              type="button"
+              className={listening ? 'composer-mic listening' : 'composer-mic'}
+              onClick={speak}
+              aria-label={listening ? 'Đang nghe, chạm để dừng' : 'Nói để ghi'}
+            >
+              {listening ? '⏹' : '🎙'}
+            </button>
+          )}
           <button
             type="button"
             className="composer-send"

@@ -346,3 +346,23 @@ test('parseReceipt đọc được biên lai ví điện tử dạng nhiều dò
   assert.equal(r.balance, 340_000)
   assert.equal(r.issuer, 'MoMo')
 })
+
+test('parseQuickEntry đọc được câu nói không có chữ số', () => {
+  // Dang chu bo nhan dang giong noi tra ve
+  const r = parseQuickEntry('cà phê ba mươi lăm nghìn', CATEGORIES, [])!
+  assert.ok(r)
+  assert.equal(r.amount, 35_000)
+  assert.equal(r.kind, 'expense')
+  assert.equal(r.categoryId, 1)
+  assert.equal(r.note, 'cà phê')
+})
+
+test('parseQuickEntry đọc được câu nói có cả ngày', () => {
+  const r = parseQuickEntry('xăng một trăm nghìn hôm qua', CATEGORIES, [])!
+  assert.equal(r.amount, 100_000)
+  assert.equal(r.categoryId, 2)
+  assert.equal(r.note, 'xăng')
+  const d = new Date()
+  d.setDate(d.getDate() - 1)
+  assert.equal(r.date, toISO(d))
+})

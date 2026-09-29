@@ -30,6 +30,25 @@ const MLKIT_META = `        <meta-data
             android:value="ocr" />
 `
 
+/**
+ * Quyen micro cho viec doc chinh ta. Day la quyen xin LUC DUNG, khong phai luc
+ * cai, va am thanh khong bao gio duoc ghi ra tep.
+ */
+const RECORD_AUDIO = `    <uses-permission android:name="android.permission.RECORD_AUDIO" />
+`
+
+/**
+ * Tu Android 11, app phai khai bao truoc moi nhin thay duoc dich vu nhan dang
+ * giong noi cua he thong. Thieu khoi nay thi SpeechRecognizer luon bao khong
+ * co san du may van co.
+ */
+const SPEECH_QUERIES = `    <queries>
+        <intent>
+            <action android:name="android.speech.RecognitionService" />
+        </intent>
+    </queries>
+`
+
 function copyTree(from, to) {
   const copied = []
   for (const entry of readdirSync(from)) {
@@ -63,6 +82,27 @@ function patchGradle() {
   text = text.slice(0, insertAt) + block + text.slice(insertAt)
   writeFileSync(path, text, 'utf8')
   return missing.map((d) => d.line)
+}
+
+function patchManifestForVoice() {
+  const path = join(TARGET, 'app', 'src', 'main', 'AndroidManifest.xml')
+  let text = readFileSync(path, 'utf8')
+  const changes = []
+
+  if (!text.includes('android.permission.RECORD_AUDIO')) {
+    const close = text.indexOf('</manifest>')
+    text = text.slice(0, close) + RECORD_AUDIO + text.slice(close)
+    changes.push('quyền RECORD_AUDIO (xin lúc dùng)')
+  }
+
+  if (!text.includes('android.speech.RecognitionService')) {
+    const close = text.indexOf('</manifest>')
+    text = text.slice(0, close) + SPEECH_QUERIES + text.slice(close)
+    changes.push('khai báo <queries> để thấy dịch vụ nhận dạng giọng nói')
+  }
+
+  if (changes.length) writeFileSync(path, text, 'utf8')
+  return changes
 }
 
 function patchManifestForMlKit() {
@@ -100,3 +140,11 @@ console.log(
     ? 'Đã khai báo tải sẵn mô hình OCR qua Google Play Services.'
     : 'Manifest đã khai báo tải mô hình OCR.',
 )
+
+const voiceChanges = patchManifestForVoice()
+if (voiceChanges.length) {
+  console.log('Đã thêm vào manifest cho phần giọng nói:')
+  for (const c of voiceChanges) console.log(`  ${c}`)
+} else {
+  console.log('Manifest đã đủ khai báo cho phần giọng nói.')
+}

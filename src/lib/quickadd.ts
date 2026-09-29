@@ -1,6 +1,7 @@
 import type { Category, Transaction, TxKind } from '../types'
 import { parseAmount } from './format'
 import { todayISO, toISO } from './date'
+import { findNumberWords } from './numberwords'
 
 const COMBINING = /[̀-ͯ]/g
 
@@ -137,6 +138,16 @@ export function parseQuickEntry(
       explicitSign = sign
     }
   }
+  // 2b) khong co chu so thi thu doc so noi bang loi ('ba muoi lam nghin'),
+  //     truong hop thuong gap khi nhap bang giong noi
+  if (!Number.isFinite(amount) || amount <= 0) {
+    const spoken = findNumberWords(maskedForAmount)
+    if (spoken) {
+      amount = spoken.value
+      amountSpan = [spoken.start, spoken.end]
+    }
+  }
+
   if (!Number.isFinite(amount) || amount <= 0) return null
 
   // 3) phan chu con lai lam ghi chu

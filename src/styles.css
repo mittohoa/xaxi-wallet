@@ -1514,3 +1514,32 @@ textarea.input {
   width: 100%;
   min-height: 48px;
 }
+
+/* ---------- Nut micro ---------- */
+.composer-mic {
+  flex: none;
+  width: 52px;
+  height: 52px;
+  border-radius: 16px;
+  border: 1px solid var(--border-strong);
+  background: var(--surface-1);
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.composer-mic:hover {
+  background: var(--surface-2);
+}
+
+.composer-mic.listening {
+  background: var(--expense);
+  border-color: var(--expense);
+  color: #ffffff;
+  animation: pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  50% {
+    opacity: 0.6;
+  }
+}
