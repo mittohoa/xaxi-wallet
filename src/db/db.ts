@@ -113,7 +113,7 @@ export function touch(): Pick<Syncable, 'updatedAt' | 'deviceId'> {
 type Seed<T> = Omit<T, 'id' | 'updatedAt' | 'deviceId'>
 
 const DEFAULT_CATEGORIES: Seed<Category>[] = [
-  { name: 'Ăn uống', kind: 'expense', icon: '🍜', color: '#eb6834', keywords: ['an', 'com', 'pho', 'bun', 'ca phe', 'cafe', 'tra sua', 'an sang', 'an trua', 'an toi', 'nhau', 'quan'] },
+  { name: 'Ăn uống', kind: 'expense', icon: '🍜', color: '#eb6834', keywords: ['an', 'com', 'pho', 'bun', 'ca phe', 'cafe', 'coffee', 'tra sua', 'an sang', 'an trua', 'an toi', 'nhau', 'quan'] },
   { name: 'Đi lại', kind: 'expense', icon: '🛵', color: '#2a78d6', keywords: ['xang', 'grab', 'taxi', 'xe bus', 'gui xe', 've xe', 'do xe', 've may bay'] },
   { name: 'Nhà cửa', kind: 'expense', icon: '🏠', color: '#4a3aa7', keywords: ['tien nha', 'thue nha', 'phong tro', 'sua nha', 'noi that'] },
   { name: 'Hoá đơn', kind: 'expense', icon: '🧾', color: '#52514e', keywords: ['dien', 'nuoc', 'internet', 'wifi', 'dien thoai', 'truyen hinh', 'hoa don'] },

@@ -10,6 +10,13 @@ import { runAttachmentHousekeeping } from './lib/attachments'
 import type { CommandName } from './lib/ask'
 import { postDueRecurring } from './lib/recurring'
 import { requestPersistence } from './lib/storage'
+import {
+  BACK_EVENT,
+  SHARED_TEXT_EVENT,
+  consumeNativeSharedText,
+  nativeBackAvailable,
+  setNativeOverlayOpen,
+} from './lib/native/shell'
 import { GapFiller } from './components/GapFiller'
 import { Budgets } from './pages/Budgets'
 import { Console } from './pages/Console'
@@ -19,8 +26,13 @@ import { Transactions } from './pages/Transactions'
 import { AppProvider, useApp } from './store'
 import type { Transaction } from './types'
 
-/** Van ban duoc chia se vao app (PWA share target / Android send intent) */
-function consumeSharedText(): string {
+/**
+ * Van ban chia se den qua duong WEB (PWA share target).
+ *
+ * Tren Android, van ban den qua Intent chu khong qua URL — xem
+ * `consumeNativeSharedText()` trong lib/native/shell.ts.
+ */
+function consumeSharedTextFromUrl(): string {
   const params = new URLSearchParams(window.location.search)
   const shared = params.get('text') ?? params.get('shared') ?? ''
   if (shared) {
@@ -72,9 +84,24 @@ function Shell() {
   const [editing, setEditing] = useState<Transaction | 'new' | null>(null)
   const [sharedText, setSharedText] = useState('')
 
+  /**
+   * Van ban chia se den tu hai duong khac nhau va phai bat ca hai:
+   * URL tren web, Intent tren Android. Them nua, Android co the chia se
+   * vao luc app DANG chay — luc do khong co lan dung nao de doc, nen
+   * MainActivity ban ra mot su kien.
+   */
   useEffect(() => {
-    const text = consumeSharedText()
-    if (text) setSharedText(text)
+    const take = (text: string) => {
+      if (text) setSharedText(text)
+    }
+    take(consumeSharedTextFromUrl())
+    consumeNativeSharedText().then(take)
+
+    const onShared = () => {
+      consumeNativeSharedText().then(take)
+    }
+    window.addEventListener(SHARED_TEXT_EVENT, onShared)
+    return () => window.removeEventListener(SHARED_TEXT_EVENT, onShared)
   }, [])
 
   useEffect(() => {
@@ -84,17 +111,43 @@ function Shell() {
     })
   }, [ready, toast])
 
-  // Nut Back cua Android dong man hinh phu thay vi thoat app
+  /**
+   * Nut Back dong man hinh phu thay vi thoat app.
+   *
+   * Hai duong khac han nhau:
+   *
+   * - Tren Android, nut Back KHONG toi duoc lop web. Loi Capacitor 6 khong
+   *   dong toi no (viec do nam o plugin @capacitor/app, du an nay khong cai),
+   *   nen Back roi thang ve hanh vi mac dinh la dong app. Phai bao xuong
+   *   MainActivity rang dang co thu de dong, va nghe su kien no ban len.
+   *
+   * - Tren trinh duyet thi nguoc lai: trinh duyet so huu cu chi Back, nen day
+   *   mot muc lich su roi nghe popstate la dung cach.
+   *
+   * `sharedText` phai nam trong danh sach: no cung mo mot tam truot chiem man
+   * hinh. Thieu no thi chia se mot tin nhan vao app roi bam Back la bi day
+   * thang ra ngoai.
+   */
+  const overlayOpen = Boolean(screen || editing || sharedText)
   useEffect(() => {
-    if (!screen && !editing) return
-    window.history.pushState({ overlay: true }, '')
-    const onPop = () => {
+    const close = () => {
       setScreen(null)
       setEditing(null)
+      setSharedText('')
     }
-    window.addEventListener('popstate', onPop)
-    return () => window.removeEventListener('popstate', onPop)
-  }, [screen, editing])
+
+    if (nativeBackAvailable()) {
+      setNativeOverlayOpen(overlayOpen)
+      if (!overlayOpen) return
+      window.addEventListener(BACK_EVENT, close)
+      return () => window.removeEventListener(BACK_EVENT, close)
+    }
+
+    if (!overlayOpen) return
+    window.history.pushState({ overlay: true }, '')
+    window.addEventListener('popstate', close)
+    return () => window.removeEventListener('popstate', close)
+  }, [overlayOpen])
 
   if (!ready) {
     return (
@@ -146,7 +199,13 @@ function Shell() {
       {screen === 'statement' && <StatementSheet onClose={close} />}
 
       {editing && <TransactionSheet editing={editing} onClose={() => setEditing(null)} />}
-      {sharedText && <ReceiptSheet initialText={sharedText} onClose={() => setSharedText('')} />}
+      {/*
+        `key` la co y: ReceiptSheet nhan `initialText` lam trang thai ban dau,
+        nen doi prop thi o van ban KHONG doi theo. Chia se tin nhan thu hai luc
+        tam truot dang mo se hien lai tin nhan cu — doi key de dung mot man hinh
+        moi hoan toan.
+      */}
+      {sharedText && <ReceiptSheet key={sharedText} initialText={sharedText} onClose={() => setSharedText('')} />}
     </>
   )
 }

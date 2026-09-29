@@ -23,9 +23,11 @@ import com.getcapacitor.annotation.CapacitorPlugin;
 /**
  * Nhung manh native lam cho lop web bot giong trang web.
  *
- * Hai viec:
+ * Bon viec:
  *   - rung phan hoi khi ghi xong mot khoan
  *   - thanh trang thai va thanh dieu huong doi mau theo chu de sang/toi
+ *   - bo chon ngay cua he dieu hanh
+ *   - lay van ban nguoi dung chia se toi app
  *
  * Deu khong xin them quyen nao: VIBRATE la quyen thuong, va o day dung
  * HapticFeedback cua View nen khong can khai bao gi.
@@ -168,5 +170,32 @@ public class ShellPlugin extends Plugin {
         JSObject result = new JSObject();
         result.put("applied", true);
         call.resolve(result);
+    }
+
+    /**
+     * Lay van ban nguoi dung vua chia se toi app, va xoa no di.
+     *
+     * Xoa ngay sau khi tra la co y: khong thi mo app lan sau se lai bat ra o
+     * dan bien lai voi doan tin nhan cu — dung loi ma phien ban truoc mac phai
+     * o duong URL.
+     */
+    @PluginMethod
+    public void consumeSharedText(PluginCall call) {
+        JSObject result = new JSObject();
+        result.put("text", MainActivity.pendingSharedText == null ? "" : MainActivity.pendingSharedText);
+        MainActivity.pendingSharedText = null;
+        call.resolve(result);
+    }
+
+    /**
+     * Lop web bao xuong rang no dang mo mot tam truot chiem man hinh.
+     *
+     * Nho co no ma nut Back dong tam truot thay vi dong app, ma van thoat app
+     * duoc khi dang o man hinh chinh.
+     */
+    @PluginMethod
+    public void setOverlayOpen(PluginCall call) {
+        MainActivity.overlayOpen = Boolean.TRUE.equals(call.getBoolean("open", false));
+        call.resolve();
     }
 }

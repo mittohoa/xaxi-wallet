@@ -5,6 +5,7 @@ import { configureFormat, formatCompact, formatMoney, parseAmount } from '../src
 import { monthRange, shiftMonth, toISO } from '../src/lib/date'
 import { parseQuickEntry } from '../src/lib/quickadd'
 import { parseReceipt } from '../src/lib/receipt'
+import { guessCategory } from '../src/lib/quickadd'
 import { parseCSV, parseStatement } from '../src/lib/statement'
 import { computeCoverage } from '../src/lib/coverage'
 import { advance, firstDueDate } from '../src/lib/recurring'
@@ -15,9 +16,10 @@ import type { Category, Recurring, Transaction, Wallet } from '../src/types'
 configureFormat('vi-VN', 'VND')
 
 const CATEGORIES: Category[] = [
-  { id: '1', name: 'Ăn uống', kind: 'expense', icon: '🍜', color: '#eb6834', keywords: ['ca phe', 'an trua', 'com'] },
+  { id: '1', name: 'Ăn uống', kind: 'expense', icon: '🍜', color: '#eb6834', keywords: ['ca phe', 'coffee', 'an trua', 'com'] },
   { id: '2', name: 'Đi lại', kind: 'expense', icon: '🛵', color: '#2a78d6', keywords: ['xang', 'grab'] },
   { id: '3', name: 'Chi khác', kind: 'expense', icon: '📦', color: '#898781', builtin: true, slug: 'uncategorized-expense' },
+  { id: '5', name: 'Chuyển đi', kind: 'expense', icon: '↗️', color: '#72727e', builtin: true, slug: 'transfer-out' },
   { id: '4', name: 'Lương', kind: 'income', icon: '💼', color: '#2a78d6', keywords: ['luong'] },
 ]
 
@@ -124,6 +126,77 @@ test('parseReceipt đọc tin nhắn biến động số dư kiểu ngân hàng'
   assert.equal(r.date, '2026-09-12')
   assert.equal(r.balance, 1_234_567)
   assert.equal(r.note, 'HIGHLANDS COFFEE')
+})
+
+/**
+ * Nhiều ngân hàng viết "ND" không kèm dấu hai chấm.
+ *
+ * Lỗi này lộ ra khi chia sẻ một tin nhắn BIDV thật vào app trên máy: ghi chú
+ * rơi về "BIDV" thay vì "GRAB CHUYEN DI", nên danh mục đoán ra là Chi khác
+ * thay vì Đi lại — tức người dùng vẫn phải sửa tay đúng cái mà app hứa lo hộ.
+ */
+/**
+ * Ghép hai mảnh: đọc được ghi chú rồi thì phải đoán được danh mục.
+ *
+ * Màn hình biên lai từng bỏ qua bước đoán, nên mọi tin nhắn ngân hàng đều rơi
+ * vào "Chi khác" dù app thừa sức biết — đúng loại chi phí thao tác mà cả app
+ * này sinh ra để cắt.
+ */
+test('đoán được danh mục từ nội dung tin nhắn ngân hàng', () => {
+  const r = parseReceipt('BIDV: TK 9988 -120,000VND 29/09/2026 ND GRAB CHUYEN DI')!
+  const guess = guessCategory(r.note, r.kind, CATEGORIES)
+  assert.equal(CATEGORIES.find((c) => c.id === guess?.categoryId)?.name, 'Đi lại')
+  assert.equal(guess?.reason, 'keyword')
+
+  const coffee = parseReceipt('TK 001 -45,000VND 12/09/2026 ND: HIGHLANDS COFFEE')!
+  const guess2 = guessCategory(coffee.note, coffee.kind, CATEGORIES)
+  assert.equal(CATEGORIES.find((c) => c.id === guess2?.categoryId)?.name, 'Ăn uống', 'coffee là chữ hay gặp trong tin nhắn ngân hàng')
+})
+
+/**
+ * Danh mục hệ thống không bao giờ được là kết quả đoán.
+ *
+ * Lỗi thật, bắt được trên máy: "ND GRAB CHUYEN DI" bị đoán thành "Chuyển đi"
+ * vì tên danh mục đó dài hơn từ khoá "grab" nên thắng ở phép so khớp dài nhất.
+ * Mà danh mục chuyển tiền bị loại khỏi MỌI phép tính thu/chi — khoản 120k sẽ
+ * biến mất khỏi tổng chi mà không báo gì.
+ */
+test('không bao giờ đoán ra danh mục hệ thống', () => {
+  const guess = guessCategory('GRAB CHUYEN DI', 'expense', CATEGORIES)
+  const category = CATEGORIES.find((c) => c.id === guess?.categoryId)
+  assert.equal(category?.name, 'Đi lại')
+  assert.equal(category?.slug, undefined, 'danh mục hệ thống không được là kết quả đoán')
+
+  // Khớp thẳng tên danh mục hệ thống cũng phải im lặng, không rơi vào nó
+  assert.equal(guessCategory('chuyển đi', 'expense', CATEGORIES), null)
+  assert.equal(guessCategory('chi khác', 'expense', CATEGORIES), null)
+})
+
+test('không đoán bừa khi nội dung không gợi ý gì', () => {
+  assert.equal(guessCategory('CK TU 9988', 'expense', CATEGORIES), null)
+  assert.equal(guessCategory('', 'expense', CATEGORIES), null)
+})
+
+test('parseReceipt đọc được ND không có dấu hai chấm', () => {
+  const r = parseReceipt('BIDV: TK 9988 -120,000VND 29/09/2026 ND GRAB CHUYEN DI')
+  assert.ok(r)
+  assert.equal(r.amount, 120_000)
+  assert.equal(r.kind, 'expense')
+  assert.equal(r.note, 'GRAB CHUYEN DI')
+  assert.equal(r.issuer, 'BIDV')
+})
+
+test('dấu hai chấm vẫn được ưu tiên khi có cả hai kiểu', () => {
+  const r = parseReceipt('TK 001 -50,000VND 29/09/2026 ND: AN TRUA')
+  assert.ok(r)
+  assert.equal(r.note, 'AN TRUA')
+})
+
+test('chữ VND không bị nhầm thành nhãn ND', () => {
+  const r = parseReceipt('TK 001 -50,000VND luc 29/09/2026. So du: 1,000,000VND')
+  assert.ok(r)
+  assert.equal(r.amount, 50_000)
+  assert.equal(r.note.includes('29/09'), false, 'không được lấy phần sau chữ VND làm ghi chú')
 })
 
 test('parseReceipt nhận ra khoản tiền vào và tên nhà cung cấp', () => {

@@ -103,6 +103,61 @@ function matchDate(folded: string): DateHit | null {
  * Vi du: 'ca phe 35k', '+15tr luong thang 9', 'xang 100k hom qua'
  * Tra ve null neu khong tim thay so tien hop le.
  */
+/**
+ * Doan danh muc tu mot doan ghi chu.
+ *
+ * Tach rieng khoi `parseQuickEntry` de man hinh bien lai dung lai duoc. Truoc
+ * day chi o nhap nhanh moi doan; tin nhan ngan hang chia se vao app luon roi
+ * vao "Chi khac" du app thua suc doan ra tu chinh doan ghi chu do — tuc nguoi
+ * dung van phai cham them mot lan dung cho app hua lo ho.
+ *
+ * Thu tu co y: bo phan loai da HOC tu lich su dat truoc tu khoa cung, vi thoi
+ * quen that cua nguoi dung dang tin hon mot bang tu khoa viet san.
+ */
+export function guessCategory(
+  note: string,
+  kind: TxKind,
+  categories: Category[],
+  guesser?: CategoryGuesser,
+): { categoryId: Id; reason: 'learned' | 'keyword' } | null {
+  if (note && guesser) {
+    const guess = guesser.predict(note, kind)
+    if (guess && guess.confidence >= LEARNED_THRESHOLD && categories.some((c) => c.id === guess.categoryId)) {
+      return { categoryId: guess.categoryId, reason: 'learned' }
+    }
+  }
+
+  const folded = normalize(note)
+  if (!folded) return null
+
+  // Tu khoa dai hon thi cu the hon: "tra sua" phai thang "tra"
+  let best: { id: Id; len: number } | null = null
+  const consider = (id: Id, token: string) => {
+    const k = normalize(token)
+    if (k && containsWord(folded, k) && (!best || k.length > best.len)) best = { id, len: k.length }
+  }
+  for (const c of categories) {
+    if (c.kind !== kind || c.id === undefined) continue
+
+    /**
+     * Khong bao gio doan ra danh muc HE THONG.
+     *
+     * Day khong phai chuyen thua: tin nhan "ND GRAB CHUYEN DI" tung duoc doan
+     * thanh "Chuyen di" — danh muc chuyen tien giua vi — vi ten danh muc do dai
+     * hon tu khoa "grab" nen thang o phep so sanh ben duoi. Ma danh muc chuyen
+     * tien bi loai khoi MOI phep tinh thu/chi, nen khoan 120k do se bien mat
+     * khoi tong chi ma khong bao gi. Cac danh muc "chua ro" va "khac" cung vay:
+     * chung la noi de rot ve, khong phai noi de doan toi.
+     */
+    if (c.slug) continue
+
+    for (const kw of c.keywords ?? []) consider(c.id, kw)
+    consider(c.id, c.name)
+  }
+
+  return best ? { categoryId: (best as { id: Id; len: number }).id, reason: 'keyword' } : null
+}
+
 export function parseQuickEntry(
   input: string,
   categories: Category[],
@@ -176,29 +231,11 @@ export function parseQuickEntry(
     }
   }
 
-  // Bo phan loai da hoc tu chinh lich su nguoi dung — dat truoc tu khoa cung
-  if (categoryId === null && note && guesser) {
-    const guess = guesser.predict(note, kind)
-    if (guess && guess.confidence >= LEARNED_THRESHOLD && categories.some((c) => c.id === guess.categoryId)) {
+  if (categoryId === null) {
+    const guess = guessCategory(note, kind, categories, guesser)
+    if (guess) {
       categoryId = guess.categoryId
-      reason = 'learned'
-    }
-  }
-
-  if (categoryId === null && foldedNote) {
-    let best: { id: Id; len: number } | null = null
-    const consider = (id: Id, token: string) => {
-      const k = normalize(token)
-      if (k && containsWord(foldedNote, k) && (!best || k.length > best.len)) best = { id, len: k.length }
-    }
-    for (const c of categories) {
-      if (c.kind !== kind || c.id === undefined) continue
-      for (const kw of c.keywords ?? []) consider(c.id, kw)
-      consider(c.id, c.name)
-    }
-    if (best) {
-      categoryId = (best as { id: Id; len: number }).id
-      reason = 'keyword'
+      reason = guess.reason
     }
   }
 

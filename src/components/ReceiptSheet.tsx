@@ -3,6 +3,8 @@ import { addTransaction, reconcileWallet, systemCategory } from '../lib/actions'
 import { formatDate } from '../lib/date'
 import { formatMoney } from '../lib/format'
 import { parseReceipt } from '../lib/receipt'
+import { guessCategory } from '../lib/quickadd'
+import { trainClassifier } from '../lib/learn'
 import { walletBalances } from '../lib/stats'
 import { useApp } from '../store'
 import { Sheet } from './ui'
@@ -57,10 +59,24 @@ export function ReceiptSheet({ initialText = '', onClose }: { initialText?: stri
   const balances = useMemo(() => walletBalances(wallets, transactions), [wallets, transactions])
 
   const kindCategories = categories.filter((c) => c.kind === (parsed?.kind ?? 'expense'))
+
+  /**
+   * Doan danh muc tu ghi chu doc duoc, dung chinh bo doan cua o nhap nhanh.
+   *
+   * Truoc day man hinh nay khong doan gi ca: moi tin nhan ngan hang deu roi vao
+   * "Chi khac" va nguoi dung phai tu chon. Ma "ND GRAB CHUYEN DI" thi app thua
+   * suc biet la Di lai — tu khoa "grab" nam san trong danh muc do.
+   */
+  const guesser = useMemo(() => trainClassifier(transactions, categories), [transactions, categories])
+  const guessed = useMemo(() => {
+    if (!parsed?.note) return null
+    return guessCategory(parsed.note, parsed.kind, categories, guesser)
+  }, [parsed?.note, parsed?.kind, categories, guesser])
+
   const fallback = parsed
     ? systemCategory(categories, parsed.kind === 'income' ? 'uncategorized-income' : 'uncategorized-expense')
     : undefined
-  const effectiveCategoryId = categoryId ?? fallback?.id ?? kindCategories[0]?.id ?? null
+  const effectiveCategoryId = categoryId ?? guessed?.categoryId ?? fallback?.id ?? kindCategories[0]?.id ?? null
 
   async function save() {
     if (!parsed || effectiveCategoryId == null || walletId == null) return
@@ -160,6 +176,11 @@ export function ReceiptSheet({ initialText = '', onClose }: { initialText?: stri
           </div>
           {parsed.note && <div className="receipt-note">{parsed.note}</div>}
           {parsed.issuer && <div className="hint">Nguồn nhận diện: {parsed.issuer}</div>}
+          {guessed && !categoryId && (
+            <div className="hint">
+              Danh mục do app đoán từ {guessed.reason === 'learned' ? 'thói quen ghi chép của bạn' : 'nội dung giao dịch'} — sửa được bên dưới.
+            </div>
+          )}
 
           <div className="grid-2" style={{ marginTop: 12 }}>
             <div className="field" style={{ marginBottom: 0 }}>

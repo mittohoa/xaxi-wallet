@@ -93,10 +93,16 @@ function cutAtStopper(text: string): string {
   return text.slice(0, end)
 }
 
-/** Lay phan mo ta giao dich: sau 'ND:', 'tai', 'cho', 'noi dung' */
+/** Lay phan mo ta giao dich: sau 'ND:', 'ND ', 'tai', 'cho', 'noi dung' */
 function findNote(text: string): string {
   const patterns = [
+    // Co dau hai cham hoac gach ngang — dang ro rang nhat
     /(?:^|[\s.;|])(?:nd|noi dung|nội dung|content|ct|mo ta|mô tả)\s*[:\-]\s*([^\n.;|]{3,120})/i,
+    // Chi cach bang khoang trang. Nhieu ngan hang viet "ND GRAB CHUYEN DI" khong
+    // dau hai cham; thieu dang nay thi ghi chu roi ve ten ngan hang, va danh muc
+    // khong bao gio doan dung. Bo 'ct' khoi danh sach o day vi hai ky tu do qua
+    // de trung voi thu khac khi khong con dau phan cach de neo.
+    /(?:^|[\s.;|])(?:nd|noi dung|nội dung|content|mo ta|mô tả)\s+([^\n.;|]{3,120})/i,
     /(?:tai|tại|cho|to|at)\s+([A-Za-zÀ-ỹ0-9][^\n.;|]{2,120})/i,
   ]
   for (const re of patterns) {
