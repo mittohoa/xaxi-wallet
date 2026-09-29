@@ -296,3 +296,113 @@ Riêng ý **máy chủ MCP** của MoneyMatter đáng suy nghĩ: cho một trợ
 - **Nếu chi vượt một hũ thì sao?** Chặn, cảnh báo, hay tự mượn từ hũ khác? Chặn thì trái tinh thần "app không phán xét người dùng".
 - **Ngân hàng nào gửi email giao dịch?** Cần biết cụ thể để viết bộ lọc IMAP — mỗi ngân hàng một định dạng.
 - **Đồng bộ cho một người nhiều máy, hay nhiều người chung một ví?** Quyết định này đổi hẳn mô hình khoá, nên cần chốt trước khi viết dòng code đồng bộ đầu tiên.
+
+---
+
+## 7. Ý tưởng tính năng rút từ 27 thiết kế tham khảo
+
+Nguồn: `docs/template/UI/`. Mỗi ý dưới đây đã đi qua bộ lọc ở §0 — *giảm công
+nhập liệu, hoặc giữ số liệu đúng khi người dùng lười*. Ý nào chỉ "trông hay" mà
+không qua được bộ lọc đều nằm ở mục cuối.
+
+Xếp theo **giá trị chia cho công sức**, cao nhất trước.
+
+### 7.1 Khoản sắp tới — ★ làm ngay
+
+Bộ tham khảo nào cũng có khối "Upcoming Payments". XAXI **đã có sẵn dữ liệu**:
+bảng `recurring` với `nextDate`. Chỉ thiếu việc hiện ba khoản gần nhất lên màn
+hình chính.
+
+Không đòi nhập thêm một chữ nào, và nó trả lời đúng câu hỏi người ta thật sự
+hỏi trước khi tiêu: *"từ giờ tới cuối tháng còn phải trả những gì?"*
+
+Công: một khối nhỏ trên Console. Dữ liệu và phép tính đã có.
+
+### 7.2 Dự báo cuối kỳ — ★ làm ngay
+
+*"Theo nhịp hiện tại, cuối tháng bạn sẽ chi khoảng 16,8 triệu."*
+
+Thuần tính toán: nhịp chi đã có (`paceRatio` trong Budgets), cộng các khoản
+định kỳ chưa tới hạn trong kỳ. Không nhập gì thêm.
+
+Đây là thứ đổi được hành vi: biết trước ngày 12 thì còn kịp, biết ngày 30 thì
+chỉ còn hối tiếc.
+
+**Điều kiện:** phải nói rõ là *ước tính*, và không dự báo khi độ phủ dữ liệu
+dưới một ngưỡng — dự báo từ dữ liệu thủng là bịa số.
+
+### 7.3 Bắt khoản bất thường ngay lúc nhập — ★ làm ngay
+
+Gõ `cà phê 350k`, app hỏi lại: *"Cà phê thường 35.000₫. Có phải bạn định gõ
+35k?"*
+
+Bộ phân loại Naive Bayes đã học phân phối số tiền theo danh mục rồi; chỉ cần
+đọc thêm độ lệch chuẩn. Bắt lỗi thừa số 0 — loại lỗi nhập liệu phổ biến nhất
+và khó phát hiện nhất về sau.
+
+Đúng tinh thần *giữ số liệu đúng*: rẻ nhất là chặn sai ngay lúc nhập.
+
+### 7.4 Nhân bản khoản gần nhất — ★★ rẻ
+
+Nhấn giữ một dòng trong danh sách → "Ghi lại y hệt, hôm nay". Một chạm.
+
+Đã có `suggestShortcuts` gợi ý theo tần suất; cái này là đường tắt trực tiếp
+cho trường hợp "hôm nay lại đúng như hôm qua".
+
+### 7.5 Tiện ích màn hình chính Android — ★★ đáng nhưng tốn công
+
+Công cụ giảm chi phí nhập liệu mạnh nhất còn lại: **ghi được mà không cần mở
+app**. Một ô hiện "chi hôm nay" cộng một nút mở thẳng ô nhập.
+
+Cần viết native thật (Glance hoặc RemoteViews), và widget phải đọc được dữ liệu
+đang nằm trong IndexedDB của WebView — đây là chỗ khó, có thể phải ghi thêm một
+bản tóm tắt nhỏ ra `SharedPreferences` mỗi lần đổi dữ liệu.
+
+Không xin thêm quyền nào.
+
+### 7.6 Chi cố định và chi biến đổi — ★★
+
+*"68% chi tiêu tháng này là khoản cố định."*
+
+Phân loại đã có sẵn trong dữ liệu: `source === 'recurring'` so với phần còn
+lại. Một dòng trong Báo cáo, không nhập gì thêm.
+
+Con số này đổi cách người ta nghĩ: phần cố định không cắt được bằng ý chí, nên
+biết tỷ lệ mới biết còn bao nhiêu chỗ để xoay.
+
+### 7.7 Mục tiêu tiết kiệm — ★★ có điều kiện
+
+Khối "Savings Goals" xuất hiện dày đặc trong bộ tham khảo. Nó tạo lý do để tiếp
+tục ghi chép — đúng vấn đề gốc của app.
+
+Nhưng nó **đòi nhập liệu** (đặt mục tiêu, gán tiến độ), nên chỉ đáng làm nếu
+tiến độ **tự tính** từ số dư ví thay vì bắt người dùng cập nhật tay. Gán một ví
+cho một mục tiêu, tiến độ chạy theo số dư ví đó.
+
+### 7.8 So sánh kỳ trước ở mọi con số — ★★ đang làm dở
+
+Đã làm cho hai ô Thu/Chi trên màn hình chính. Còn thiếu: mỗi danh mục trong
+Báo cáo.
+
+Lưu ý đã cài sẵn trong `comparableRange`: phải so **cùng số ngày đã trôi qua**.
+So tháng mới đi mười hai ngày với cả tháng trước thì tháng nào cũng ra "giảm
+mạnh" — một con số luôn sai theo cùng một hướng dạy người dùng bỏ qua chỗ đó.
+
+### 7.9 Ngày nào trong tuần tiêu nhiều nhất — ★ nhỏ
+
+Thuần suy ra từ dữ liệu có sẵn. Thường ra kết quả người dùng không ngờ (cuối
+tuần, hoặc đúng ngày nhận lương).
+
+---
+
+### Đã cân nhắc và bỏ
+
+| Ý | Vì sao bỏ |
+|---|---|
+| Thanh tab dưới đáy | Đã bỏ có chủ ý — "ô nhập là toàn bộ app" |
+| Chuyển tiền cho người khác, ảnh đại diện | Không có tài khoản, không có mạng xã hội |
+| Nối ngân hàng, hiện thẻ VISA | Trái nguyên tắc không hỏi thông tin ngân hàng |
+| Trợ lý AI dạng chat toàn màn hình | Ô nhập đã trả lời câu hỏi; thêm màn hình là thêm bước |
+| Gói trả phí, "Get Pro" | Không có |
+| Theo dõi đầu tư, danh mục cổ phiếu | Bài toán khác hẳn, kéo theo dữ liệu thời gian thực từ mạng |
+| Thông báo thường trú để ghi nhanh | Hiệu quả, nhưng phiền — trái với "app không làm phiền người dùng" |

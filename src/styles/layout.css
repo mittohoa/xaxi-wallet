@@ -1,0 +1,292 @@
+/* ============================================================
+   XAXI — BỐ CỤC
+
+   Khung xương của app: khung màn hình, khối nội dung, lưới, tấm trượt.
+   Không màu mè gì ở đây ngoài nền phân tầng — trang / thẻ / nổi.
+
+   Một luật chi phối toàn bộ tệp này: PHÂN TẦNG BẰNG NỀN, KHÔNG BẰNG
+   ĐƯỜNG KẺ. Giao diện web thô hay dùng viền 1px quanh mọi thứ; app
+   native tách tầng bằng cách đổi nền và nhấc lên bằng bóng. Đó là khác
+   biệt lớn nhất giữa "trang web trong khung điện thoại" và "ứng dụng".
+   ============================================================ */
+
+/* ---------- khung màn hình ---------- */
+
+.console {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  max-width: 680px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.console-scroll {
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding: 0 var(--s-4);
+}
+
+.console-body {
+  padding-bottom: var(--s-4);
+}
+
+.boot {
+  height: 100%;
+  display: grid;
+  place-items: center;
+  color: var(--text-muted);
+  font-size: var(--t-sm);
+}
+
+/* ---------- tiêu đề nhóm ---------- */
+
+.console-section {
+  font-size: var(--t-2xs);
+  font-weight: var(--w-semi);
+  letter-spacing: var(--track-caps);
+  text-transform: uppercase;
+  color: var(--text-muted);
+  padding: var(--s-5) var(--s-1) var(--s-2);
+}
+
+.day-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: var(--s-3);
+  padding: var(--s-4) var(--s-1) var(--s-2);
+  font-size: var(--t-xs);
+  color: var(--text-muted);
+  font-weight: var(--w-semi);
+}
+
+/* ---------- thẻ ---------- */
+
+.card {
+  background: var(--surface);
+  border-radius: var(--r-lg);
+  padding: var(--s-4);
+  box-shadow: var(--lift-1);
+}
+
+/* Chế độ tối không có bóng, nên phải có viền để thẻ tách khỏi trang */
+:root.theme-dark .card,
+:root.theme-dark .list,
+:root.theme-dark .receipt-preview,
+:root.theme-dark .help-grid {
+  border: 1px solid var(--line);
+}
+
+.card + .card,
+.card + .panel-ink,
+.panel-ink + .card,
+.panel-ink + .panel-ink {
+  margin-top: var(--s-3);
+}
+
+.card-title {
+  margin: 0 0 var(--s-4);
+  font-size: var(--t-2xs);
+  font-weight: var(--w-semi);
+  text-transform: uppercase;
+  letter-spacing: var(--track-caps);
+  color: var(--text-muted);
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+}
+
+.card-title .spacer {
+  flex: 1;
+}
+
+/**
+ * Thẻ mực — nơi biểu đồ sống.
+ *
+ * Luôn tối, ở cả hai chế độ. Đây là điều cho phép cả app chỉ cần MỘT bộ
+ * màu biểu đồ đã kiểm định thay vì hai bộ phải kiểm riêng cho sáng/tối,
+ * và cũng là khuôn hay gặp nhất trong các thiết kế tham khảo.
+ */
+.panel-ink {
+  background: linear-gradient(160deg, var(--ink-2), var(--ink));
+  color: var(--text-on-ink);
+  border-radius: var(--r-lg);
+  padding: var(--s-4);
+  box-shadow: var(--lift-2);
+}
+
+.panel-ink .card-title,
+.panel-ink .hint,
+.panel-ink .legend {
+  color: var(--text-on-ink-muted);
+}
+
+/* ---------- lưới ---------- */
+
+.grid-2 {
+  display: grid;
+  gap: var(--s-3);
+  grid-template-columns: 1fr 1fr;
+}
+
+.btn-row,
+.filter-row,
+.chips,
+.nudge-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+}
+
+.filter-row {
+  align-items: center;
+  gap: var(--s-3);
+}
+
+.filter-row .input {
+  width: auto;
+  flex: 1;
+  min-width: 130px;
+}
+
+.add-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--s-2);
+  margin-top: var(--s-4);
+  padding-top: var(--s-4);
+  border-top: 1px solid var(--line);
+}
+
+.add-row .input {
+  width: auto;
+  flex: 1;
+  min-width: 106px;
+  min-height: 44px;
+}
+
+/* ---------- màn hình phụ chiếm cả màn ---------- */
+
+.full-sheet {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-sheet);
+  background: var(--page);
+  display: flex;
+  flex-direction: column;
+  animation: sheet-in var(--dur-slow) var(--ease-out);
+}
+
+.full-sheet-top {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  padding: var(--s-2) var(--s-2);
+  padding-top: calc(var(--s-2) + var(--safe-t));
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.full-sheet-top h1 {
+  font-size: var(--t-lg);
+  font-weight: var(--w-semi);
+  letter-spacing: var(--track-snug);
+}
+
+.full-sheet-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--s-4) var(--s-4) calc(var(--s-8) + var(--safe-b));
+  max-width: 680px;
+  width: 100%;
+  margin: 0 auto;
+}
+
+/* ---------- tấm trượt từ dưới lên ---------- */
+
+.scrim {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-scrim);
+  background: rgba(8, 10, 14, 0.55);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  animation: fade var(--dur-base) var(--ease);
+  backdrop-filter: blur(3px);
+}
+
+.sheet {
+  background: var(--page);
+  width: 100%;
+  max-width: 520px;
+  border-radius: var(--r-xl) var(--r-xl) 0 0;
+  padding: var(--s-2) var(--s-5) calc(var(--s-5) + var(--safe-b));
+  max-height: 92vh;
+  overflow-y: auto;
+  animation: sheet-in var(--dur-slow) var(--ease-out);
+}
+
+/* Tay nắm kéo — dấu hiệu native quen thuộc, báo rằng vuốt xuống là đóng */
+.sheet::before {
+  content: '';
+  display: block;
+  width: 36px;
+  height: 4px;
+  border-radius: var(--r-pill);
+  background: var(--line-strong);
+  margin: 0 auto var(--s-4);
+}
+
+.sheet h2 {
+  margin: 0 0 var(--s-5);
+  font-size: var(--t-xl);
+  font-weight: var(--w-semi);
+  letter-spacing: var(--track-snug);
+}
+
+.sheet-actions {
+  display: flex;
+  gap: var(--s-3);
+  margin-top: var(--s-6);
+}
+
+.sheet-actions .btn {
+  flex: 1;
+  min-height: 50px;
+}
+
+/* ---------- màn hình rộng ---------- */
+
+@media (min-width: 760px) {
+  .console-scroll {
+    padding: 0 var(--s-5);
+  }
+
+  .composer {
+    padding: var(--s-3) var(--s-5) var(--s-5);
+  }
+
+  .full-sheet-body {
+    padding: var(--s-6);
+  }
+
+  .scrim {
+    align-items: center;
+  }
+
+  .sheet {
+    border-radius: var(--r-xl);
+    margin-bottom: 4vh;
+  }
+}
+
+@media (max-width: 340px) {
+  .grid-2 {
+    grid-template-columns: 1fr;
+  }
+}

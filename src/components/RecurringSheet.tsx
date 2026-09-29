@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { selectableCategories } from '../lib/actions'
 import { db, stamp, touch } from '../db/db'
 import { firstDueDate } from '../lib/recurring'
 import { formatDate } from '../lib/date'
@@ -26,7 +27,7 @@ export function RecurringSheet({ editing, onClose }: { editing: Recurring | 'new
   const [walletId, setWalletId] = useState<Id | null>(initial?.walletId ?? null)
   const [armed, setArmed] = useState(false)
 
-  const kindCategories = categories.filter((c) => c.kind === kind)
+  const kindCategories = selectableCategories(categories, kind)
   const activeWallets = wallets.filter((w) => !w.archived)
   const effectiveCategoryId =
     categoryId !== null && kindCategories.some((c) => c.id === categoryId) ? categoryId : (kindCategories[0]?.id ?? null)

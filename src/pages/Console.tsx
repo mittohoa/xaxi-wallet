@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { AnswerView } from '../components/AnswerView'
-import { Avatar, Figure, Money } from '../components/ui'
+import { Avatar, Figure, Money, Tile } from '../components/ui'
 import { addTransaction, markNoSpend, suggestShortcuts, systemCategory } from '../lib/actions'
 import { detectRecurring, trainClassifier } from '../lib/learn'
 import { db, stamp, touch } from '../db/db'
@@ -9,9 +9,9 @@ import { haptic } from '../lib/native/shell'
 import { saveSettings } from '../store'
 import { helpAnswer, interpret, type Answer, type CommandName } from '../lib/ask'
 import { computeCoverage, firstActivity } from '../lib/coverage'
-import { currentMonth, formatDateLong, monthRange, todayISO } from '../lib/date'
+import { currentMonth, formatDateLong, monthRange, shiftMonth, todayISO } from '../lib/date'
 import { formatMoney } from '../lib/format'
-import { inRange, sumTotals, walletBalances } from '../lib/stats'
+import { comparableRange, inRange, percentChange, sumTotals, walletBalances } from '../lib/stats'
 import { useApp, useLookups } from '../store'
 import type { Transaction } from '../types'
 
@@ -111,6 +111,19 @@ export function Console({
     () => sumTotals(inRange(transactions, range.start, range.end)),
     [transactions, range.start, range.end],
   )
+
+  /**
+   * Tổng của kỳ trước, đã cắt cho khớp số ngày kỳ này đã đi được.
+   *
+   * So tháng này mới đi mười hai ngày với cả tháng trước thì tháng nào cũng
+   * ra "giảm mạnh" — xem `comparableRange`.
+   */
+  const prevTotals = useMemo(() => {
+    const prev = monthRange(shiftMonth(month, -1), settings.startDayOfMonth)
+    const cut = comparableRange(range, prev, todayISO())
+    return sumTotals(inRange(transactions, cut.start, cut.end))
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [transactions, month, range.start, range.end, settings.startDayOfMonth])
 
   const coverage = useMemo(
     () => computeCoverage(transactions, dayMarks, settings.gapWindowDays, firstActivity(transactions, dayMarks)),
@@ -224,6 +237,21 @@ export function Console({
               {monthTotals.net < 0 ? '−' : '+'}
               {formatMoney(Math.abs(monthTotals.net))}
             </b>
+          </div>
+
+          <div className="hero-tiles">
+            <Tile
+              label="Thu tháng này"
+              kind="up"
+              value={monthTotals.income}
+              delta={percentChange(monthTotals.income, prevTotals.income)}
+            />
+            <Tile
+              label="Chi tháng này"
+              kind="down"
+              value={monthTotals.expense}
+              delta={percentChange(monthTotals.expense, prevTotals.expense)}
+            />
           </div>
         </header>
 

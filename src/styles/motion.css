@@ -1,0 +1,59 @@
+/* ============================================================
+   XAXI — CHUYỂN ĐỘNG
+
+   Chuyển động ở đây chỉ làm một việc: cho biết thứ gì vừa đổi và nó
+   đến từ đâu. Không có hiệu ứng nào chỉ để đẹp — mỗi lần chờ 200ms
+   là 200ms người dùng không ghi được khoản chi.
+   ============================================================ */
+
+@keyframes fade {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+@keyframes sheet-in {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 12px);
+  }
+}
+
+@keyframes breathe {
+  50% {
+    opacity: 0.55;
+    transform: scale(0.94);
+  }
+}
+
+/**
+ * Danh sách trôi vào lần lượt.
+ *
+ * Chỉ năm dòng đầu mới lệch nhau; từ dòng thứ sáu trở đi dùng chung một
+ * độ trễ. Xếp lớp cả danh sách dài thì dòng cuối phải chờ nửa giây mới
+ * hiện — lúc đó nó thành trò diễn chứ không còn là thông tin.
+ */
+.list .row {
+  animation: slide-up 0.26s var(--ease) backwards;
+}
+
+.list .row:nth-child(1) { animation-delay: 0ms; }
+.list .row:nth-child(2) { animation-delay: 22ms; }
+.list .row:nth-child(3) { animation-delay: 44ms; }
+.list .row:nth-child(4) { animation-delay: 66ms; }
+.list .row:nth-child(5) { animation-delay: 88ms; }
+.list .row:nth-child(n + 6) { animation-delay: 100ms; }

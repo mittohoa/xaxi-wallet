@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from 'react'
-import { addTransaction, reconcileWallet, systemCategory } from '../lib/actions'
+import { addTransaction, reconcileWallet, selectableCategories, systemCategory } from '../lib/actions'
 import { formatDate } from '../lib/date'
 import { formatMoney } from '../lib/format'
 import { parseReceipt } from '../lib/receipt'
@@ -58,7 +58,7 @@ export function ReceiptSheet({ initialText = '', onClose }: { initialText?: stri
   const parsed = useMemo(() => parseReceipt(text), [text])
   const balances = useMemo(() => walletBalances(wallets, transactions), [wallets, transactions])
 
-  const kindCategories = categories.filter((c) => c.kind === (parsed?.kind ?? 'expense'))
+  const kindCategories = selectableCategories(categories, parsed?.kind ?? 'expense')
 
   /**
    * Doan danh muc tu ghi chu doc duoc, dung chinh bo doan cua o nhap nhanh.

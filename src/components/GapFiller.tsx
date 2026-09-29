@@ -75,7 +75,7 @@ export function GapFiller() {
 
       <div className="coverage-line">
         <div className="meter" style={{ flex: 1 }}>
-          <i style={{ width: `${pct}%`, background: pct >= 80 ? 'var(--good)' : pct >= 50 ? 'var(--warning)' : 'var(--serious)' }} />
+          <i style={{ width: `${pct}%`, background: pct >= 80 ? 'var(--good)' : pct >= 50 ? 'var(--warning)' : 'var(--warning)' }} />
         </div>
         <b>{pct}%</b>
       </div>

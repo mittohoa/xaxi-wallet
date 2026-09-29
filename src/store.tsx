@@ -74,7 +74,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const dark = settings.theme === 'dark' || (settings.theme === 'system' && media.matches)
       root.classList.toggle('theme-dark', dark)
       root.dataset.theme = dark ? 'dark' : 'light'
-      const background = dark ? '#0b0b0d' : '#f3f3f5'
+      const background = dark ? '#0d1117' : '#f4f5f0'
       document.querySelector('meta[name="theme-color"]')?.setAttribute('content', background)
       applySystemTheme(dark, background)
     }

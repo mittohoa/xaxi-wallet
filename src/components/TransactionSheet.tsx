@@ -1,10 +1,11 @@
 import { useMemo, useState } from 'react'
+import { selectableCategories } from '../lib/actions'
 import { db, newId, stamp, touch } from '../db/db'
 import { formatMoney, parseAmount } from '../lib/format'
 import { todayISO } from '../lib/date'
 import { useApp } from '../store'
 import type { Id, Transaction, TxKind } from '../types'
-import { ConfirmButton, Segmented, Sheet } from './ui'
+import { ConfirmButton, Segmented, Sheet, flowColor } from './ui'
 import { DateField } from './DateField'
 import { PhotoStrip } from './PhotoStrip'
 import { deleteAttachmentsFor } from '../lib/attachments'
@@ -33,7 +34,7 @@ export function TransactionSheet({ editing, onClose }: { editing: Transaction | 
   const [draftId] = useState<Id>(() => initial?.id ?? newId())
 
   const activeWallets = useMemo(() => wallets.filter((w) => !w.archived || w.id === initial?.walletId), [wallets, initial])
-  const kindCategories = useMemo(() => categories.filter((c) => c.kind === kind), [categories, kind])
+  const kindCategories = useMemo(() => selectableCategories(categories, kind), [categories, kind])
 
   const amount = parseAmount(amountText)
   const amountValid = Number.isFinite(amount) && amount > 0
@@ -109,7 +110,7 @@ export function TransactionSheet({ editing, onClose }: { editing: Transaction | 
             setAmountText(e.target.value)
             setError(null)
           }}
-          style={{ color: amountValid ? `var(--${kind})` : undefined }}
+          style={{ color: amountValid ? flowColor(kind) : undefined }}
         />
         <div className="hint" style={{ textAlign: 'right' }}>
           {amountValid ? formatMoney(Math.round(amount)) : 'Gõ tắt được: 50k · 1.2tr · 3ty'}

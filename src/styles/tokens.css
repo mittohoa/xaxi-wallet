@@ -1,0 +1,226 @@
+/* ============================================================
+   XAXI — TẦNG TOKEN
+
+   Mọi giá trị thị giác của app đều bắt đầu từ tệp này. Không tệp nào
+   khác được viết mã màu, cỡ chữ hay khoảng cách bằng số trực tiếp.
+
+   Bốn quyết định định hình toàn bộ hệ thống:
+
+   1. MÀU ĐI RA TỪ LOGO, không đi ra từ thư viện giao diện.
+      Dấu hiệu là hai đường xu hướng: chanh #B8FF3D đi lên, đỏ #E34948
+      đi xuống, trên nền mực #0D1117. Ba màu đó trở thành: màu nhấn,
+      màu cảnh báo, và nền của chế độ tối. App chính là cái logo.
+
+   2. BIỂU ĐỒ LUÔN NẰM TRÊN NỀN MỰC, ở cả chế độ sáng lẫn tối.
+      Nhờ vậy chỉ cần MỘT bộ màu biểu đồ đã kiểm định thay vì hai bộ
+      phải kiểm riêng. Đây cũng là khuôn hay gặp nhất trong bộ tham
+      khảo: thẻ tối nổi trên trang sáng.
+
+   3. MÀU KHÔNG BAO GIỜ LÀ DẤU HIỆU DUY NHẤT.
+      Đã đo: không có bộ 5 sắc nào vượt qua được phép kiểm mọi cặp với
+      người loạn sắc đỏ–lục — cam và xanh lá luôn chập vào nhau. Vì vậy
+      mọi danh mục trong biểu đồ đều kèm biểu tượng và tên.
+
+   4. ĐỎ ĐƯỢC DÀNH RIÊNG CHO CẢNH BÁO.
+      Khoản chi dùng đỏ trầm (--down); vượt ngân sách và số dư âm mới
+      dùng đỏ gắt (--critical). Nếu mọi dòng chi đều đỏ gắt thì màu đỏ
+      hết nghĩa đúng lúc cần nó nhất.
+
+   Số liệu đo được, không phải ước lượng:
+   - bộ màu biểu đồ trên #0D1117: ΔE loạn sắc giữa hai màu cạnh nhau
+     thấp nhất 12,1 · mắt thường 16,6 · tương phản đều trên 3:1
+   - mọi màu chữ ngữ nghĩa đều đạt WCAG AA trên cả hai nền
+   ============================================================ */
+
+:root {
+  /* ---------- thương hiệu ---------- */
+  --brand-ink: #0d1117;
+  --brand-lime: #b8ff3d;
+  --brand-red: #e34948;
+
+  /* ---------- nhịp khoảng cách, gốc 4px ---------- */
+  --s-1: 4px;
+  --s-2: 8px;
+  --s-3: 12px;
+  --s-4: 16px;
+  --s-5: 20px;
+  --s-6: 24px;
+  --s-8: 32px;
+  --s-10: 40px;
+  --s-12: 48px;
+
+  /* ---------- thang chữ ----------
+     Bước nhảy đủ lớn để phân cấp đọc được ngay, không cần đọc kỹ.
+     Cỡ nhỏ nhất là 11px: dưới mức đó thì trên điện thoại không ai đọc. */
+  --t-2xs: 11px;
+  --t-xs: 12px;
+  --t-sm: 13px;
+  --t-md: 15px;
+  --t-lg: 17px;
+  --t-xl: 20px;
+  --t-2xl: 24px;
+
+  /* Con số dẫn dắt co theo bề ngang màn hình */
+  --t-figure: clamp(36px, 11vw, 52px);
+  --t-figure-sm: clamp(28px, 8.5vw, 38px);
+
+  --w-normal: 400;
+  --w-medium: 550;
+  --w-semi: 620;
+  --w-bold: 720;
+
+  /* Chữ càng lớn càng phải bó chặt, không thì nhìn rời rạc */
+  --track-tight: -0.03em;
+  --track-snug: -0.012em;
+  --track-normal: 0;
+  --track-caps: 0.09em;
+
+  --leading-tight: 1.1;
+  --leading-snug: 1.35;
+  --leading-normal: 1.55;
+  --leading-loose: 1.7;
+
+  /* ---------- bo góc ---------- */
+  --r-xs: 8px;
+  --r-sm: 12px;
+  --r-md: 16px;
+  --r-lg: 22px;
+  --r-xl: 28px;
+  --r-pill: 999px;
+
+  /* ---------- chuyển động ---------- */
+  --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --dur-fast: 0.12s;
+  --dur-base: 0.2s;
+  --dur-slow: 0.32s;
+
+  /* ---------- tầng ---------- */
+  --z-sheet: 40;
+  --z-scrim: 50;
+  --z-tooltip: 60;
+  --z-toast: 70;
+  --z-zoom: 90;
+
+  /* ---------- lề an toàn của thiết bị ---------- */
+  --safe-t: env(safe-area-inset-top, 0px);
+  --safe-b: env(safe-area-inset-bottom, 0px);
+
+  --font: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+
+  /* ---------- bộ màu biểu đồ ----------
+     Tám sắc, luôn vẽ trên nền mực nên dùng chung cho cả hai chế độ.
+     Thứ tự đã được tìm bằng cách thử mọi hoán vị để hai màu CẠNH NHAU
+     cách xa nhau nhất với người loạn sắc — đổi thứ tự là hỏng phép đo. */
+  --c-1: #73a434;
+  --c-2: #2b99e7;
+  --c-3: #db703b;
+  --c-4: #a17adf;
+  --c-5: #ac9008;
+  --c-6: #03aa8e;
+  --c-7: #6f8bed;
+  --c-8: #d4679f;
+}
+
+/* ============================================================
+   CHẾ ĐỘ SÁNG
+   ============================================================ */
+
+:root {
+  color-scheme: light;
+
+  --page: #f4f5f0;
+  --surface: #ffffff;
+  --surface-2: #eceee6;
+  --surface-3: #e0e3d8;
+
+  --text-primary: #11161c;
+  --text-secondary: #5a636e;
+  --text-muted: #8a929d;
+  --text-on-ink: #e7edf5;
+  --text-on-ink-muted: #9aa6b4;
+
+  --line: rgba(17, 22, 28, 0.08);
+  --line-strong: rgba(17, 22, 28, 0.16);
+
+  /* Nhấn: chanh của logo. Chữ trên nền chanh là mực — 15,7:1 */
+  --accent: #b8ff3d;
+  --accent-ink: #0d1117;
+  /* Chanh trên nền trắng không đủ tương phản để làm CHỮ; đây là biến thể tối */
+  --accent-text: #4a7c0f;
+  --accent-soft: rgba(184, 255, 61, 0.22);
+
+  /* Dòng tiền */
+  --up: #3e7a17;
+  --down: #b3453f;
+  --up-soft: rgba(62, 122, 23, 0.12);
+  --down-soft: rgba(179, 69, 63, 0.1);
+
+  /* Trạng thái — dành riêng, không dùng lại cho chuỗi dữ liệu */
+  --good: #3e7a17;
+  --warning: #8a5a00;
+  --critical: #c0271f;
+  --warning-soft: rgba(138, 90, 0, 0.12);
+  --critical-soft: rgba(192, 39, 31, 0.1);
+
+  /* Nền mực dùng cho thẻ biểu đồ, ở CẢ hai chế độ */
+  --ink: #0d1117;
+  --ink-2: #1a212b;
+  --grid: rgba(255, 255, 255, 0.09);
+  --axis: rgba(255, 255, 255, 0.22);
+
+  --lift-1: 0 1px 2px rgba(17, 22, 28, 0.05), 0 1px 1px rgba(17, 22, 28, 0.03);
+  --lift-2: 0 2px 8px rgba(17, 22, 28, 0.07), 0 10px 24px -14px rgba(17, 22, 28, 0.22);
+  --lift-3: 0 6px 16px rgba(17, 22, 28, 0.1), 0 24px 48px -24px rgba(17, 22, 28, 0.35);
+  --ring: 0 0 0 2px var(--accent-text);
+}
+
+/* ============================================================
+   CHẾ ĐỘ TỐI — nền chính là mực của logo
+   ============================================================ */
+
+:root.theme-dark {
+  color-scheme: dark;
+
+  --page: #0d1117;
+  --surface: #161b22;
+  --surface-2: #212936;
+  --surface-3: #2c3542;
+
+  --text-primary: #e7edf5;
+  --text-secondary: #9aa6b4;
+  --text-muted: #6c7889;
+  --text-on-ink: #e7edf5;
+  --text-on-ink-muted: #9aa6b4;
+
+  --line: rgba(231, 237, 245, 0.09);
+  --line-strong: rgba(231, 237, 245, 0.18);
+
+  --accent: #b8ff3d;
+  --accent-ink: #0d1117;
+  --accent-text: #b8ff3d;
+  --accent-soft: rgba(184, 255, 61, 0.16);
+
+  --up: #a9e85c;
+  --down: #f0817c;
+  --up-soft: rgba(169, 232, 92, 0.14);
+  --down-soft: rgba(240, 129, 124, 0.14);
+
+  --good: #a9e85c;
+  --warning: #e3a800;
+  --critical: #ff7a72;
+  --warning-soft: rgba(227, 168, 0, 0.16);
+  --critical-soft: rgba(255, 122, 114, 0.14);
+
+  /* Ở chế độ tối thẻ biểu đồ phải ĐẬM hơn nền, không thì nó biến mất */
+  --ink: #080b0f;
+  --ink-2: #131922;
+  --grid: rgba(255, 255, 255, 0.08);
+  --axis: rgba(255, 255, 255, 0.2);
+
+  /* Bóng đổ vô nghĩa trên nền tối — dùng viền mảnh để tách tầng */
+  --lift-1: none;
+  --lift-2: 0 2px 10px rgba(0, 0, 0, 0.45);
+  --lift-3: 0 10px 34px rgba(0, 0, 0, 0.6);
+  --ring: 0 0 0 2px var(--accent);
+}

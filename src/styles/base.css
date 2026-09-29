@@ -1,0 +1,118 @@
+/* ============================================================
+   XAXI — NỀN
+
+   Thiết lập gốc cho tài liệu và các thẻ HTML thô. Không có lớp
+   (class) nào ở đây; mọi thứ đặt tên đều nằm ở layout.css và
+   components.css.
+   ============================================================ */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font);
+  font-size: var(--t-md);
+  line-height: var(--leading-normal);
+  background: var(--page);
+  color: var(--text-primary);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  -webkit-tap-highlight-color: transparent;
+  overscroll-behavior-y: none;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+  margin: 0;
+}
+
+button {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+/**
+ * Chữ số đều bề ngang ở mọi chỗ hiện tiền.
+ *
+ * Không có nó thì cột số bên phải danh sách nhảy trái phải khi cuộn, vì
+ * chữ số 1 hẹp hơn chữ số 8 trong hầu hết phông hệ thống.
+ */
+.amount,
+.hero-figure,
+.answer-figure,
+.rank-value,
+.trail,
+.tile-value,
+.data-table td,
+.recon-value,
+.delta,
+.budget-foot,
+.coverage-line {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+
+/**
+ * Ký hiệu tiền tệ lùi lại một bậc.
+ *
+ * "45.000₫" — thứ có nghĩa là con số, không phải chữ đ. Thu nhỏ và làm
+ * nhạt ký hiệu thì mắt bắt ngay vào phần đáng đọc.
+ */
+.sym {
+  font-size: 0.54em;
+  font-weight: var(--w-medium);
+  letter-spacing: var(--track-normal);
+  opacity: 0.45;
+  margin-left: 0.08em;
+}
+
+/** Dấu cộng trừ nhạt hơn con số nhưng vẫn đọc được */
+.sign {
+  opacity: 0.55;
+  margin-right: 0.04em;
+  font-weight: var(--w-medium);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/** Người dùng tắt hiệu ứng thì tắt thật, không giảm bớt */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}

@@ -2,7 +2,7 @@ import type { Answer } from '../lib/ask'
 import { formatDate, formatDateLong } from '../lib/date'
 import { formatMoney } from '../lib/format'
 import { useLookups } from '../store'
-import { Avatar, Figure, Money } from './ui'
+import { Avatar, Figure, Money, flowColor } from './ui'
 
 /**
  * Ve mot cau tra loi. Moi dang tra loi co mot cach trinh bay rieng,
@@ -51,7 +51,7 @@ export function AnswerView({ answer, onPick }: { answer: Answer; onPick?: (text:
                 <span className="rank-track">
                   <span
                     className="rank-fill"
-                    style={{ width: `${Math.max(s.share * 100, 2)}%`, background: `var(--${answer.focus})` }}
+                    style={{ width: `${Math.max(s.share * 100, 2)}%`, background: flowColor(answer.focus) }}
                   />
                 </span>
               </div>

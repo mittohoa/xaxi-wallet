@@ -24,12 +24,25 @@ export function Reports() {
 
   return (
     <>
-      <div className="card">
+      {/*
+        Biểu đồ nằm trên thẻ mực ở CẢ hai chế độ sáng và tối.
+        Nhờ vậy cả app chỉ cần một bộ màu biểu đồ đã kiểm định thay vì hai bộ
+        phải kiểm riêng — xem chú thích đầu styles/tokens.css.
+      */}
+      <div className="panel-ink">
         <div className="card-title">6 tháng gần nhất</div>
         <MonthlyBars data={series} />
-        <button type="button" className="btn ghost sm" style={{ marginTop: 6 }} onClick={() => setShowTable((v) => !v)}>
-          {showTable ? 'Ẩn bảng số liệu' : 'Xem dạng bảng'}
-        </button>
+      </div>
+
+      <div className="card">
+        <div className="filter-row">
+          <div className="hint" style={{ flex: 1 }}>
+            Chi trung bình {formatMoney(Math.round(avg))}/tháng trong giai đoạn này.
+          </div>
+          <button type="button" className="btn sm" onClick={() => setShowTable((v) => !v)}>
+            {showTable ? 'Ẩn bảng' : 'Xem bảng'}
+          </button>
+        </div>
         {showTable && (
           <div className="table-wrap">
             <table className="data-table">
@@ -56,9 +69,7 @@ export function Reports() {
             </table>
           </div>
         )}
-        <div className="hint" style={{ marginTop: 10 }}>
-          Chi trung bình {formatMoney(Math.round(avg))}/tháng trong giai đoạn này.
-        </div>
+
       </div>
 
       <div className="card">
@@ -127,9 +138,15 @@ export function Reports() {
                 </span>
                 <span className="rank-value">{formatMoney(slice.amount)}</span>
                 <span className="rank-track">
+                  {/*
+                    Thanh mang màu của CHÍNH danh mục, không phải một màu chung
+                    cho thu/chi. Nhờ vậy mắt nối được thanh này với biểu tượng
+                    cùng màu ở danh sách giao dịch. Màu không phải dấu hiệu duy
+                    nhất: tên và biểu tượng đứng ngay bên trái.
+                  */}
                   <span
                     className="rank-fill"
-                    style={{ width: `${Math.max(slice.share * 100, 2)}%`, background: `var(--${kind})` }}
+                    style={{ width: `${Math.max(slice.share * 100, 2)}%`, background: slice.category.color }}
                   />
                 </span>
               </div>

@@ -5,11 +5,12 @@ import { configureFormat, formatCompact, formatMoney, parseAmount } from '../src
 import { monthRange, shiftMonth, toISO } from '../src/lib/date'
 import { parseQuickEntry } from '../src/lib/quickadd'
 import { parseReceipt } from '../src/lib/receipt'
+import { selectableCategories } from '../src/lib/actions'
 import { guessCategory } from '../src/lib/quickadd'
 import { parseCSV, parseStatement } from '../src/lib/statement'
 import { computeCoverage } from '../src/lib/coverage'
 import { advance, firstDueDate } from '../src/lib/recurring'
-import { byCategory, dailySeries, isTransfer, monthlySeries, spendable, sumTotals, walletBalances } from '../src/lib/stats'
+import { byCategory, comparableRange, dailySeries, isTransfer, monthlySeries, percentChange, spendable, sumTotals, walletBalances } from '../src/lib/stats'
 import { suggestShortcuts } from '../src/lib/actions'
 import type { Category, Recurring, Transaction, Wallet } from '../src/types'
 
@@ -502,4 +503,52 @@ test('máy mới cài chưa có dữ liệu thì không bị trách là bỏ só
   assert.equal(coverage.currentGapStreak, 0, 'không được báo đang trống nhiều ngày')
   assert.equal(coverage.ratio, 1)
   assert.equal(coverage.window, 0)
+})
+
+/* ================= so sánh với kỳ trước ================= */
+
+test('kỳ trước bị cắt cho khớp số ngày đã trôi qua', () => {
+  const nay = { start: '2026-09-01', end: '2026-09-30' }
+  const truoc = { start: '2026-08-01', end: '2026-08-31' }
+
+  // Hôm nay là 12/09 — mới đi được 11 ngày, nên tháng 8 cũng chỉ lấy 11 ngày
+  assert.deepEqual(comparableRange(nay, truoc, '2026-09-12'), { start: '2026-08-01', end: '2026-08-12' })
+
+  // Ngày đầu kỳ thì kỳ trước cũng chỉ một ngày
+  assert.deepEqual(comparableRange(nay, truoc, '2026-09-01'), { start: '2026-08-01', end: '2026-08-01' })
+})
+
+test('kỳ đã qua hẳn thì lấy trọn kỳ trước', () => {
+  const nay = { start: '2026-09-01', end: '2026-09-30' }
+  const truoc = { start: '2026-08-01', end: '2026-08-31' }
+  const r = comparableRange(nay, truoc, '2026-12-25')
+  assert.equal(r.end, '2026-08-31', 'không được vượt quá ngày cuối của kỳ trước')
+})
+
+test('phần trăm thay đổi im lặng khi kỳ trước bằng không', () => {
+  assert.equal(percentChange(100, 0), null)
+  assert.equal(percentChange(0, 0), null)
+  assert.equal(percentChange(120, 100), 20)
+  assert.equal(percentChange(80, 100), -20)
+})
+
+/**
+ * Danh mục hệ thống không được phép chọn tay.
+ *
+ * Lỗi thật, thấy trên máy: biểu mẫu ghi đầy đủ liệt kê cả "Chuyển đi". Chọn
+ * nhầm vào đó thì khoản chi biến khỏi tổng chi mà không có gì báo, vì chuyển
+ * tiền giữa hai ví bị loại khỏi mọi phép tính thu/chi.
+ */
+test('bộ chọn danh mục loại bỏ danh mục hệ thống', () => {
+  const all = [
+    ...CATEGORIES,
+    { id: '6', name: 'Chuyển đi', kind: 'expense' as const, icon: '↗️', color: '#72727e', builtin: true, slug: 'transfer-out' as const },
+    { id: '7', name: 'Chi chưa rõ', kind: 'expense' as const, icon: '❔', color: '#ec835a', builtin: true, slug: 'reconcile-expense' as const },
+  ]
+  const chon = selectableCategories(all, 'expense').map((c) => c.name)
+
+  assert.equal(chon.includes('Chuyển đi'), false, 'chọn nhầm là khoản chi biến khỏi tổng')
+  assert.equal(chon.includes('Chi chưa rõ'), false, 'đây là chênh lệch do đối soát sinh ra, không phải khoản người dùng tiêu')
+  assert.equal(chon.includes('Chi khác'), true, '"Chi khác" vẫn được tính vào tổng chi nên giữ lại')
+  assert.equal(chon.includes('Ăn uống'), true)
 })

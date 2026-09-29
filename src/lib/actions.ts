@@ -227,3 +227,22 @@ export async function deleteTransfer(transferId: Id): Promise<number> {
   await db.transactions.bulkDelete(legs.map((t) => t.id))
   return legs.length
 }
+
+/**
+ * Danh mục người dùng được phép chọn tay.
+ *
+ * Bỏ hai nhóm danh mục hệ thống, vì cùng một lý do: chọn nhầm vào chúng thì
+ * con số của người dùng sai mà không có gì báo.
+ *
+ * - `transfer-*`: chuyển tiền giữa hai ví bị loại khỏi MỌI phép tính thu/chi.
+ *   Một khoản chi thật bị gán vào đây sẽ biến mất khỏi tổng chi tháng đó.
+ * - `reconcile-*`: đây là phần chênh lệch do đối soát số dư sinh ra, luôn kèm
+ *   cờ "ước tính". Người dùng gán tay vào đây là nói dối chính báo cáo của mình.
+ *
+ * `uncategorized-*` thì GIỮ: "Chi khác" là chỗ rót về hợp lệ khi chưa biết xếp
+ * vào đâu, và nó vẫn được tính vào tổng chi bình thường.
+ */
+export function selectableCategories(categories: Category[], kind: TxKind): Category[] {
+  const cam: CategorySlug[] = ['transfer-out', 'transfer-in', 'reconcile-expense', 'reconcile-income']
+  return categories.filter((c) => c.kind === kind && !(c.slug && cam.includes(c.slug)))
+}

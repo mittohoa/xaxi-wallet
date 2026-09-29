@@ -10,7 +10,7 @@ import type { Id } from '../types'
 /** Mau canh bao theo muc do dung ngan sach — luon di kem nhan chu, khong chi dua vao mau */
 function statusOf(ratio: number, paceRatio: number): { color: string; label: string } {
   if (ratio > 1) return { color: 'var(--critical)', label: 'Vượt ngân sách' }
-  if (ratio > paceRatio + 0.15) return { color: 'var(--serious)', label: 'Đang tiêu nhanh hơn dự kiến' }
+  if (ratio > paceRatio + 0.15) return { color: 'var(--warning)', label: 'Đang tiêu nhanh hơn dự kiến' }
   if (ratio > 0.85) return { color: 'var(--warning)', label: 'Sắp chạm hạn mức' }
   return { color: 'var(--good)', label: 'Trong tầm kiểm soát' }
 }

@@ -47,7 +47,7 @@ export function TransactionList({
           <div className="day-head">
             <span>{formatDateLong(day.date)}</span>
             {showDayTotals && (
-              <span style={{ color: day.net < 0 ? 'var(--expense)' : 'var(--income)', fontVariantNumeric: 'tabular-nums' }}>
+              <span style={{ color: day.net < 0 ? 'var(--down)' : 'var(--up)', fontVariantNumeric: 'tabular-nums' }}>
                 {day.net < 0 ? '−' : '+'}
                 {formatMoney(Math.abs(day.net))}
               </span>

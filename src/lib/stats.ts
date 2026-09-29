@@ -128,3 +128,45 @@ export function monthlySeries(txs: Transaction[], endMonth: string, count: numbe
   }
   return months
 }
+
+/* ---------------- so sánh với kỳ trước ---------------- */
+
+export interface Range {
+  start: string
+  end: string
+}
+
+/**
+ * Cắt kỳ trước cho khớp số ngày đã trôi qua của kỳ này.
+ *
+ * Nếu so tháng này — mới đi được mười hai ngày — với CẢ tháng trước thì
+ * con số luôn ra "giảm mạnh", mọi tháng, với mọi người dùng. Một con số
+ * luôn sai theo cùng một hướng còn tệ hơn là không có con số nào: nó dạy
+ * người dùng bỏ qua chỗ đó.
+ *
+ * Kỳ này đã đi được bao nhiêu ngày thì kỳ trước cũng chỉ lấy bấy nhiêu.
+ */
+export function comparableRange(current: Range, previous: Range, today: string): Range {
+  // Kỳ này đã qua hẳn thì lấy trọn kỳ trước. Không được đếm ngày rồi dời sang,
+  // vì tháng dài ngắn khác nhau: 29 ngày của tháng 9 dời sang tháng 8 sẽ dừng ở
+  // ngày 30 và bỏ mất ngày 31.
+  if (today >= current.end) return previous
+
+  const day = 86_400_000
+  const at = (iso: string) => Date.parse(`${iso}T00:00:00Z`)
+  const elapsed = Math.max(0, Math.round((at(today) - at(current.start)) / day))
+  const end = new Date(at(previous.start) + elapsed * day).toISOString().slice(0, 10)
+  return { start: previous.start, end: end < previous.end ? end : previous.end }
+}
+
+/**
+ * Phần trăm thay đổi, hoặc null khi không so được.
+ *
+ * Trả về null khi kỳ trước bằng 0: chia cho không thì ra vô cực, mà hiển
+ * thị "+∞%" hay "+100%" đều là bịa. Không có gì để so thì nói thẳng là
+ * không có gì để so.
+ */
+export function percentChange(now: number, before: number): number | null {
+  if (!Number.isFinite(now) || !Number.isFinite(before) || before === 0) return null
+  return ((now - before) / before) * 100
+}

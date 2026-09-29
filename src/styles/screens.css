@@ -1,0 +1,523 @@
+/* ============================================================
+   XAXI — MÀN HÌNH
+
+   Những mảnh chỉ xuất hiện ở một chỗ. Mảnh nào dùng lại ở hai chỗ trở
+   lên thì phải chuyển sang components.css.
+   ============================================================ */
+
+/* ============================================================
+   CON SỐ DẪN DẮT
+   ============================================================ */
+
+.console-hero {
+  position: relative;
+  text-align: center;
+  padding: calc(var(--s-8) + var(--safe-t)) var(--s-2) var(--s-6);
+}
+
+.console-gear {
+  position: absolute;
+  top: calc(var(--s-4) + var(--safe-t));
+  right: 0;
+  opacity: 0.5;
+}
+
+.console-gear:active {
+  transform: scale(0.9);
+}
+
+.hero-figure {
+  font-size: var(--t-figure);
+  font-weight: var(--w-bold);
+  letter-spacing: var(--track-tight);
+  line-height: var(--leading-tight);
+}
+
+.hero-sub {
+  margin-top: var(--s-2);
+  font-size: var(--t-xs);
+  color: var(--text-muted);
+}
+
+.hero-sub b {
+  font-weight: var(--w-semi);
+}
+
+/* Hàng ô số liệu ngay dưới con số dẫn dắt */
+.hero-tiles {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--s-2);
+  margin-top: var(--s-5);
+  text-align: left;
+}
+
+.console-onboard {
+  color: var(--text-secondary);
+  font-size: var(--t-md);
+  line-height: var(--leading-loose);
+  padding: var(--s-4) var(--s-1);
+}
+
+.console-onboard p {
+  margin: 0 0 var(--s-3);
+}
+
+/* ============================================================
+   Ô NHẬP — TRUNG TÂM CỦA APP
+   ============================================================ */
+
+.composer {
+  flex: none;
+  padding: var(--s-2) var(--s-4) calc(var(--s-3) + var(--safe-b));
+  background: linear-gradient(to top, var(--page) 62%, transparent);
+}
+
+.composer-preview {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--s-2);
+  font-size: var(--t-sm);
+  color: var(--text-secondary);
+  padding: var(--s-1) var(--s-2) var(--s-2);
+  min-height: 24px;
+  animation: slide-up var(--dur-base) var(--ease);
+}
+
+.composer-preview .sep {
+  color: var(--text-muted);
+  opacity: 0.6;
+}
+
+.composer-preview .tag {
+  font-size: var(--t-2xs);
+  font-weight: var(--w-semi);
+  letter-spacing: var(--track-caps);
+  color: var(--text-muted);
+  background: var(--surface-2);
+  border-radius: var(--r-pill);
+  padding: 3px var(--s-2);
+}
+
+/* Thanh nổi bo tròn, không phải ô input viền 1px */
+.composer-row {
+  display: flex;
+  gap: var(--s-2);
+  align-items: center;
+  background: var(--surface);
+  border-radius: var(--r-xl);
+  padding: var(--s-1) var(--s-1) var(--s-1) var(--s-3);
+  box-shadow: var(--lift-2);
+}
+
+:root.theme-dark .composer-row {
+  border: 1px solid var(--line);
+}
+
+.composer-input {
+  flex: 1;
+  min-width: 0;
+  min-height: 46px;
+  border: 0;
+  background: transparent;
+  padding: var(--s-3) var(--s-2);
+  font-size: 16px; /* dưới 16px thì iOS tự phóng to trang khi gõ */
+  letter-spacing: var(--track-snug);
+  outline: none;
+}
+
+.composer-input::placeholder {
+  color: var(--text-muted);
+}
+
+.composer-send,
+.composer-mic {
+  flex: none;
+  width: 46px;
+  height: 46px;
+  border-radius: var(--r-pill);
+  border: 0;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  font-size: var(--t-lg);
+  transition: transform var(--dur-fast) var(--ease), opacity var(--dur-fast) var(--ease);
+}
+
+.composer-send {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.composer-send:active,
+.composer-mic:active {
+  transform: scale(0.9);
+}
+
+.composer-send:disabled {
+  opacity: 0.26;
+  cursor: not-allowed;
+}
+
+.composer-mic {
+  background: var(--surface-2);
+}
+
+.composer-mic.listening {
+  background: var(--brand-red);
+  color: #fff;
+  animation: breathe 1.5s ease-in-out infinite;
+}
+
+.composer-chips {
+  display: flex;
+  gap: var(--s-2);
+  margin-top: var(--s-2);
+  overflow-x: auto;
+  scrollbar-width: none;
+  padding: 1px 0 2px;
+}
+
+.composer-chips::-webkit-scrollbar {
+  display: none;
+}
+
+.composer-chips .chip {
+  flex: none;
+  white-space: nowrap;
+}
+
+/* ============================================================
+   CÂU TRẢ LỜI
+   ============================================================ */
+
+.answer {
+  animation: slide-up var(--dur-slow) var(--ease-out);
+}
+
+.answer-close {
+  margin: var(--s-1) 0 var(--s-3);
+}
+
+.answer-label {
+  font-size: var(--t-2xs);
+  font-weight: var(--w-semi);
+  letter-spacing: var(--track-caps);
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: var(--s-2);
+  padding: 0 var(--s-1);
+}
+
+.answer-figure {
+  font-size: var(--t-figure-sm);
+  font-weight: var(--w-bold);
+  letter-spacing: var(--track-tight);
+  line-height: var(--leading-tight);
+  padding: 0 var(--s-1);
+}
+
+.answer-meta {
+  margin-top: var(--s-2);
+  padding: 0 var(--s-1);
+  font-size: var(--t-sm);
+  color: var(--text-secondary);
+  line-height: var(--leading-normal);
+}
+
+.answer-empty {
+  margin-top: var(--s-3);
+  padding: 0 var(--s-1);
+  font-size: var(--t-md);
+  color: var(--text-muted);
+  line-height: var(--leading-loose);
+}
+
+.compare-delta {
+  margin: var(--s-4) var(--s-1) 0;
+  font-size: var(--t-md);
+  font-weight: var(--w-semi);
+  letter-spacing: var(--track-snug);
+}
+
+.help-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: var(--s-2);
+  background: var(--surface);
+  border-radius: var(--r-md);
+  padding: var(--s-2);
+  box-shadow: var(--lift-1);
+}
+
+.help-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--s-3);
+  font-size: var(--t-sm);
+  color: var(--text-muted);
+  padding: var(--s-2);
+}
+
+/* ============================================================
+   BIÊN LAI
+   ============================================================ */
+
+.scan-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  margin-bottom: var(--s-4);
+}
+
+.scan-row .btn {
+  width: 100%;
+  min-height: 52px;
+}
+
+.receipt-preview {
+  border-radius: var(--r-md);
+  padding: var(--s-4);
+  background: var(--surface);
+  box-shadow: var(--lift-1);
+}
+
+.receipt-amount {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-3);
+  font-size: var(--t-2xl);
+  font-weight: var(--w-bold);
+  letter-spacing: var(--track-tight);
+}
+
+.receipt-note {
+  font-size: var(--t-sm);
+  color: var(--text-secondary);
+  margin-top: var(--s-1);
+}
+
+/* ============================================================
+   ĐỐI SOÁT
+   ============================================================ */
+
+.recon-compare {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--s-3);
+  align-items: end;
+  margin-bottom: var(--s-4);
+}
+
+.recon-value {
+  font-size: var(--t-xl);
+  font-weight: var(--w-semi);
+  letter-spacing: var(--track-tight);
+  padding: var(--s-3) 0;
+}
+
+.recon-diff {
+  background: var(--surface);
+  border-radius: var(--r-sm);
+  padding: var(--s-3) var(--s-4);
+  font-size: var(--t-sm);
+  margin-bottom: var(--s-4);
+  line-height: var(--leading-normal);
+}
+
+/* ============================================================
+   SAO KÊ
+   ============================================================ */
+
+.stmt-list {
+  max-height: 44vh;
+  overflow-y: auto;
+  border-radius: var(--r-sm);
+  background: var(--surface);
+}
+
+.stmt-row {
+  display: grid;
+  grid-template-columns: auto 74px 1fr auto;
+  align-items: center;
+  gap: var(--s-3);
+  padding: var(--s-3);
+  font-size: var(--t-sm);
+  cursor: pointer;
+  min-height: 48px;
+}
+
+.stmt-row + .stmt-row {
+  border-top: 1px solid var(--line);
+}
+
+.stmt-row.dup {
+  opacity: 0.5;
+}
+
+.stmt-row input {
+  width: 20px;
+  height: 20px;
+  accent-color: var(--accent-text);
+}
+
+.stmt-date {
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.stmt-note {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.stmt-summary {
+  font-size: var(--t-sm);
+  color: var(--text-secondary);
+  margin-top: var(--s-3);
+  line-height: var(--leading-normal);
+}
+
+/* ============================================================
+   NGÂN SÁCH
+   ============================================================ */
+
+.month-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--s-4);
+  font-size: var(--t-lg);
+  font-weight: var(--w-semi);
+  letter-spacing: var(--track-snug);
+}
+
+.budget-row {
+  padding: var(--s-4) 0;
+  border-top: 1px solid var(--line);
+}
+
+.budget-row:first-of-type {
+  border-top: 0;
+  padding-top: 0;
+}
+
+.budget-head {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+}
+
+.budget-head .rank-label {
+  flex: 1;
+  min-width: 0;
+}
+
+.budget-input {
+  width: 128px;
+  text-align: right;
+}
+
+.budget-foot {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--s-3);
+  font-size: var(--t-xs);
+  color: var(--text-muted);
+  margin-top: var(--s-2);
+}
+
+/* ============================================================
+   ĐỘ PHỦ VÀ KHOẢNG TRỐNG
+   ============================================================ */
+
+.coverage-line {
+  display: flex;
+  align-items: center;
+  gap: var(--s-3);
+  font-weight: var(--w-semi);
+}
+
+.gap-row {
+  display: grid;
+  grid-template-columns: 1fr 110px auto;
+  align-items: center;
+  gap: var(--s-2);
+  padding: var(--s-2) 0;
+  border-top: 1px solid var(--line);
+}
+
+.gap-date {
+  font-size: var(--t-sm);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gap-input {
+  min-height: 44px;
+  padding: var(--s-2) var(--s-3);
+  text-align: right;
+  font-size: var(--t-sm);
+}
+
+/* ============================================================
+   HỘP CHỜ PHÂN LOẠI
+   ============================================================ */
+
+.row.inbox-pending {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: var(--s-2) var(--s-3);
+  cursor: default;
+  align-items: center;
+}
+
+.row.inbox-pending:active {
+  transform: none;
+  background: none;
+}
+
+.inbox-pick {
+  grid-column: 1 / -1;
+}
+
+/* ============================================================
+   CHUYỂN TIỀN
+   ============================================================ */
+
+.transfer-row {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  gap: var(--s-3);
+  align-items: start;
+}
+
+.transfer-swap {
+  margin-top: 28px;
+  background: var(--surface-2);
+}
+
+/* ============================================================
+   CÀI ĐẶT
+   ============================================================ */
+
+.privacy-list {
+  margin: 0;
+  padding-left: var(--s-5);
+  font-size: var(--t-sm);
+  line-height: var(--leading-loose);
+  color: var(--text-secondary);
+}
+
+.footnote {
+  text-align: center;
+  font-size: var(--t-xs);
+  color: var(--text-muted);
+  margin: var(--s-6) 0 0;
+}

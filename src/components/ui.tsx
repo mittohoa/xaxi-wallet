@@ -106,9 +106,10 @@ export function Avatar({ icon, color }: { icon: string; color: string }) {
     <span
       className="avatar"
       style={{
-        // Nen trung tinh + vong mau manh: to mau thang vao nen lam emoji bi duc
-        background: 'var(--surface-2)',
-        boxShadow: `inset 0 0 0 1.5px color-mix(in srgb, ${color} 55%, transparent)`,
+        // Nen nhuom rat nhat theo mau danh muc, khong to dac: to dac vao thi
+        // emoji bi duc va ca cot bieu tuong thanh mot day mang mau chong nhau.
+        background: `color-mix(in srgb, ${color} 14%, var(--surface-2))`,
+        boxShadow: `inset 0 0 0 1px color-mix(in srgb, ${color} 30%, transparent)`,
       }}
       aria-hidden="true"
     >
@@ -148,4 +149,71 @@ export function ConfirmButton({
       {armed ? confirmLabel : label}
     </button>
   )
+}
+
+/**
+ * Nhãn so sánh với kỳ trước.
+ *
+ * Thứ đáng lấy nhất từ bộ giao diện tham khảo: nó thêm rất nhiều thông tin mà
+ * KHÔNG đòi người dùng nhập thêm gì.
+ *
+ * Hai điều bắt buộc:
+ * - có mũi tên đi kèm màu, để người loạn sắc không phải dựa vào màu;
+ * - `percent` bằng null thì KHÔNG hiện gì. Kỳ trước bằng 0 thì không có gì để
+ *   so, và bịa ra "+100%" là nói dối về chính con số của người dùng.
+ *
+ * `invert` dành cho khoản chi: chi nhiều hơn kỳ trước là tin xấu, nên phải tô
+ * màu ngược lại với thu.
+ */
+export function Delta({ percent, invert }: { percent: number | null; invert?: boolean }) {
+  if (percent === null || !Number.isFinite(percent)) return null
+
+  const rounded = Math.round(percent)
+  if (rounded === 0) return <span className="delta flat">≈ như kỳ trước</span>
+
+  const tang = rounded > 0
+  const tone = tang === !invert ? 'up' : 'down'
+  return (
+    <span className={`delta ${tone}`}>
+      {tang ? '↑' : '↓'} {Math.abs(rounded)}%
+    </span>
+  )
+}
+
+/** Ô số liệu: nhãn nhỏ, con số lớn, và nhãn so sánh nếu có */
+export function Tile({
+  label,
+  value,
+  kind,
+  delta,
+}: {
+  label: string
+  value: number
+  kind: 'up' | 'down'
+  delta?: number | null
+}) {
+  return (
+    <div className={`tile ${kind}`}>
+      <span className="tile-head">
+        <span className={`dot ${kind === 'up' ? 'income' : 'expense'}`} aria-hidden="true" />
+        {label}
+      </span>
+      <span className="tile-value">
+        <Money value={value} />
+      </span>
+      {delta !== undefined && <Delta percent={delta ?? null} invert={kind === 'down'} />}
+    </div>
+  )
+}
+
+/**
+ * Màu của một chiều tiền.
+ *
+ * Tồn tại để không ai ghép tên biến CSS bằng chuỗi nữa. Ba chỗ trong app từng
+ * dựng tên biến từ giá trị `kind`; khi token đổi tên từ --income/--expense sang --up/--down
+ * thì cả ba gãy cùng lúc mà không grep nào thấy, và cột biểu đồ đổ về màu đen.
+ * Đi qua hàm này thì trình biên dịch bắt được.
+ */
+export function flowColor(kind: 'income' | 'expense'): string {
+  return kind === 'income' ? 'var(--up)' : 'var(--down)'
 }
