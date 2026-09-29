@@ -11,6 +11,16 @@ import { formatDate } from './date'
  */
 export const BACKUP_VERSION = 2
 
+/**
+ * Bản sao lưu GIỮ NGUYÊN bia mộ — cố ý.
+ *
+ * Lọc chúng đi thì khôi phục trên máy thứ hai sẽ làm sống lại đúng những bản
+ * ghi người dùng đã xoá: máy đó vẫn giữ bản cũ, không thấy tin đã xoá ở đâu, và
+ * coi như chưa có gì xảy ra.
+ *
+ * Người mở tệp ra xem sẽ thấy vài dòng có `deletedAt`. Đó là cái giá đúng để
+ * trả cho việc xoá không tự mọc lại.
+ */
 export async function buildBackup(): Promise<BackupFile> {
   const [categories, wallets, transactions, budgets, dayMarks, templates, recurring, settings, goals] = await Promise.all([
     db.categories.toArray(),

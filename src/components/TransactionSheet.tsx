@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { selectableCategories } from '../lib/actions'
-import { db, newId, stamp, touch } from '../db/db'
+import { db, newId, softDelete, stamp, touch } from '../db/db'
 import { formatMoney, parseAmount } from '../lib/format'
 import { todayISO } from '../lib/date'
 import { useApp } from '../store'
@@ -76,7 +76,7 @@ export function TransactionSheet({ editing, onClose }: { editing: Transaction | 
 
   async function remove() {
     if (!initial?.id) return
-    await db.transactions.delete(initial.id)
+    await softDelete('transactions', initial.id)
     await deleteAttachmentsFor(initial.id)
     toast('Đã xoá giao dịch')
     onClose()

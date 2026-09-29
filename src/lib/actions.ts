@@ -1,4 +1,4 @@
-import { db, newId, stamp, touch } from '../db/db'
+import { db, live, newId, softDelete, stamp, touch } from '../db/db'
 import type { Category, CategorySlug, Id, Transaction, TxKind, TxSource, Wallet } from '../types'
 import { todayISO } from './date'
 import { normalize } from './quickadd'
@@ -40,12 +40,18 @@ export function systemCategory(categories: Category[], slug: CategorySlug): Cate
 
 export async function markNoSpend(date: string): Promise<void> {
   const existing = await db.dayMarks.where('date').equals(date).first()
-  if (!existing) await db.dayMarks.add(stamp({ date, markedAt: Date.now() }))
+  // Bỏ đánh dấu rồi đánh dấu lại: bản ghi cũ vẫn nằm đó dưới dạng bia mộ, và
+  // cột `date` là duy nhất nên không thêm bản mới được — phải dựng lại bản cũ
+  if (existing) {
+    if (existing.deletedAt) await db.dayMarks.update(existing.id, { ...touch(), deletedAt: undefined, markedAt: Date.now() })
+    return
+  }
+  await db.dayMarks.add(stamp({ date, markedAt: Date.now() }))
 }
 
 export async function unmarkNoSpend(date: string): Promise<void> {
   const existing = await db.dayMarks.where('date').equals(date).first()
-  if (existing) await db.dayMarks.delete(existing.id)
+  if (existing && !existing.deletedAt) await softDelete('dayMarks', existing.id)
 }
 
 /* ---------- Doi soat so du ---------- */
@@ -223,8 +229,8 @@ export async function transferBetweenWallets(
 
 /** Xoa ca hai ve cua mot lan chuyen tien — xoa mot ve thi so du sai hai vi */
 export async function deleteTransfer(transferId: Id): Promise<number> {
-  const legs = await db.transactions.where('transferId').equals(transferId).toArray()
-  await db.transactions.bulkDelete(legs.map((t) => t.id))
+  const legs = live(await db.transactions.where('transferId').equals(transferId).toArray())
+  await softDelete('transactions', legs.map((t) => t.id))
   return legs.length
 }
 

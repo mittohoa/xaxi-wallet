@@ -115,6 +115,62 @@ export function touch(): Pick<Syncable, 'updatedAt' | 'deviceId'> {
   return { updatedAt: Date.now(), deviceId: deviceId() }
 }
 
+/* ---------------- bia mộ ---------------- */
+
+/**
+ * XOÁ MỀM: ghi lại rằng bản ghi đã bị xoá, thay vì bỏ nó đi.
+ *
+ * Xoá hẳn thì máy thứ hai không có cách nào biết chuyện gì đã xảy ra. Nó vẫn
+ * giữ bản ghi đó, thấy máy này thiếu, và "sửa giúp" bằng cách gửi ngược về —
+ * khoản chi bạn vừa xoá lại mọc lên ở cả hai máy. Một bia mộ thì hợp nhất được
+ * như mọi thay đổi khác: bản mới hơn thắng, mà bia mộ luôn mới hơn.
+ *
+ * Đây là điều kiện tiên quyết của đồng bộ, và phải có TRƯỚC khi đồng bộ được
+ * bật — xem §3.6 docs/dinh-huong.md.
+ */
+export async function softDelete(table: string, ids: Id | Id[]): Promise<number> {
+  const list = Array.isArray(ids) ? ids : [ids]
+  if (list.length === 0) return 0
+  const patch = { ...touch(), deletedAt: Date.now() }
+  await Promise.all(list.map((id) => db.table(table).update(id, patch)))
+  return list.length
+}
+
+/**
+ * Lọc bỏ bia mộ.
+ *
+ * Gọi ở MỌI đường đọc dùng cho giao diện. Quên một chỗ thì khoản đã xoá hiện
+ * lại đúng ở đó — và vì các chỗ khác vẫn đúng, lỗi nhìn như dữ liệu hỏng chứ
+ * không như một chỗ quên lọc.
+ */
+export function live<T extends { deletedAt?: number }>(rows: T[]): T[] {
+  return rows.filter((r) => !r.deletedAt)
+}
+
+/**
+ * Giữ bia mộ bao lâu trước khi dọn hẳn.
+ *
+ * Dọn sớm quá thì một máy lâu ngày không mở sẽ không kịp thấy tin đã xoá, và
+ * gửi ngược bản ghi cũ về — đúng thứ mà bia mộ sinh ra để chặn. Nửa năm là dài
+ * hơn mọi khoảng thời gian hợp lý giữa hai lần đồng bộ.
+ */
+const TOMBSTONE_DAYS = 180
+
+/** Dọn bia mộ đã quá cũ; trả về số bản ghi đã xoá hẳn */
+export async function purgeTombstones(now = Date.now()): Promise<number> {
+  const cutoff = now - TOMBSTONE_DAYS * 86_400_000
+  let removed = 0
+  for (const name of SYNC_TABLES) {
+    const old = (await db.table(name).toArray()).filter(
+      (r: Syncable) => r.deletedAt !== undefined && r.deletedAt < cutoff,
+    )
+    if (old.length === 0) continue
+    await db.table(name).bulkDelete(old.map((r: { id: Id }) => r.id))
+    removed += old.length
+  }
+  return removed
+}
+
 /* ---------------- dữ liệu mặc định ---------------- */
 
 type Seed<T> = Omit<T, 'id' | 'updatedAt' | 'deviceId'>
@@ -162,14 +218,16 @@ export async function seedIfEmpty(): Promise<void> {
     // `createdAt` la chi so trong bo hat giong, khong phai moc thoi gian that.
     // So nho nen chung luon dung truoc ban ghi nguoi dung tu tao sau nay
     // (Date.now() cỡ 1,7 nghìn tỷ). Xem lib/order.ts.
-    if ((await db.categories.count()) === 0)
+    // Đếm bản còn sống, không đếm bia mộ: người dùng xoá hết danh mục rồi mở
+    // lại app thì phải được gieo lại bộ mặc định, chứ không phải nhìn màn trống
+    if (live(await db.categories.toArray()).length === 0)
       await db.categories.bulkAdd(DEFAULT_CATEGORIES.map((c, i) => stamp({ ...c, createdAt: i })))
-    if ((await db.wallets.count()) === 0)
+    if (live(await db.wallets.toArray()).length === 0)
       await db.wallets.bulkAdd(DEFAULT_WALLETS.map((w, i) => stamp({ ...w, createdAt: i })))
-    if ((await db.settings.count()) === 0) await db.settings.add(stamp(DEFAULT_SETTINGS))
+    if (live(await db.settings.toArray()).length === 0) await db.settings.add(stamp(DEFAULT_SETTINGS))
 
     // Du lieu chuyen sang tu ban cu chua co hai danh muc chuyen tien
-    const slugs = new Set((await db.categories.toArray()).map((c) => c.slug).filter(Boolean))
+    const slugs = new Set(live(await db.categories.toArray()).map((c) => c.slug).filter(Boolean))
     const missing = DEFAULT_CATEGORIES.filter(
       (c) => (c.slug === 'transfer-out' || c.slug === 'transfer-in') && !slugs.has(c.slug),
     )
@@ -204,7 +262,7 @@ const LEGACY_COLORS = new Set([
  * sách cũ nữa.
  */
 export async function refreshCategoryColors(): Promise<number> {
-  const rows = await db.categories.toArray()
+  const rows = live(await db.categories.toArray())
   const wanted = new Map(DEFAULT_CATEGORIES.map((c) => [`${c.kind}|${c.name}`, c.color]))
 
   const changes = rows

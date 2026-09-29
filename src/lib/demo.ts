@@ -5,7 +5,7 @@
  *
  * Dung so ngau nhien co hat co dinh nen ket qua lap lai duoc.
  */
-import { db, stamp, touch } from '../db/db'
+import { db, live, stamp, touch } from '../db/db'
 import type { Budget, Category, DayMark, Transaction, Wallet } from '../types'
 import { toISO, todayISO } from './date'
 import { firstDueDate } from './recurring'
@@ -58,8 +58,8 @@ export interface DemoSummary {
  * Giu nguyen danh muc va vi de nguoi dung khong mat thiet lap rieng.
  */
 export async function loadDemoData(): Promise<DemoSummary> {
-  const categories = await db.categories.toArray()
-  const wallets = await db.wallets.toArray()
+  const categories = live(await db.categories.toArray())
+  const wallets = live(await db.wallets.toArray())
   if (categories.length === 0 || wallets.length === 0) throw new Error('Chưa có danh mục hoặc ví để tạo dữ liệu mẫu.')
 
   const byName = new Map(categories.map((c) => [c.name, c]))

@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { selectableCategories } from '../lib/actions'
-import { db, stamp, touch } from '../db/db'
+import { db, softDelete, stamp, touch } from '../db/db'
 import { firstDueDate } from '../lib/recurring'
 import { formatDate } from '../lib/date'
 import { formatMoney, parseAmount } from '../lib/format'
@@ -63,7 +63,7 @@ export function RecurringSheet({ editing, onClose }: { editing: Recurring | 'new
 
   async function remove() {
     if (!initial?.id) return
-    await db.recurring.delete(initial.id)
+    await softDelete('recurring', initial.id)
     toast('Đã xoá khoản định kỳ')
     onClose()
   }

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { db, newId, stamp, touch } from '../db/db'
+import { db, newId, softDelete, stamp, touch } from '../db/db'
 import { currentMonth, monthLabel, todayISO } from '../lib/date'
 import { formatMoney, parseAmount } from '../lib/format'
 import { claimedWallets, goalStates } from '../lib/goals'
@@ -107,7 +107,7 @@ export function GoalsView() {
                 // Cất đi chứ không xoá khi đã đạt: đó là một cột mốc, giữ lại có
                 // ý nghĩa với người dùng và không tốn gì
                 if (s.done) await db.goals.update(s.goal.id, { ...touch(), archived: true })
-                else await db.goals.delete(s.goal.id)
+                else await softDelete('goals', s.goal.id)
                 toast(s.done ? 'Đã cất mục tiêu' : 'Đã xoá mục tiêu')
               }}
             />

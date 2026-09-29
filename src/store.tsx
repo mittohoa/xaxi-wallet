@@ -1,6 +1,6 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { DEFAULT_SETTINGS, db, stamp, touch } from './db/db'
+import { DEFAULT_SETTINGS, db, live, stamp, touch } from './db/db'
 import { configureFormat } from './lib/format'
 import { ordered } from './lib/order'
 import { applySystemTheme } from './lib/native/shell'
@@ -73,15 +73,15 @@ export function AppProvider({ children }: { children: ReactNode }) {
        * sớm muộn sẽ có màn hình quên, và người dùng thấy cùng một danh sách ví
        * xếp hai kiểu ở hai chỗ.
        */
-      categories: ordered(categories),
-      wallets: ordered(wallets),
-      transactions,
-      budgets,
-      dayMarks,
-      templates,
-      recurring,
-      goals,
-      settings: { ...FALLBACK_SETTINGS, ...(settingsRows[0] ?? {}) } as Settings,
+      categories: ordered(live(categories)),
+      wallets: ordered(live(wallets)),
+      transactions: live(transactions),
+      budgets: live(budgets),
+      dayMarks: live(dayMarks),
+      templates: live(templates),
+      recurring: live(recurring),
+      goals: live(goals),
+      settings: { ...FALLBACK_SETTINGS, ...(live(settingsRows)[0] ?? {}) } as Settings,
     }
   }, [])
 
@@ -168,7 +168,7 @@ export function useLookups() {
 }
 
 export async function saveSettings(patch: Partial<Settings>): Promise<void> {
-  const existing = await db.settings.toArray()
+  const existing = live(await db.settings.toArray())
   if (existing.length === 0) await db.settings.add(stamp({ ...DEFAULT_SETTINGS, ...patch }))
   else await db.settings.update(existing[0].id, { ...patch, ...touch() })
 }
