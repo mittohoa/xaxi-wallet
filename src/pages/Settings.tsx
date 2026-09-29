@@ -3,7 +3,8 @@ import { RecurringSheet } from '../components/RecurringSheet'
 import { StatementSheet } from '../components/StatementSheet'
 import { ConfirmButton, Empty, Segmented } from '../components/ui'
 import { db, stamp, touch, wipeAll } from '../db/db'
-import { buildBackup, downloadFile, readTextFile, restoreBackup, toCSV } from '../lib/backup'
+import { buildBackup, downloadBlob, downloadFile, readTextFile, restoreBackup, toCSV } from '../lib/backup'
+import { MAX_DIMENSION, attachmentUsage, exportAttachments, purgeOlderThan, type AttachmentUsage } from '../lib/attachments'
 import { loadDemoData, primeOpeningBalances } from '../lib/demo'
 import { formatDate, todayISO } from '../lib/date'
 import { formatMoney, parseAmount } from '../lib/format'
@@ -37,10 +38,14 @@ export function Settings() {
 
   const [storage, setStorage] = useState<StorageStatus | null>(null)
   const [asking, setAsking] = useState(false)
+  const [photos, setPhotos] = useState<AttachmentUsage | null>(null)
+  const [armedPhotos, setArmedPhotos] = useState(false)
 
   const refreshStorage = () => readStorageStatus().then(setStorage)
+  const refreshPhotos = () => attachmentUsage().then(setPhotos)
   useEffect(() => {
     refreshStorage()
+    refreshPhotos()
   }, [])
 
   const [newWallet, setNewWallet] = useState({ name: '', kind: 'cash' as WalletKind, opening: '' })
@@ -59,6 +64,13 @@ export function Settings() {
   async function exportCSV() {
     downloadFile(`xaxi-giao-dich-${todayISO()}.csv`, toCSV(transactions, categories, wallets), 'text/csv')
     toast('Đã xuất CSV')
+  }
+
+  async function exportPhotos() {
+    const { blob, count } = await exportAttachments()
+    if (count === 0) return toast('Chưa có ảnh nào để xuất')
+    downloadBlob(`xaxi-anh-bien-lai-${todayISO()}.zip`, blob)
+    toast(`Đã xuất ${count} ảnh`)
   }
 
   async function importJSON(file: File | undefined) {
@@ -439,10 +451,75 @@ export function Settings() {
       </div>
 
       <div className="card">
+        <div className="card-title">Ảnh biên lai</div>
+        <div className="hint" style={{ marginBottom: 12 }}>
+          Ảnh <b>không bao giờ rời khỏi máy này</b>: không vào bản sao lưu, không lên mạng, không đồng bộ. Mỗi ảnh được
+          thu nhỏ còn {MAX_DIMENSION}px và nén lại — thường khoảng 10KB thay vì 3–5MB của ảnh gốc. Toạ độ GPS và thông tin
+          máy ảnh trong ảnh gốc bị loại bỏ khi nén.
+        </div>
+
+        {photos && photos.count === 0 ? (
+          <div className="hint">Chưa lưu ảnh nào. Đính ảnh ngay trong màn hình sửa giao dịch.</div>
+        ) : (
+          photos && (
+            <div className="hint" style={{ marginBottom: 12 }}>
+              Đang giữ <b>{photos.count} ảnh</b> · {formatBytes(photos.bytes)} · cũ nhất từ {formatDate(photos.oldest)}
+            </div>
+          )
+        )}
+
+        <div className="field">
+          <label htmlFor="set-keep">Tự xoá ảnh cũ hơn</label>
+          <select
+            id="set-keep"
+            className="input"
+            value={settings.attachmentRetentionDays ?? 0}
+            onChange={async (e) => {
+              const days = Number(e.target.value)
+              await patch({ attachmentRetentionDays: days })
+              const removed = await purgeOlderThan(days)
+              await refreshPhotos()
+              if (removed) toast(`Đã xoá ${removed} ảnh quá hạn`)
+            }}
+          >
+            <option value={0}>Giữ mãi</option>
+            {[90, 180, 365, 730].map((d) => (
+              <option key={d} value={d}>
+                {d} ngày
+              </option>
+            ))}
+          </select>
+          <div className="hint">
+            Hoá đơn cũ hiếm khi cần tra lại, nhưng vẫn chiếm chỗ. Đặt mốc ở đây thì app tự dọn mỗi lần mở.
+          </div>
+        </div>
+
+        <div className="btn-row">
+          <button type="button" className="btn" onClick={exportPhotos} disabled={!photos?.count}>
+            🗜 Xuất ảnh ra tệp ZIP
+          </button>
+          <ConfirmButton
+            label="Xoá toàn bộ ảnh"
+            confirmLabel="Chắc chắn xoá hết ảnh?"
+            armed={armedPhotos}
+            setArmed={setArmedPhotos}
+            onConfirm={async () => {
+              await db.attachments.clear()
+              await refreshPhotos()
+              await refreshStorage()
+              toast('Đã xoá toàn bộ ảnh biên lai')
+            }}
+          />
+        </div>
+        <div className="hint" style={{ marginTop: 8 }}>
+          Ảnh nằm ngoài bản sao lưu JSON nên đổi máy thì phải xuất ZIP riêng. Xoá ảnh không đụng tới giao dịch.
+        </div>
+      </div>
+      <div className="card">
         <div className="card-title">Dữ liệu</div>
         <div className="hint" style={{ marginBottom: 12 }}>
           Dữ liệu nằm trong máy bạn (IndexedDB). Không có tài khoản, không đồng bộ lên máy chủ. Muốn chuyển sang thiết bị
-          khác thì xuất bản sao lưu rồi nhập lại.
+          khác thì xuất bản sao lưu rồi nhập lại. Bản sao lưu <b>không kèm ảnh biên lai</b> — ảnh xuất riêng ở thẻ trên.
         </div>
         <div className="btn-row">
           <button type="button" className="btn" onClick={exportJSON}>
@@ -500,6 +577,7 @@ export function Settings() {
           <li>Không đọc SMS, không nghe thông báo hệ thống, không dùng Accessibility Service.</li>
           <li>Không kết nối tới ngân hàng, không hỏi tài khoản / mật khẩu ngân hàng.</li>
           <li>Biên lai và sao kê chỉ được xử lý ngay trên máy, do bạn chủ động dán hoặc chọn tệp.</li>
+          <li>Ảnh biên lai nằm ngoài bản sao lưu và ngoài mọi đường đồng bộ — muốn mang đi phải tự xuất ZIP.</li>
           <li>Không tài khoản, không quảng cáo, không thống kê hành vi.</li>
         </ul>
       </div>

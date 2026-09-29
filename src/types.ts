@@ -159,6 +159,35 @@ export interface Settings extends Syncable {
   reconcileEveryDays: number
   /** khoa cua cac de xuat dinh ky nguoi dung da tu choi, de khong hoi lai */
   dismissedSuggestions?: string[]
+  /** tu xoa anh bien lai cu hon ngan nay ngay (0 hoac thieu = giu mai) */
+  attachmentRetentionDays?: number
+}
+
+/**
+ * Anh bien lai dinh kem mot giao dich.
+ *
+ * Co MOT diem khac biet co y voi moi kieu khac trong tep nay: no KHONG mo rong
+ * `Syncable`. Khong `updatedAt`, khong `deviceId`, khong bia mo. Day khong
+ * phai thieu sot — do la cach bao dam bang cau truc rang anh khong bao gio roi
+ * khoi may. Giao thuc dong bo hop nhat theo `updatedAt`; mot ban ghi khong co
+ * truong do thi khong the tham gia, va khong ai co the "quen" loai no ra sau nay.
+ *
+ * Cung vi vay anh khong nam trong `BackupFile`. Muon mang anh sang may khac thi
+ * phai xuat rieng bang tay — xem `lib/attachments.ts`.
+ */
+export interface Attachment {
+  id: Id
+  /** giao dich so huu anh nay */
+  transactionId: Id
+  /** anh da nen, luu thang duoi dang Blob chu khong phai base64 */
+  blob: Blob
+  /** kieu that sau khi nen — 'image/webp' hoac 'image/jpeg' khi may khong ma hoa duoc webp */
+  mime: string
+  /** so byte sau khi nen, de tinh dung luong ma khong phai doc het blob */
+  bytes: number
+  width: number
+  height: number
+  createdAt: number
 }
 
 export interface BackupFile {

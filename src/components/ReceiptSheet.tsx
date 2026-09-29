@@ -8,10 +8,15 @@ import { useApp } from '../store'
 import { Sheet } from './ui'
 import type { Id } from '../types'
 import { ocrSupported, recognizeImage } from '../lib/native/ocr'
+import { attachPhoto } from '../lib/attachments'
+import { formatBytes } from '../lib/storage'
 
 /**
  * Ghi giao dich tu doan van ban bien lai NGUOI DUNG tu dan vao.
  * Khong doc SMS, khong nghe thong bao he thong — chi xu ly cai duoc dan.
+ *
+ * Anh chup duoc doc chu ngay tren may. Giu lai anh la tuy chon: neu giu thi
+ * anh nen lai roi nam trong bang `attachments`, khong bao gio ra khoi may.
  */
 export function ReceiptSheet({ initialText = '', onClose }: { initialText?: string; onClose: () => void }) {
   const { categories, wallets, transactions, toast } = useApp()
@@ -21,6 +26,9 @@ export function ReceiptSheet({ initialText = '', onClose }: { initialText?: stri
   const [alsoReconcile, setAlsoReconcile] = useState(true)
   const [scanning, setScanning] = useState(false)
   const [scanError, setScanError] = useState<string | null>(null)
+  /** Anh vua chup, giu lai de dinh kem SAU khi giao dich duoc luu va co id */
+  const [photo, setPhoto] = useState<File | null>(null)
+  const [keepPhoto, setKeepPhoto] = useState(true)
   const cameraInput = useRef<HTMLInputElement>(null)
   const canScan = ocrSupported()
 
@@ -35,6 +43,7 @@ export function ReceiptSheet({ initialText = '', onClose }: { initialText?: stri
       } else {
         setText(result.text)
         setCategoryId(null)
+        setPhoto(file)
       }
     } catch (e) {
       setScanError(e instanceof Error ? e.message : 'Không đọc được ảnh.')
@@ -58,7 +67,7 @@ export function ReceiptSheet({ initialText = '', onClose }: { initialText?: stri
     const wallet = wallets.find((w) => w.id === walletId)
     if (!wallet) return
 
-    await addTransaction({
+    const txId = await addTransaction({
       kind: parsed.kind,
       amount: parsed.amount,
       categoryId: effectiveCategoryId,
@@ -67,6 +76,11 @@ export function ReceiptSheet({ initialText = '', onClose }: { initialText?: stri
       note: parsed.note || undefined,
       source: 'quick',
     })
+
+    // Chi dinh anh SAU khi giao dich da co id — khong thi anh thanh mo coi
+    if (keepPhoto && photo) {
+      await attachPhoto(txId, photo).catch(() => undefined)
+    }
 
     let extra = ''
     if (alsoReconcile && parsed.balance !== undefined) {
@@ -92,7 +106,7 @@ export function ReceiptSheet({ initialText = '', onClose }: { initialText?: stri
             >
               📷 {scanning ? 'Đang đọc ảnh…' : 'Chụp biên lai'}
             </button>
-            <span className="hint">ảnh được đọc ngay trên máy, không lưu lại, không gửi đi đâu</span>
+            <span className="hint">ảnh được đọc ngay trên máy, không gửi đi đâu</span>
           </div>
           <input
             ref={cameraInput}
@@ -103,6 +117,15 @@ export function ReceiptSheet({ initialText = '', onClose }: { initialText?: stri
             onChange={(e) => scan(e.target.files?.[0])}
           />
           {scanError && <div className="error" style={{ marginBottom: 10 }}>{scanError}</div>}
+
+          {photo && (
+            <label className="check-row" style={{ marginBottom: 12 }}>
+              <input type="checkbox" checked={keepPhoto} onChange={(e) => setKeepPhoto(e.target.checked)} />
+              <span>
+                Giữ lại ảnh biên lai <span className="hint">({formatBytes(photo.size)} → khoảng 10KB sau khi nén, chỉ nằm trên máy này)</span>
+              </span>
+            </label>
+          )}
         </>
       )}
 

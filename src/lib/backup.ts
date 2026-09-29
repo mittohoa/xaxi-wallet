@@ -1,4 +1,5 @@
 import { db } from '../db/db'
+import { purgeOrphans } from './attachments'
 import type { BackupFile, Category, Transaction, Wallet } from '../types'
 import { formatDate } from './date'
 
@@ -59,6 +60,9 @@ export async function restoreBackup(file: BackupFile): Promise<void> {
       ])
     },
   )
+  // Ban sao luu thay toan bo bang giao dich, nen anh cu gan nhu chac chan
+  // mo coi. Khong don thi chung nam lai vinh vien ma khong man hinh nao mo duoc.
+  await purgeOrphans()
 }
 
 const CSV_HEADER = ['Ngày', 'Loại', 'Số tiền', 'Danh mục', 'Ví', 'Ghi chú', 'Ước tính', 'Nguồn']
@@ -99,7 +103,11 @@ export function toCSV(txs: Transaction[], categories: Category[], wallets: Walle
 }
 
 export function downloadFile(filename: string, content: string, mime: string): void {
-  const blob = new Blob([content], { type: `${mime};charset=utf-8` })
+  downloadBlob(filename, new Blob([content], { type: `${mime};charset=utf-8` }))
+}
+
+/** Duong tai ve cho du lieu nhi phan — anh bien lai dong goi ZIP di loi nay */
+export function downloadBlob(filename: string, blob: Blob): void {
   const url = URL.createObjectURL(blob)
   const a = document.createElement('a')
   a.href = url

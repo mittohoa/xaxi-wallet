@@ -1,5 +1,5 @@
 import Dexie, { type Table } from 'dexie'
-import type { Budget, Category, DayMark, Id, Recurring, Settings, Syncable, Template, Transaction, Wallet } from '../types'
+import type { Attachment, Budget, Category, DayMark, Id, Recurring, Settings, Syncable, Template, Transaction, Wallet } from '../types'
 
 /**
  * Tên CSDL đổi so với bản đầu vì khoá chính đổi từ số tự tăng sang UUID —
@@ -18,6 +18,7 @@ export class XaxiDB extends Dexie {
   templates!: Table<Template, Id>
   recurring!: Table<Recurring, Id>
   settings!: Table<Settings, Id>
+  attachments!: Table<Attachment, Id>
 
   constructor() {
     super(DB_NAME)
@@ -30,6 +31,15 @@ export class XaxiDB extends Dexie {
       templates: 'id, kind, uses, pinned, updatedAt',
       recurring: 'id, nextDate, active, updatedAt',
       settings: 'id, updatedAt',
+    })
+
+    /**
+     * Anh bien lai. Bang nay CO Y khong nam trong `SYNC_TABLES`: no khong ra
+     * ban sao luu, khong ra may chu, khong di dau ca. Xem chu thich cua
+     * `Attachment` trong types.ts.
+     */
+    this.version(2).stores({
+      attachments: 'id, transactionId, createdAt',
     })
   }
 }
@@ -47,6 +57,13 @@ export const SYNC_TABLES = [
   'recurring',
   'settings',
 ] as const
+
+/**
+ * Bang chi ton tai tren may nay. Khong sao luu, khong dong bo, nhung "xoa sach
+ * du lieu" thi van phai don — nguoi dung bam nut do la muon may sach, khong
+ * phai muon giu lai mot dong anh mo coi.
+ */
+export const LOCAL_ONLY_TABLES = ['attachments'] as const
 
 /* ---------------- danh tính thiết bị ---------------- */
 
@@ -149,11 +166,12 @@ export async function seedIfEmpty(): Promise<void> {
 }
 
 export async function wipeAll(): Promise<void> {
+  const tables = [...SYNC_TABLES, ...LOCAL_ONLY_TABLES]
   await db.transaction(
     'rw',
-    SYNC_TABLES.map((name) => db.table(name)),
+    tables.map((name) => db.table(name)),
     async () => {
-      await Promise.all(SYNC_TABLES.map((name) => db.table(name).clear()))
+      await Promise.all(tables.map((name) => db.table(name).clear()))
     },
   )
   await seedIfEmpty()

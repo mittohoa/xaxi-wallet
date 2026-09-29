@@ -6,6 +6,7 @@ import { TransactionSheet } from './components/TransactionSheet'
 import { TransferSheet } from './components/TransferSheet'
 import { seedIfEmpty } from './db/db'
 import { migrateLegacyDatabase } from './db/migrate'
+import { runAttachmentHousekeeping } from './lib/attachments'
 import type { CommandName } from './lib/ask'
 import { postDueRecurring } from './lib/recurring'
 import { requestPersistence } from './lib/storage'
@@ -162,6 +163,9 @@ export default function App() {
       .catch(() => undefined)
       .then(() => seedIfEmpty())
       .then(() => setSeeded(true))
+      // Don anh bien lai mo coi / qua han; khong chan man hinh dau tien
+      .then(() => runAttachmentHousekeeping())
+      .catch(() => undefined)
   }, [])
 
   if (!seeded) return null

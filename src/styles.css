@@ -1754,3 +1754,82 @@ textarea.input {
   opacity: 0.55;
   font-size: 15px;
 }
+
+/* ---------- Ảnh biên lai ---------- */
+
+.photo-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 6px 0 8px;
+}
+
+.photo-thumb,
+.photo-add {
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  border-radius: var(--r-md);
+  width: 76px;
+  height: 76px;
+  overflow: hidden;
+  background: var(--surface-2);
+}
+
+.photo-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.photo-add {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  color: var(--text-secondary);
+  font-size: 11px;
+  font-weight: 550;
+  /* Nét đứt để phân biệt ngay ô thêm mới với ảnh đã có, không cần đọc chữ */
+  border: 1.5px dashed var(--line-strong);
+  background: transparent;
+}
+
+.photo-add:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+.photo-thumb:active,
+.photo-add:active {
+  transform: scale(0.95);
+}
+
+/* Xem to: phủ kín màn hình, chạm nền là đóng */
+.photo-zoom {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  background: rgba(0, 0, 0, 0.88);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  padding: 20px;
+  padding-bottom: calc(20px + env(safe-area-inset-bottom));
+}
+
+.photo-zoom img {
+  max-width: 100%;
+  max-height: 72vh;
+  object-fit: contain;
+  border-radius: var(--r-md);
+}
+
+.photo-zoom-actions {
+  display: flex;
+  gap: 10px;
+}
