@@ -21,7 +21,8 @@
     "test": "node tests/build-and-run.mjs",
     "device:check": "node scripts/device-check.mjs",
     "bank:inbox": "node scripts/bank-inbox.mjs",
-    "icons:sheet": "node scripts/icon-sheet.mjs"
+    "icons:sheet": "node scripts/icon-sheet.mjs",
+    "telegram:bot": "node scripts/telegram-bot.mjs"
   },
   "dependencies": {
     "@capacitor/core": "^6.2.0",

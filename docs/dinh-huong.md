@@ -193,8 +193,8 @@ Thiết bị thứ hai nhập cùng cụm mật khẩu là đọc được — k
 | ~~2~~ | ~~Hoàn thiện giao diện~~ | — | **xong** — xem `docs/he-thong-thiet-ke.md` |
 | ~~3~~ | ~~**Sáu hũ**~~ | — | **xong** — xem §10 |
 | ~~4~~ | ~~**Công cụ IMAP chạy tại máy**~~ | — | **xong** — xem §14 |
-| 5 | Rung phản hồi, icon vector | không | đánh bóng |
-| 6 | Bot Telegram mức A | có, nhưng có kiểm soát | chỉ sau khi 1–5 xong |
+| ~~5~~ | ~~Rung phản hồi, icon vector~~ | — | **xong** — 23 hình vector, xem `docs/he-thong-thiet-ke.md` §10 |
+| ~~6~~ | ~~**Bot Telegram mức A**~~ | — | **xong** — xem §15 |
 | 7 | **Đồng bộ đa thiết bị, mã hoá đầu-cuối** | không, nếu làm đúng | mục tiêu đã chốt — xem §3.6 |
 
 
@@ -730,3 +730,69 @@ Mật khẩu nằm trong `xaxi-imap.json` trên đĩa người dùng, đã có t
 `.gitignore`. Với Gmail và phần lớn nhà cung cấp, phải dùng **mật khẩu ứng dụng**
 riêng chứ không phải mật khẩu chính — mật khẩu ứng dụng thu hồi được bất cứ lúc
 nào mà không ảnh hưởng tài khoản.
+
+## 15. Bot Telegram mức A — bot chạy trên máy bạn, không phải máy ai khác
+
+`npm run telegram:bot`. Nhắn "cà phê 35k" cho bot, nó ghi nhận ngay; lúc nào
+rảnh gõ `/xuat` để lấy CSV nhập vào app.
+
+### Điều khiến nó là "mức A"
+
+Cái hay của Telegram là bắt được khoản chi ngay lúc vừa tiêu, khi mở app ra là
+phiền. Cái dở của một con bot thông thường là nó chạy trên máy chủ của ai đó và
+giữ một bản sao toàn bộ chi tiêu của bạn ở ngoài kia — §3.3 gọi đó là thứ nặng
+nề nhất về quyền riêng tư trong cả danh sách.
+
+Bot này **chạy trên máy bạn** và **không có cơ sở dữ liệu**. Danh sách chờ nằm
+trong bộ nhớ tiến trình; đóng chương trình là hết (và trước khi thoát nó ghi ra
+tệp, để không mất). Không tồn tại kho chi tiêu nào ngoài máy bạn.
+
+Telegram vẫn thấy nội dung tin nhắn — điều đó không tránh được và §3.3 đã nói
+thẳng từ đầu. Cái tránh được là một kho dữ liệu thứ hai.
+
+### Bốn ràng buộc được ép ở tầng mã
+
+**Một — chỉ nhận tin từ đúng một cuộc trò chuyện.** Bot Telegram là công khai:
+ai biết tên nó đều nhắn được. Không chốt theo `chatId` thì người lạ chèn được
+giao dịch vào sổ chi tiêu của bạn. Tin từ người lạ bị bỏ qua **im lặng** — trả
+lời là xác nhận cho họ biết bot có thật và đang chạy.
+
+**Hai — không một gói phụ thuộc nào.** Bộ khách Bot API tự viết trên `node:https`,
+kể cả phần dựng `multipart/form-data` để gửi tệp. Ai có token thì đọc được mọi
+tin nhắn gửi tới bot và giả danh nó; mỗi gói thêm vào là một cửa nữa token có
+thể đi ra.
+
+**Ba — token không bao giờ được in ra.** Nó nằm ngay trong đường dẫn URL, nên
+mọi chỗ ghi lại URL đều phải che đi. Có bài kiểm riêng cho đúng điều này.
+
+**Bốn — bot KHÔNG đoán danh mục.** Nó chỉ tách số tiền, ngày và nội dung. Danh
+mục và lịch sử nằm trong IndexedDB trên máy chạy app, không phải ở đây; đoán
+bằng một bộ dữ liệu rỗng thì đoán sai, mà đoán sai lại ghi vào sổ thì tệ hơn là
+không đoán. Để trống thì lúc nhập, app xếp chúng vào "chờ phân loại" và tự đoán
+bằng chính mô hình đã học của bạn.
+
+### Dùng lại đúng bộ đọc của app
+
+`scripts/compile-src.mjs` biên dịch thẳng `src/lib/quickadd.ts` bằng esbuild —
+cùng cơ chế mà công cụ đọc email dùng cho `receipt.ts`. Nhờ vậy "ăn trưa ba mươi
+lăm nghìn" gõ vào Telegram ra đúng con số như gõ vào ô lệnh trong app, kể cả khi
+bộ đọc được sửa sau này.
+
+### Điều bot này KHÔNG làm
+
+**Không nhận tin nhắn thoại.** Phần nhận diện giọng nói của Telegram gửi âm
+thanh lên dịch vụ bên ngoài, trong khi XAXI đã có giọng nói chạy thẳng trên máy
+— đổi sang cách kia là đi lùi về quyền riêng tư. Nhắn thoại cho bot thì nó trả
+lời đúng câu đó.
+
+Không chạy nền, không hẹn giờ, không tự khởi động. Bạn chạy thì nó chạy.
+
+### Một đánh đổi đã cân nhắc: `/xuat` gửi tệp qua Telegram
+
+Đường đi thật của người dùng là: đang ở ngoài, nhắn cho bot bằng điện thoại —
+rồi cần đưa kết quả vào app **cũng trên điện thoại đó**. Nếu `/xuat` chỉ ghi ra
+đĩa máy tính thì người đang cầm điện thoại chẳng nhận được gì.
+
+Nên mặc định nó vừa ghi ra đĩa vừa gửi tệp vào cuộc trò chuyện. Tệp đó **không
+thêm thông tin gì mới cho Telegram**: mọi dòng trong nó đều đến từ tin nhắn
+chính bạn đã gõ ở đấy. Ai vẫn muốn tắt thì đặt `guiTep: false`.

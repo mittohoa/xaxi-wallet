@@ -23,10 +23,9 @@
  * không phải mật khẩu chính. Mật khẩu ứng dụng thu hồi được bất cứ lúc nào mà
  * không ảnh hưởng tài khoản.
  */
-import { build } from 'esbuild'
-import { existsSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
-import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { existsSync, readFileSync, writeFileSync } from 'node:fs'
+import { toCSV, csvName } from './csv.mjs'
+import { loadFromSource } from './compile-src.mjs'
 import { connect, imapDate } from './imap/client.mjs'
 import { decodeHeader, extractText, parseHeaders, splitMessage } from './imap/mime.mjs'
 
@@ -59,44 +58,11 @@ function doiCauHinh() {
   return { mailbox: 'INBOX', from: [], ...cfg }
 }
 
-/**
- * Nạp đúng bộ đọc biên lai mà app đang dùng.
- *
- * Viết lại một bộ đọc riêng ở đây là có hai bộ luật phải giữ khớp bằng tay, và
- * người dùng sẽ gặp trường hợp công cụ đọc ra một số còn app dán tay ra số
- * khác. Biên dịch thẳng từ nguồn thì hai bên luôn là một.
- */
-async function napBoDoc() {
-  const dir = mkdtempSync(join(tmpdir(), 'xaxi-imap-'))
-  const out = join(dir, 'receipt.mjs')
-  await build({
-    entryPoints: ['src/lib/receipt.ts'],
-    outfile: out,
-    bundle: true,
-    platform: 'node',
-    format: 'esm',
-    logLevel: 'error',
-  })
-  return import(`file://${out.replace(/\\/g, '/')}`)
-}
-
-function csvCell(v) {
-  const s = String(v ?? '')
-  return /[",;\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s
-}
-
-function toCSV(rows) {
-  const head = ['Ngày', 'Nội dung', 'Số tiền']
-  const body = rows.map((r) => [r.date, r.note, r.kind === 'expense' ? -r.amount : r.amount].map(csvCell).join(','))
-  // BOM để Excel đọc đúng tiếng Việt
-  return '﻿' + [head.join(','), ...body].join('\r\n')
-}
-
 /* ============================================================ */
 
 const viet = process.argv.includes('--write')
 const cfg = doiCauHinh()
-const { parseReceipt } = await napBoDoc()
+const { parseReceipt } = await loadFromSource('src/lib/receipt.ts')
 
 console.log(`Nối tới ${cfg.host} với tài khoản ${cfg.user}…`)
 const box = await connect({ host: cfg.host, port: cfg.port ?? 993, user: cfg.user, pass: cfg.pass })
@@ -167,7 +133,7 @@ if (rows.length === 0) {
   process.exit(0)
 }
 
-const ten = `xaxi-sao-ke-${new Date().toISOString().slice(0, 10)}.csv`
+const ten = csvName('xaxi-sao-ke', new Date().toISOString().slice(0, 10))
 writeFileSync(ten, toCSV(rows), 'utf8')
 console.log(`\nĐã ghi ${ten}`)
 console.log('Mở app → gõ "sao kê" → chọn tệp này. App sẽ tự loại những dòng trùng với giao dịch đã có.')
