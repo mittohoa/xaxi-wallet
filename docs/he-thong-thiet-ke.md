@@ -193,3 +193,32 @@ tokens → base → layout → components → screens → motion
 
 Không đổi được: token phải có trước mọi thứ dùng nó, và màn hình phải sau bộ
 phận để đè lên được mà không cần `!important`.
+
+---
+
+## 10. Rà trên máy thật
+
+```
+npm run device:check
+```
+
+Mười sáu phép kiểm chạy qua đúng giao diện trên thiết bị đang nối, cộng hai
+phép kiểm ở lớp Android mà không mã JavaScript nào chạm tới được: chia sẻ tin
+nhắn vào app, và nút Back.
+
+**Vì sao cần, khi đã có hơn 150 bài kiểm thử:** mọi lỗi đáng kể tìm được trong
+quá trình làm app này đều nằm ở ranh giới giữa lớp web và lớp Android, và không
+bài kiểm thử nào bắt được — vì chúng gọi thẳng vào hàm, còn lỗi thì nằm ở chỗ
+hai lớp gặp nhau:
+
+- nội dung chia sẻ vào app bị vứt đi, mà app vẫn mở lên bình thường;
+- nút Back đóng luôn app ở mọi màn hình;
+- xuất sao lưu không tạo ra tệp nào nhưng vẫn báo "đã xuất";
+- cột biểu đồ chi tô đen kịt vì một biến CSS đổi tên.
+
+Cả bốn đều **im lặng**. Thứ bắt được chúng là chạy app thật rồi nhìn.
+
+Cần bản **debug** đang cài: bản phát hành cố ý không mở cổng gỡ lỗi.
+
+Vài phép kiểm nạp dữ liệu mẫu, tức ghi đè giao dịch. Script sao lưu toàn bộ CSDL
+trước khi chạy và trả lại sau, kể cả khi có phép kiểm hỏng giữa chừng.

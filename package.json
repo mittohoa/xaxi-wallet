@@ -18,7 +18,8 @@
     "tauri": "tauri",
     "desktop:dev": "tauri dev",
     "desktop:build": "tauri build",
-    "test": "node tests/build-and-run.mjs"
+    "test": "node tests/build-and-run.mjs",
+    "device:check": "node scripts/device-check.mjs"
   },
   "dependencies": {
     "@capacitor/core": "^6.2.0",
