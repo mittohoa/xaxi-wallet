@@ -186,7 +186,9 @@ Thiết bị thứ hai nhập cùng cụm mật khẩu là đọc được — k
 
 | # | Việc | Phá nguyên tắc nào không | Ghi chú |
 |---|---|---|---|
-| 0 | **Đổi khoá chính sang UUID + thêm `updatedAt`/`deletedAt`/`deviceId`** | không | làm sớm rẻ, làm muộn rất đắt — xem §3.6 |
+| 0a | **Xin lưu trữ bền vững** | không | rủi ro mất sạch dữ liệu — xem §6.1.B, sửa rất rẻ |
+| 0b | **Chuyển tiền giữa ví** | không | báo cáo đang sai — xem §6.1.A |
+| 0c | **Đổi khoá chính sang UUID + thêm `updatedAt`/`deletedAt`/`deviceId`** | không | làm sớm rẻ, làm muộn rất đắt — xem §3.6 |
 | 1 | Thử OCR và giọng nói bằng phần cứng thật | không | chưa xong, chặn việc khẳng định hai tính năng này chạy được |
 | 2 | Hoàn thiện giao diện sau khi có tham chiếu | không | đang chờ ảnh chụp app khác |
 | 3 | **Sáu hũ** | không | cần đổi lược đồ ngân sách |
@@ -194,6 +196,82 @@ Thiết bị thứ hai nhập cùng cụm mật khẩu là đọc được — k
 | 5 | Rung phản hồi, icon vector | không | đánh bóng |
 | 6 | Bot Telegram mức A | có, nhưng có kiểm soát | chỉ sau khi 1–5 xong |
 | 7 | **Đồng bộ đa thiết bị, mã hoá đầu-cuối** | không, nếu làm đúng | mục tiêu đã chốt — xem §3.6 |
+
+
+---
+
+## 6. Rút ra từ tài liệu tham khảo
+
+Nguồn: `docs/mo-ta.md` (CapMoney) và `docs/template/url.md` (ExpenseOwl, MoneyMatter, MoneyWallet, MMAS).
+
+### 6.1 Ba lỗi thật trong XAXI mà tài liệu tham khảo làm lộ ra
+
+Đây không phải "tính năng còn thiếu" — là chỗ app đang **sai** hoặc **có nguy cơ mất dữ liệu**.
+
+#### A. Không có khái niệm chuyển tiền giữa ví — **báo cáo đang sai**
+
+CapMoney có "chuyển tiền giữa tài khoản bằng cặp giao dịch liên kết". XAXI không có gì cả.
+
+Hậu quả: rút 2 triệu từ ngân hàng ra tiền mặt, người dùng buộc phải ghi thành một khoản **chi** ở ví ngân hàng và một khoản **thu** ở ví tiền mặt. Số dư từng ví thì đúng, nhưng:
+
+- tổng chi tháng đó **phồng lên 2 triệu** dù không tiêu đồng nào
+- tổng thu cũng phồng tương ứng
+- phân bổ theo danh mục bị bẩn
+- câu hỏi "tháng này chi bao nhiêu" trả lời **sai**
+
+Đây là lỗi tính toán, không phải thiếu tiện nghi. Cần thêm loại giao dịch thứ ba (`transfer`) với hai bản ghi liên kết bị **loại khỏi mọi phép tính thu/chi**.
+
+#### B. Không xin lưu trữ bền vững — **có thể mất sạch dữ liệu**
+
+CapMoney có "xin chế độ lưu trữ bền vững". XAXI chưa gọi `navigator.storage.persist()` lần nào.
+
+IndexedDB ở chế độ mặc định là **"best-effort"**: trình duyệt và WebView được phép xoá nó khi máy thiếu dung lượng, **không báo trước, không hỏi**. Với một app mà toàn bộ lời hứa là "dữ liệu nằm trên máy bạn", đây là rủi ro nặng nhất trong cả danh sách.
+
+Sửa rẻ: gọi `navigator.storage.persist()` lúc khởi động, và hiện trạng thái trong Cài đặt để người dùng biết dữ liệu của mình đang ở chế độ nào.
+
+#### C. Bản web không thật sự chạy offline
+
+CapMoney có "PWA, cache offline". XAXI có tệp manifest nhưng **không đăng ký service worker nào** — mở bản GitHub Pages lúc mất mạng là trang trắng.
+
+Nghĩa là lời "local-first" hiện chỉ đúng với bản Android. Cần một service worker tối thiểu cache vỏ app.
+
+### 6.2 Ý tưởng mạnh nên lấy
+
+#### Giữ lại ảnh biên lai — **đáng giá nhất trong cả danh sách**
+
+CapMoney lưu ảnh capture thật của giao dịch và có cả **lịch ảnh** để xem lại theo ngày.
+
+XAXI hiện đọc chữ từ ảnh rồi **vứt ảnh đi**. Giữ lại một bản nén sẽ mở ra:
+
+- **Chụp là xong** — không cần gõ gì, phân loại sau lúc rảnh. Đây đúng là bộ lọc "giảm công nhập liệu" ở mức mạnh nhất.
+- Đối chiếu lại được khi nghi ngờ số liệu, thay vì phải tin vào OCR
+- Ảnh vẫn nằm trên máy, không phá nguyên tắc nào
+
+Cái giá: dung lượng. Cần nén mạnh, và cần một trang hiển thị dung lượng đang dùng — CapMoney làm đúng vậy.
+
+#### Quy tắc phân loại do người dùng tự đặt
+
+XAXI có từ khoá dựng sẵn và bộ phân loại tự học, nhưng người dùng **không can thiệp được** khi máy đoán sai. CapMoney cho đặt quy tắc theo từ khoá. Rẻ, và trả lại quyền kiểm soát.
+
+#### Chống trùng khi ghi nhanh
+
+XAXI mới chống trùng ở đường nhập sao kê. CapMoney chống trùng cả ở đường OCR. Nên mở rộng: cùng số tiền, cùng ngày, ghi chú giống nhau trong vòng vài phút thì hỏi lại.
+
+### 6.3 Ghi nhận từ các dự án mã nguồn mở
+
+| Dự án | Điều đáng học |
+|---|---|
+| **ExpenseOwl** | Cố tình **không làm** ngân sách, tài khoản, tìm kiếm. Một lời nhắc rằng thêm tính năng luôn có giá, và "theo dõi" khác "lập kế hoạch" |
+| **MoneyMatter** | Quy tắc tự động hoá · người nhận (payee) · tách hoá đơn · hoàn tiền · **máy chủ MCP cho AI truy vấn dữ liệu** |
+| **MoneyWallet** | Android thuần, nhiều biến thể build (có/không phụ thuộc dịch vụ Google) — mô hình đáng tham khảo nếu muốn lên F-Droid |
+| **MMAS** | Flutter, đa nền tảng — hướng khác với Capacitor nhưng cùng bài toán |
+
+Riêng ý **máy chủ MCP** của MoneyMatter đáng suy nghĩ: cho một trợ lý AI truy vấn dữ liệu chi tiêu. Nếu làm thì phải là **MCP chạy cục bộ**, đọc từ bản sao lưu trên máy, chứ không phải máy chủ từ xa — nếu không thì lại rơi vào đúng cái bẫy đã phân tích ở §2.
+
+### 6.4 Chưa rõ, cần bạn xác nhận
+
+- **CapMoney là app của bạn hay là tham chiếu bên ngoài?** Nếu là của bạn thì câu hỏi thật sự không phải "lấy ý gì" mà là **XAXI và CapMoney khác nhau ở đâu** — hai app cùng giải một bài toán thì nên có lý do tồn tại riêng, không thì nên gộp.
+- **Đa tiền tệ** (MoneyMatter có, CapMoney không): có cần không? Nếu chỉ dùng VND thì bỏ qua, vì nó kéo theo tỷ giá và quy đổi khá nặng.
 
 ---
 

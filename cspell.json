@@ -1,0 +1,7 @@
+{
+  "version": "0.2",
+  "language": "en",
+  "ignorePaths": ["node_modules/**", "dist/**", "android/**", "tests/.out/**", "package-lock.json"],
+  "ignoreRegExpList": ["/[\u00C0-\u1EF9][\p{L}]*/gu", "/\b(?:[a-z]+)(?=[\u00C0-\u1EF9])/giu"],
+  "words": ["XAXI", "Capacitor", "Dexie", "Tauri", "mlkit", "unbundled", "webmanifest", "appimage", "tabular", "tnum", "jbr", "assembleDebug", "gradlew", "IMAP", "CRDT", "Argon", "PBKDF"]
+}
