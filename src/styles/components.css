@@ -845,6 +845,21 @@ textarea.input {
   color: var(--text-primary);
 }
 
+/*
+ * Biến thể đỏ gắt — chỉ dùng cho cảnh báo MẤT DỮ LIỆU KHÔNG LẤY LẠI ĐƯỢC.
+ *
+ * §4 của hệ thống thiết kế dành riêng đỏ gắt cho những chỗ như thế này. Dùng nó
+ * cho mọi cảnh báo thì chẳng cảnh báo nào còn nghĩa.
+ */
+.nudge.danger {
+  background: var(--critical-soft);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--critical) 28%, transparent);
+}
+
+.nudge.danger b {
+  color: var(--critical);
+}
+
 .nudge-actions {
   margin-top: var(--s-3);
 }

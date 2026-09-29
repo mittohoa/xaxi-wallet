@@ -195,7 +195,7 @@ Thiết bị thứ hai nhập cùng cụm mật khẩu là đọc được — k
 | ~~4~~ | ~~**Công cụ IMAP chạy tại máy**~~ | — | **xong** — xem §14 |
 | ~~5~~ | ~~Rung phản hồi, icon vector~~ | — | **xong** — 23 hình vector, xem `docs/he-thong-thiet-ke.md` §10 |
 | ~~6~~ | ~~**Bot Telegram mức A**~~ | — | **xong** — xem §15 |
-| 7 | **Đồng bộ đa thiết bị, mã hoá đầu-cuối** | không, nếu làm đúng | mục tiêu đã chốt — xem §3.6 |
+| ~~7~~ | ~~**Đồng bộ đa thiết bị, mã hoá đầu-cuối**~~ | — | **xong** — xem §16 |
 
 
 ---
@@ -796,3 +796,90 @@ rồi cần đưa kết quả vào app **cũng trên điện thoại đó**. N�
 Nên mặc định nó vừa ghi ra đĩa vừa gửi tệp vào cuộc trò chuyện. Tệp đó **không
 thêm thông tin gì mới cho Telegram**: mọi dòng trong nó đều đến từ tin nhắn
 chính bạn đã gõ ở đấy. Ai vẫn muốn tắt thì đặt `guiTep: false`.
+
+## 16. Đồng bộ đa thiết bị — một tệp bạn tự mang đi
+
+Không có máy chủ, không có tài khoản. App mã hoá toàn bộ dữ liệu thành một tệp
+`.xaxi`; bạn tự mang nó sang máy kia bằng bất cứ đường nào — Drive, USB, tự gửi
+cho chính mình. Máy kia nhập đúng cụm mật khẩu là đọc được.
+
+§3.6 nghiêng về "thư mục app trên Drive của người dùng". Cách làm ở đây đi xa
+hơn một bậc theo cùng hướng đó: **app không biết Drive là gì**. Không OAuth,
+không client id phải nhúng vào bản phát hành, không quyền truy cập kho tệp nào.
+Người dùng cầm tệp và tự quyết để nó ở đâu. Thêm Drive sau này chỉ là tự động
+hoá đúng một việc "chuyển tệp", không đụng gì tới phần mã hoá hay hợp nhất.
+
+### Ba tầng, làm theo thứ tự đó
+
+**Tầng một — bia mộ.** Xoá hẳn một bản ghi thì máy kia vẫn giữ bản cũ, thấy máy
+này thiếu, và gửi ngược về. `softDelete()` ghi lại việc đã xoá; `live()` lọc nó
+khỏi mọi đường đọc. Phải có TRƯỚC khi bật đồng bộ, và nó là thay đổi rủi ro
+nhất trong cả ba tầng vì quên lọc một chỗ là khoản đã xoá hiện lại đúng ở đó.
+
+**Tầng hai — mã hoá.** PBKDF2-SHA256 250.000 vòng dẫn ra khoá AES-GCM 256, bằng
+WebCrypto có sẵn. Không thêm thư viện mã hoá nào: tự viết mã hoá là sai lầm
+kinh điển, mà nhét thêm một gói vào đúng chỗ cầm khoá của người dùng cũng không
+khá hơn. Muối và véc-tơ khởi tạo nằm ngoài phần mã hoá — chúng không phải bí
+mật, chúng tồn tại để cùng một cụm mật khẩu không bao giờ sinh ra hai tệp giống
+hệt nhau.
+
+**Tầng ba — hợp nhất.** "Bản mới hơn thắng" theo từng bản ghi, đúng như §3.6 đã
+chốt. Hoà `updatedAt` thì phá thế hoà bằng `deviceId` — không phải vì máy nào
+quan trọng hơn, mà để hai máy cùng ra một kết quả; phá thế hoà ngẫu nhiên thì
+chúng không bao giờ hội tụ.
+
+### Vấn đề khó hơn "bản mới hơn thắng"
+
+Quy tắc đó chỉ giải được xung đột khi hai bên nói về **cùng một id**. Chỗ khó
+nằm ở nơi khác: hai máy sinh ra hai bản ghi **khác id** cho cùng một thứ.
+
+Mỗi máy lúc mới cài đều tự gieo bộ danh mục mặc định, nên cả hai đều có "Ăn
+uống" — với hai UUID khác nhau, và giao dịch ở mỗi máy trỏ vào id của riêng máy
+đó. Ghép thẳng lại thì người dùng có hai danh mục "Ăn uống", mỗi cái giữ một
+nửa số liệu, và không có gì báo.
+
+Nên trước khi hợp nhất phải **gộp trùng theo khoá tự nhiên**, rồi **nối lại mọi
+khoá ngoại** đang trỏ vào bản thua. Bản thua không bị bỏ đi mà bị đánh bia mộ —
+máy kia cũng phải biết là nó đã được gộp.
+
+| Bảng | Khoá tự nhiên | Vì sao |
+|---|---|---|
+| Danh mục | loại + tên | hai máy cùng gieo bộ mặc định |
+| Ví | tên | như trên |
+| Ngày không chi tiêu | ngày | cột `date` là chỉ mục DUY NHẤT — hai bản là vỡ |
+| Ngân sách | tháng + danh mục | hai hạn mức cho một danh mục là vô nghĩa |
+| Cài đặt | bản ghi đơn | hai dòng thì app đọc phải dòng nào là tuỳ may rủi |
+| Bút toán đối soát | ví + ngày | §3.6 gọi tên: hai máy cùng đối soát là bù HAI LẦN |
+| Giao dịch thường | *không có* | hai lần mua cà phê giống hệt vẫn là hai lần tiêu |
+
+Thứ tự quan trọng: gộp danh mục và ví TRƯỚC, nối khoá ngoại, rồi mới gộp ngân
+sách — vì khoá tự nhiên của ngân sách có chứa `categoryId`.
+
+### Bắt buộc xuất bản sao lưu trước khi bật
+
+Mã hoá đầu-cuối nghĩa là **không có cửa sau**: quên cụm mật khẩu là mất sạch tệp
+đó, người viết app cũng không mở được. Bản sao lưu JSON thường không cần mật
+khẩu, nên nó là đường lui duy nhất — và phải có trước. Thẻ Đồng bộ trong Cài đặt
+khoá cho tới khi người dùng bấm "Xuất bản sao lưu rồi bật"; mốc đó ghi vào
+`settings.syncReadyAt`.
+
+Cụm mật khẩu **không được lưu ở đâu cả**, gõ lại mỗi lần. Lưu nó đi thì có thêm
+một bí mật nằm trên đĩa, mà lợi ích chỉ là đỡ gõ vài giây cho việc mỗi tuần làm
+một lần.
+
+### Hai điều đã kiểm trên máy thật
+
+WebCrypto và `CompressionStream` đều chạy trong WebView Android — tệp `.xaxi` ra
+tới bảng Chia sẻ thật.
+
+Và một lỗi chỉ lộ ra vì thử đúng lúc 1h13 sáng: `syncFileName()` dùng
+`toISOString()`, tức ngày theo giờ UTC. Ở Việt Nam (UTC+7) thì từ 0h tới 7h
+sáng nó lùi lại một ngày, nên bản sao lưu ghi 30/09 còn tệp đồng bộ xuất sau đó
+vài giây ghi 29/09 — người dùng không biết tệp nào mới hơn. Đã đổi sang
+`todayISO()` như cả phần còn lại của app.
+
+### Việc chưa quyết, vẫn chưa quyết
+
+Hai câu hỏi cuối §3.6 còn nguyên: chung ví giữa nhiều người (đổi hẳn mô hình
+khoá), và đồng bộ tự động hay bấm nút. Bản này là **bấm nút** — không chạy nền,
+không tốn pin, không bất ngờ.

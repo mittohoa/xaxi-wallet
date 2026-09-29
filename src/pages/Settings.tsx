@@ -11,6 +11,7 @@ import { formatMoney, parseAmount } from '../lib/format'
 import { formatBytes, readStorageStatus, requestPersistence, type StorageStatus } from '../lib/storage'
 import { nativeShareAvailable } from '../lib/native/shell'
 import { nextCategoryColor } from '../lib/palette'
+import { applySyncFile, buildSyncFile, syncFileName } from '../lib/sync/apply'
 import { saveSettings, useApp } from '../store'
 import type { Id, Recurring, Settings as SettingsType, TxKind, WalletKind } from '../types'
 import { Icon } from '../components/Icon'
@@ -42,6 +43,11 @@ export function Settings() {
   const [asking, setAsking] = useState(false)
   const [photos, setPhotos] = useState<AttachmentUsage | null>(null)
   const [armedPhotos, setArmedPhotos] = useState(false)
+
+  /* Đồng bộ — cụm mật khẩu CHỦ Ý không lưu ở đâu, gõ lại mỗi lần */
+  const syncInput = useRef<HTMLInputElement>(null)
+  const [cumMatKhau, setCumMatKhau] = useState('')
+  const [dangDongBo, setDangDongBo] = useState(false)
 
   const refreshStorage = () => readStorageStatus().then(setStorage)
   const refreshPhotos = () => attachmentUsage().then(setPhotos)
@@ -104,6 +110,57 @@ export function Settings() {
       toast(e instanceof Error ? e.message : 'Không khôi phục được')
     } finally {
       if (restoreInput.current) restoreInput.current.value = ''
+    }
+  }
+
+  /**
+   * Bật đồng bộ = xuất một bản sao lưu thường trước đã.
+   *
+   * Tệp đồng bộ mã hoá bằng cụm mật khẩu; quên nó là mất sạch, không ai khôi
+   * phục được. Bản JSON thường là đường lui duy nhất, nên nó phải có TRƯỚC —
+   * §3.6 gọi đây là điều bắt buộc.
+   */
+  async function batDongBo() {
+    const backup = await buildBackup()
+    await xuat(
+      () => downloadFile(`xaxi-backup-${todayISO()}.json`, JSON.stringify(backup, null, 2), 'application/json'),
+      'Đã xuất bản sao lưu',
+    )
+    await saveSettings({ syncReadyAt: Date.now() })
+  }
+
+  async function xuatDongBo() {
+    if (cumMatKhau.length < 8) return toast('Cụm mật khẩu cần ít nhất 8 ký tự')
+    setDangDongBo(true)
+    try {
+      const envelope = await buildSyncFile(cumMatKhau)
+      await xuat(
+        () => downloadFile(syncFileName(), JSON.stringify(envelope), 'application/octet-stream'),
+        'Đã xuất tệp đồng bộ',
+      )
+    } finally {
+      setDangDongBo(false)
+    }
+  }
+
+  async function nhapDongBo(file: File | undefined) {
+    if (!file) return
+    if (!cumMatKhau) return toast('Nhập cụm mật khẩu trước đã')
+    setDangDongBo(true)
+    try {
+      const envelope = JSON.parse(await readTextFile(file))
+      const r = await applySyncFile(envelope, cumMatKhau)
+      const phan = [
+        r.added > 0 && `${r.added} bản ghi mới`,
+        r.updated > 0 && `${r.updated} bản cập nhật`,
+        r.collapsed > 0 && `${r.collapsed} bản trùng đã gộp`,
+      ].filter(Boolean)
+      toast(phan.length > 0 ? `Đã hợp nhất · ${phan.join(' · ')}` : 'Không có gì mới — hai máy đã giống nhau')
+    } catch (e) {
+      toast(e instanceof Error ? e.message : 'Không đọc được tệp đồng bộ')
+    } finally {
+      setDangDongBo(false)
+      if (syncInput.current) syncInput.current.value = ''
     }
   }
 
@@ -590,6 +647,81 @@ export function Settings() {
         <div className="hint" style={{ marginTop: 8 }}>
           Dữ liệu mẫu ghi đè toàn bộ giao dịch, ngân sách và khoản định kỳ hiện có, nhưng giữ nguyên danh mục và ví của bạn.
         </div>
+      </div>
+
+      <div className="card">
+        <div className="card-title">Đồng bộ đa thiết bị</div>
+        <div className="hint" style={{ marginBottom: 12 }}>
+          Không có máy chủ và không có tài khoản. App mã hoá toàn bộ dữ liệu thành một tệp, bạn tự mang tệp đó sang máy
+          kia — Drive, USB, tự gửi cho chính mình, tuỳ bạn. Ai cầm được tệp cũng chỉ thấy một khối byte vô nghĩa, vì
+          khoá sinh từ cụm mật khẩu của bạn và không bao giờ rời khỏi máy.
+        </div>
+
+        {/*
+          Cảnh báo này KHÔNG được làm nhẹ đi. Mã hoá đầu-cuối nghĩa là không có
+          cửa sau — người viết app cũng không mở được tệp của bạn.
+        */}
+        <div className="nudge danger" style={{ marginBottom: 12 }}>
+          <b>Quên cụm mật khẩu là mất sạch tệp đó.</b> Không có cách khôi phục, kể cả người làm ra app. Hãy giữ nó như
+          giữ chìa khoá nhà.
+        </div>
+
+        {!settings.syncReadyAt ? (
+          <>
+            <button type="button" className="btn primary" onClick={batDongBo}>
+              <Icon name="download" /> Xuất bản sao lưu rồi bật
+            </button>
+            <div className="hint" style={{ marginTop: 8 }}>
+              Bản sao lưu JSON thường không cần mật khẩu, nên nó là đường lui nếu bạn quên cụm mật khẩu sau này. Phải có
+              nó trước đã.
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="field">
+              <label htmlFor="sync-pass">Cụm mật khẩu</label>
+              <input
+                id="sync-pass"
+                className="input"
+                type="password"
+                autoComplete="off"
+                placeholder="ít nhất 8 ký tự"
+                value={cumMatKhau}
+                onChange={(e) => setCumMatKhau(e.target.value)}
+              />
+              <div className="hint">
+                Không được lưu lại — gõ lại mỗi lần đồng bộ. Máy kia nhập đúng cụm này là đọc được, không cần đăng nhập
+                gì.
+              </div>
+            </div>
+
+            <div className="btn-row">
+              <button type="button" className="btn" onClick={xuatDongBo} disabled={dangDongBo || cumMatKhau.length < 8}>
+                <Icon name="upload" /> Xuất tệp đồng bộ
+              </button>
+              <button
+                type="button"
+                className="btn"
+                onClick={() => syncInput.current?.click()}
+                disabled={dangDongBo || cumMatKhau.length < 8}
+              >
+                <Icon name="download" /> Nhập tệp từ máy khác
+              </button>
+            </div>
+            <input
+              ref={syncInput}
+              type="file"
+              accept=".xaxi,application/json"
+              hidden
+              onChange={(e) => nhapDongBo(e.target.files?.[0])}
+            />
+
+            <div className="hint" style={{ marginTop: 10 }}>
+              Nhập là <b>hợp nhất</b>, không phải ghi đè: bản nào mới hơn thắng, khoản đã xoá ở máy này không mọc lại từ
+              máy kia, và hai danh mục cùng tên do hai máy tự tạo được gộp làm một.
+            </div>
+          </>
+        )}
       </div>
 
       <div className="card">

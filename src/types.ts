@@ -218,6 +218,14 @@ export interface Settings extends Syncable {
    * Thieu hoac khong hop le thi rot ve ty le goc cua phuong phap JARS.
    */
   jarPercents?: Record<string, number>
+  /**
+   * Moc nguoi dung da xuat ban sao luu thuong truoc khi bat dong bo.
+   *
+   * §3.6 doi dieu nay va co ly do that: tep dong bo ma hoa bang cum mat khau,
+   * mat cum mat khau la mat sach — khong ai khoi phuc duoc. Mot ban sao luu
+   * JSON thuong la duong lui duy nhat.
+   */
+  syncReadyAt?: number
 }
 
 /**
