@@ -6,6 +6,7 @@
 import type { Transaction, TxKind } from '../types'
 import { toISO } from './date'
 import { normalize } from './quickadd'
+import { readXlsx } from './xlsx'
 
 export interface StatementRow {
   date: string
@@ -23,6 +24,9 @@ export interface StatementParse {
   /** ten cot da nhan dien duoc, de hien cho nguoi dung doi chieu */
   mapping: { date: string; amount: string; note: string }
   skipped: number
+  /** nguon doc duoc, de hien cho nguoi dung biet app hieu tep kieu gi */
+  source: 'csv' | 'xlsx'
+  sheetName?: string
 }
 
 /* ---------- CSV ---------- */
@@ -129,7 +133,33 @@ export function dedupeKey(kind: TxKind, date: string, amount: number, note: stri
  * `existing` dung de danh dau cac dong da co trong app.
  */
 export function parseStatement(text: string, existing: Transaction[]): StatementParse | null {
-  const table = parseCSV(text)
+  return parseStatementTable(parseCSV(text), existing, 'csv')
+}
+
+/**
+ * Doc mot tep sao ke do nguoi dung chon: .csv hoac .xlsx.
+ * Tep duoc xu ly ngay tren may, khong gui di dau.
+ */
+export async function parseStatementFile(file: File, existing: Transaction[]): Promise<StatementParse | null> {
+  const isExcel = /\.xlsx$/i.test(file.name) || file.type.includes('spreadsheetml')
+  if (isExcel) {
+    const sheet = await readXlsx(await file.arrayBuffer())
+    const parsed = parseStatementTable(sheet.rows, existing, 'xlsx')
+    return parsed ? { ...parsed, sheetName: sheet.name } : null
+  }
+  if (/\.xls$/i.test(file.name)) {
+    throw new Error('Định dạng .xls cũ chưa hỗ trợ. Mở bằng Excel rồi lưu lại thành .xlsx hoặc .csv.')
+  }
+  return parseStatement(await file.text(), existing)
+}
+
+/** Phan chung cho ca CSV lan Excel: nhan dien cot va doi chieu trung lap */
+export function parseStatementTable(
+  table: string[][],
+  existing: Transaction[],
+  source: 'csv' | 'xlsx',
+): StatementParse | null {
+  table = table.filter((r) => r.some((c) => (c ?? '').trim() !== ''))
   if (table.length < 2) return null
 
   // Dong tieu de la dong dau tien nhan dien duoc cot ngay
@@ -203,5 +233,6 @@ export function parseStatement(text: string, existing: Transaction[]): Statement
       note: noteCol >= 0 ? (header[noteCol] ?? '') : '(không có)',
     },
     skipped,
+    source,
   }
 }

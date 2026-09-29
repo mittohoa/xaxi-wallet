@@ -1,10 +1,9 @@
 import { useMemo, useState } from 'react'
 import { db } from '../db/db'
-import { readTextFile } from '../lib/backup'
 import { systemCategory } from '../lib/actions'
 import { formatDate } from '../lib/date'
 import { formatMoney } from '../lib/format'
-import { parseStatement, type StatementParse } from '../lib/statement'
+import { parseStatementFile, type StatementParse } from '../lib/statement'
 import { useApp } from '../store'
 import { Sheet } from './ui'
 
@@ -39,10 +38,9 @@ export function StatementSheet({ onClose }: { onClose: () => void }) {
     if (!file) return
     setError(null)
     try {
-      const text = await readTextFile(file)
-      const parsed = parseStatement(text, transactions)
+      const parsed = await parseStatementFile(file, transactions)
       if (!parsed) {
-        setError('Không đọc được file này. Cần file CSV có cột ngày và cột số tiền (hoặc ghi nợ / ghi có).')
+        setError('Không đọc được tệp này. Cần bảng có cột ngày và cột số tiền (hoặc ghi nợ / ghi có).')
         setResult(null)
         setRows([])
         return
@@ -81,20 +79,21 @@ export function StatementSheet({ onClose }: { onClose: () => void }) {
   }
 
   return (
-    <Sheet title="Nhập sao kê CSV" onClose={onClose}>
+    <Sheet title="Nhập sao kê" onClose={onClose}>
       {!result && (
         <>
           <p className="hint" style={{ marginTop: 0 }}>
-            Xuất sao kê dạng CSV từ app ngân hàng hoặc ví điện tử của bạn rồi chọn file ở đây. Ứng dụng không kết nối tới
-            ngân hàng và không hỏi thông tin đăng nhập — file được đọc ngay trên máy.
+            Xuất sao kê dạng <b>CSV</b> hoặc <b>Excel (.xlsx)</b> từ app ngân hàng hoặc ví điện tử của bạn rồi chọn tệp ở
+            đây. Ứng dụng không kết nối tới ngân hàng và không hỏi thông tin đăng nhập — tệp được đọc ngay trên máy, không
+            gửi đi đâu.
           </p>
           <div className="field">
-            <label htmlFor="stmt-file">Chọn tệp CSV</label>
+            <label htmlFor="stmt-file">Chọn tệp CSV hoặc Excel</label>
             <input
               id="stmt-file"
               className="input"
               type="file"
-              accept=".csv,text/csv,text/plain"
+              accept=".csv,.xlsx,text/csv,text/plain,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
               onChange={(e) => pick(e.target.files?.[0])}
             />
           </div>
@@ -106,8 +105,8 @@ export function StatementSheet({ onClose }: { onClose: () => void }) {
       {result && (
         <>
           <div className="hint" style={{ marginBottom: 12 }}>
-            Cột nhận diện được — ngày: <b>{result.mapping.date}</b> · số tiền: <b>{result.mapping.amount}</b> · nội dung:{' '}
-            <b>{result.mapping.note}</b>
+            Đọc từ {result.source === 'xlsx' ? `Excel · sheet "${result.sheetName}"` : 'CSV'} — ngày:{' '}
+            <b>{result.mapping.date}</b> · số tiền: <b>{result.mapping.amount}</b> · nội dung: <b>{result.mapping.note}</b>
             {result.skipped > 0 && ` · bỏ qua ${result.skipped} dòng không đọc được`}
             {duplicates > 0 && ` · ${duplicates} dòng đã có sẵn (bỏ chọn tự động)`}
           </div>
