@@ -21,3 +21,5 @@ tests/.out
 android/keystore.properties
 *.jks
 *.keystore
+android/pw.txt
+android/*.txt

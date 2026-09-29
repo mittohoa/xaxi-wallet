@@ -1,4 +1,4 @@
-package app.xaxi.wallet;
+package com.mittohoa.xaxi_wallet;
 
 import android.Manifest;
 import android.content.Intent;

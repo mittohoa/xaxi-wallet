@@ -50,7 +50,7 @@ chạm là khoản đó không bao giờ phải nhập tay nữa.
 | Đọc số tiền nói bằng lời tiếng Việt | trên máy | không | **xong** |
 | Online · đồng bộ nhiều thiết bị | — | — | **chỉ cân nhắc khi offline đã hoàn chỉnh** |
 
-Quyền trên máy thật, kiểm bằng `adb shell dumpsys package app.xaxi.wallet`:
+Quyền trên máy thật, kiểm bằng `adb shell dumpsys package com.mittohoa.xaxi_wallet`:
 
 ```
 requested permissions:
@@ -197,7 +197,7 @@ phụ thuộc vào `build.gradle`, khai báo manifest, và cấu hình ký số.
 
 `scripts/patch-android-manifest.mjs` **chặn build** nếu manifest xuất hiện bất kỳ quyền nào thuộc danh
 sách cấm (`READ_SMS`, `RECEIVE_SMS`, `BIND_NOTIFICATION_LISTENER_SERVICE`, `BIND_ACCESSIBILITY_SERVICE`,
-`PACKAGE_USAGE_STATS`). Kiểm chứng trên máy thật bằng `adb shell dumpsys package app.xaxi.wallet`:
+`PACKAGE_USAGE_STATS`). Kiểm chứng trên máy thật bằng `adb shell dumpsys package com.mittohoa.xaxi_wallet`:
 
 ```
 requested permissions:

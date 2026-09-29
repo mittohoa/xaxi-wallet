@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli'
 
 const config: CapacitorConfig = {
-  appId: 'app.xaxi.wallet',
+  appId: 'com.mittohoa.xaxi_wallet',
   appName: 'XAXI',
   webDir: 'dist',
   android: {

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Màn hình chờ cho Android 11 trở xuống: chỉ là nền trơn cùng màu với nền app.
+  Không đặt hình gì ở giữa vì app mở trong dưới hai giây — một khung màu trùng
+  khít rồi chuyển thẳng vào nội dung trông liền mạch hơn là chớp một logo.
+  Android 12 trở lên tự vẽ biểu tượng app, xem values-v31/styles.xml.
+-->
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:drawable="@color/xaxi_page" />
+</layer-list>

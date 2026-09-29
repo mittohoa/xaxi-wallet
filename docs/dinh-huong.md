@@ -231,7 +231,7 @@ Nhận định đầu tiên là "rủi ro nặng nhất, có thể mất sạch 
 
 | | |
 |---|---|
-| IndexedDB nằm ở | `/data/data/app.xaxi.wallet/app_webview/Default/IndexedDB` |
+| IndexedDB nằm ở | `/data/data/com.mittohoa.xaxi_wallet/app_webview/Default/IndexedDB` |
 | Đó là vùng | **app data**, không phải `cache/` |
 | Android dọn dung lượng xoá | `cache/` — không đụng app data |
 

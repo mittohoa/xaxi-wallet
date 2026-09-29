@@ -1,6 +1,6 @@
 # Giu cac plugin tu viet: Capacitor goi chung qua ten lop trong @CapacitorPlugin,
 # neu R8 doi ten thi cau noi khong tim thay.
--keep class app.xaxi.wallet.** { *; }
+-keep class com.mittohoa.xaxi_wallet.** { *; }
 -keep @com.getcapacitor.annotation.CapacitorPlugin class * { *; }
 -keepclassmembers class * {
   @com.getcapacitor.PluginMethod public *;
