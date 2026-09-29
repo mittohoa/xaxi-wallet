@@ -60,7 +60,11 @@ viền tiêu điểm) — hai biến, hai công dụng, không thay nhau đượ
 cần **một** bộ màu biểu đồ đã kiểm định thay vì hai bộ phải kiểm riêng trên hai
 nền. Một bộ thì kiểm được, hai bộ thì sớm muộn một bộ sẽ trôi.
 
-Bộ tám sắc `--c-1` … `--c-8`, đo trên `#0D1117`:
+Bộ tám sắc nằm ở `src/lib/palette.ts`, **không** ở `tokens.css`: màu của một
+danh mục là **dữ liệu**, được ghi vào CSDL lúc tạo danh mục và đi theo bản ghi
+đó. CSS không bao giờ đọc tới nó.
+
+Đo trên `#0D1117`:
 
 ```
 Dải độ sáng      ✓ cả 8 nằm trong OKLCH L 0,48–0,67
@@ -73,6 +77,21 @@ Tương phản nền   ✓ cả 8 ≥ 3:1
 **Thứ tự của tám sắc là kết quả tìm kiếm, không phải sắp cho đẹp.** Đã thử mọi
 hoán vị để hai màu cạnh nhau cách xa nhau nhất với người loạn sắc. Đổi thứ tự
 là phá phép đo.
+
+Trên nền thẻ **trắng** thì hai sắc xanh lá và ngọc rơi xuống 2,94–2,96 — dưới
+3:1 một chút. Bộ kiểm gọi đó là mức phải có "cứu trợ" chứ không phải cấm, và
+cứu trợ đã có sẵn: mỗi hàng danh mục luôn kèm biểu tượng, tên và con số, cộng
+một lối xem dạng bảng trong Báo cáo.
+
+> Bộ màu cũ (`#eb6834`, `#2a78d6`, `#52514e`…) **trượt** phép kiểm: `#52514e`
+> độ bão hoà 0,005 nên đọc ra xám, và `#e34948` với `#e87ba4` chỉ cách nhau
+> ΔE 13,2 — mắt thường cũng khó phân biệt. `refreshCategoryColors()` đổi các
+> danh mục còn mang màu cũ, nhưng chỉ khi người dùng chưa tự chọn màu khác.
+
+Danh mục **hệ thống** — "Chi khác", "Chưa rõ", "Chuyển đi" — cố ý mang màu xám
+riêng. Chúng là chỗ rót về, không phải khoản chi có ý nghĩa; cho chúng một sắc
+rực rỡ thì trong biểu đồ chúng trông ngang hàng với danh mục người dùng thật sự
+quan tâm, và còn chiếm mất một sắc của bộ tám.
 
 ---
 

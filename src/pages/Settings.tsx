@@ -10,6 +10,7 @@ import { formatDate, todayISO } from '../lib/date'
 import { formatMoney, parseAmount } from '../lib/format'
 import { formatBytes, readStorageStatus, requestPersistence, type StorageStatus } from '../lib/storage'
 import { nativeShareAvailable } from '../lib/native/shell'
+import { nextCategoryColor } from '../lib/palette'
 import { saveSettings, useApp } from '../store'
 import type { Id, Recurring, Settings as SettingsType, TxKind, WalletKind } from '../types'
 
@@ -27,7 +28,6 @@ const WALLET_KINDS: { value: WalletKind; label: string; icon: string }[] = [
   { value: 'saving', label: 'Tiết kiệm', icon: '🏆' },
 ]
 
-const CATEGORY_COLORS = ['#2a78d6', '#eb6834', '#1baf7a', '#eda100', '#e87ba4', '#008300', '#4a3aa7', '#e34948']
 
 export function Settings() {
   const { settings, wallets, categories, transactions, recurring, toast } = useApp()
@@ -116,7 +116,7 @@ export function Settings() {
         name,
         kind: newWallet.kind,
         icon: preset.icon,
-        color: CATEGORY_COLORS[wallets.length % CATEGORY_COLORS.length],
+        color: nextCategoryColor(wallets.length),
         openingBalance: Number.isFinite(opening) ? Math.round(opening) : 0,
       }),
     )
@@ -132,7 +132,7 @@ export function Settings() {
         name,
         kind: newCategory.kind,
         icon: newCategory.icon || '🏷️',
-        color: CATEGORY_COLORS[categories.length % CATEGORY_COLORS.length],
+        color: nextCategoryColor(categories.length),
       }),
     )
     setNewCategory({ name: '', kind: newCategory.kind, icon: '🏷️' })

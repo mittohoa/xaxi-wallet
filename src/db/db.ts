@@ -1,5 +1,6 @@
 import Dexie, { type Table } from 'dexie'
 import type { Attachment, Budget, Category, DayMark, Id, Recurring, Settings, Syncable, Template, Transaction, Wallet } from '../types'
+import { CATEGORY_COLORS, SYSTEM_COLOR } from '../lib/palette'
 
 /**
  * Tên CSDL đổi so với bản đầu vì khoá chính đổi từ số tự tăng sang UUID —
@@ -113,29 +114,29 @@ export function touch(): Pick<Syncable, 'updatedAt' | 'deviceId'> {
 type Seed<T> = Omit<T, 'id' | 'updatedAt' | 'deviceId'>
 
 const DEFAULT_CATEGORIES: Seed<Category>[] = [
-  { name: 'Ăn uống', kind: 'expense', icon: '🍜', color: '#eb6834', keywords: ['an', 'com', 'pho', 'bun', 'ca phe', 'cafe', 'coffee', 'tra sua', 'an sang', 'an trua', 'an toi', 'nhau', 'quan'] },
-  { name: 'Đi lại', kind: 'expense', icon: '🛵', color: '#2a78d6', keywords: ['xang', 'grab', 'taxi', 'xe bus', 'gui xe', 've xe', 'do xe', 've may bay'] },
-  { name: 'Nhà cửa', kind: 'expense', icon: '🏠', color: '#4a3aa7', keywords: ['tien nha', 'thue nha', 'phong tro', 'sua nha', 'noi that'] },
-  { name: 'Hoá đơn', kind: 'expense', icon: '🧾', color: '#52514e', keywords: ['dien', 'nuoc', 'internet', 'wifi', 'dien thoai', 'truyen hinh', 'hoa don'] },
-  { name: 'Mua sắm', kind: 'expense', icon: '🛍️', color: '#e87ba4', keywords: ['mua', 'quan ao', 'giay', 'shopee', 'lazada', 'tiki', 'sieu thi'] },
-  { name: 'Sức khoẻ', kind: 'expense', icon: '💊', color: '#e34948', keywords: ['thuoc', 'kham', 'benh vien', 'bao hiem', 'nha khoa', 'gym'] },
-  { name: 'Giải trí', kind: 'expense', icon: '🎮', color: '#1baf7a', keywords: ['phim', 'game', 'du lich', 'netflix', 'spotify', 'ca nhac'] },
-  { name: 'Giáo dục', kind: 'expense', icon: '📚', color: '#eda100', keywords: ['hoc', 'hoc phi', 'sach', 'khoa hoc'] },
-  { name: 'Chi khác', kind: 'expense', icon: '📦', color: '#898781', builtin: true, slug: 'uncategorized-expense' },
-  { name: 'Chi chưa rõ', kind: 'expense', icon: '❔', color: '#ec835a', builtin: true, slug: 'reconcile-expense' },
-  { name: 'Chuyển đi', kind: 'expense', icon: '↗️', color: '#72727e', builtin: true, slug: 'transfer-out' },
-  { name: 'Lương', kind: 'income', icon: '💼', color: '#2a78d6', keywords: ['luong', 'salary'] },
-  { name: 'Thưởng', kind: 'income', icon: '🎁', color: '#1baf7a', keywords: ['thuong', 'bonus', 'li xi'] },
-  { name: 'Đầu tư', kind: 'income', icon: '📈', color: '#4a3aa7', keywords: ['lai', 'co tuc', 'dau tu', 'chung khoan'] },
-  { name: 'Thu khác', kind: 'income', icon: '💰', color: '#898781', builtin: true, slug: 'uncategorized-income' },
-  { name: 'Thu chưa rõ', kind: 'income', icon: '❔', color: '#eda100', builtin: true, slug: 'reconcile-income' },
-  { name: 'Chuyển đến', kind: 'income', icon: '↘️', color: '#72727e', builtin: true, slug: 'transfer-in' },
+  { name: 'Ăn uống', kind: 'expense', icon: '🍜', color: CATEGORY_COLORS[0], keywords: ['an', 'com', 'pho', 'bun', 'ca phe', 'cafe', 'coffee', 'tra sua', 'an sang', 'an trua', 'an toi', 'nhau', 'quan'] },
+  { name: 'Đi lại', kind: 'expense', icon: '🛵', color: CATEGORY_COLORS[1], keywords: ['xang', 'grab', 'taxi', 'xe bus', 'gui xe', 've xe', 'do xe', 've may bay'] },
+  { name: 'Nhà cửa', kind: 'expense', icon: '🏠', color: CATEGORY_COLORS[2], keywords: ['tien nha', 'thue nha', 'phong tro', 'sua nha', 'noi that'] },
+  { name: 'Hoá đơn', kind: 'expense', icon: '🧾', color: CATEGORY_COLORS[3], keywords: ['dien', 'nuoc', 'internet', 'wifi', 'dien thoai', 'truyen hinh', 'hoa don'] },
+  { name: 'Mua sắm', kind: 'expense', icon: '🛍️', color: CATEGORY_COLORS[4], keywords: ['mua', 'quan ao', 'giay', 'shopee', 'lazada', 'tiki', 'sieu thi'] },
+  { name: 'Sức khoẻ', kind: 'expense', icon: '💊', color: CATEGORY_COLORS[5], keywords: ['thuoc', 'kham', 'benh vien', 'bao hiem', 'nha khoa', 'gym'] },
+  { name: 'Giải trí', kind: 'expense', icon: '🎮', color: CATEGORY_COLORS[6], keywords: ['phim', 'game', 'du lich', 'netflix', 'spotify', 'ca nhac'] },
+  { name: 'Giáo dục', kind: 'expense', icon: '📚', color: CATEGORY_COLORS[7], keywords: ['hoc', 'hoc phi', 'sach', 'khoa hoc'] },
+  { name: 'Chi khác', kind: 'expense', icon: '📦', color: SYSTEM_COLOR, builtin: true, slug: 'uncategorized-expense' },
+  { name: 'Chi chưa rõ', kind: 'expense', icon: '❔', color: SYSTEM_COLOR, builtin: true, slug: 'reconcile-expense' },
+  { name: 'Chuyển đi', kind: 'expense', icon: '↗️', color: SYSTEM_COLOR, builtin: true, slug: 'transfer-out' },
+  { name: 'Lương', kind: 'income', icon: '💼', color: CATEGORY_COLORS[1], keywords: ['luong', 'salary'] },
+  { name: 'Thưởng', kind: 'income', icon: '🎁', color: CATEGORY_COLORS[0], keywords: ['thuong', 'bonus', 'li xi'] },
+  { name: 'Đầu tư', kind: 'income', icon: '📈', color: CATEGORY_COLORS[3], keywords: ['lai', 'co tuc', 'dau tu', 'chung khoan'] },
+  { name: 'Thu khác', kind: 'income', icon: '💰', color: SYSTEM_COLOR, builtin: true, slug: 'uncategorized-income' },
+  { name: 'Thu chưa rõ', kind: 'income', icon: '❔', color: SYSTEM_COLOR, builtin: true, slug: 'reconcile-income' },
+  { name: 'Chuyển đến', kind: 'income', icon: '↘️', color: SYSTEM_COLOR, builtin: true, slug: 'transfer-in' },
 ]
 
 const DEFAULT_WALLETS: Seed<Wallet>[] = [
-  { name: 'Tiền mặt', kind: 'cash', icon: '👛', color: '#1baf7a', openingBalance: 0 },
-  { name: 'Ngân hàng', kind: 'bank', icon: '🏦', color: '#2a78d6', openingBalance: 0 },
-  { name: 'Ví điện tử', kind: 'ewallet', icon: '📱', color: '#e87ba4', openingBalance: 0 },
+  { name: 'Tiền mặt', kind: 'cash', icon: '👛', color: CATEGORY_COLORS[0], openingBalance: 0 },
+  { name: 'Ngân hàng', kind: 'bank', icon: '🏦', color: CATEGORY_COLORS[1], openingBalance: 0 },
+  { name: 'Ví điện tử', kind: 'ewallet', icon: '📱', color: CATEGORY_COLORS[7], openingBalance: 0 },
 ]
 
 export const DEFAULT_SETTINGS: Seed<Settings> = {
@@ -163,6 +164,41 @@ export async function seedIfEmpty(): Promise<void> {
     )
     if (missing.length) await db.categories.bulkAdd(missing.map(stamp))
   })
+}
+
+/**
+ * Màu của bộ hạt giống cũ, trước khi bộ màu được đo lại.
+ *
+ * Bộ này trượt phép kiểm: "#52514e" độ bão hoà 0,005 nên đọc ra xám, và
+ * "#e34948" với "#e87ba4" chỉ cách nhau ΔE 13,2 — mắt thường cũng khó phân
+ * biệt hai danh mục mang hai màu đó trong cùng một biểu đồ.
+ */
+const LEGACY_COLORS = new Set([
+  '#eb6834', '#2a78d6', '#4a3aa7', '#52514e', '#e87ba4',
+  '#e34948', '#1baf7a', '#eda100', '#898781', '#ec835a', '#72727e',
+])
+
+/**
+ * Đổi màu các danh mục vẫn đang mang màu của bộ hạt giống cũ.
+ *
+ * Chỉ đụng tới danh mục có TÊN trùng bộ mặc định VÀ màu vẫn là một trong các
+ * màu cũ. Người dùng tự chọn màu khác thì giữ nguyên — màu đó là lựa chọn của
+ * họ, không phải giá trị mặc định bị bỏ quên.
+ *
+ * Chạy nhiều lần không sao: sau lần đầu thì không màu nào còn nằm trong danh
+ * sách cũ nữa.
+ */
+export async function refreshCategoryColors(): Promise<number> {
+  const rows = await db.categories.toArray()
+  const wanted = new Map(DEFAULT_CATEGORIES.map((c) => [`${c.kind}|${c.name}`, c.color]))
+
+  const changes = rows
+    .filter((c) => LEGACY_COLORS.has(c.color))
+    .map((c) => ({ row: c, color: wanted.get(`${c.kind}|${c.name}`) }))
+    .filter((x): x is { row: Category; color: string } => Boolean(x.color) && x.color !== x.row.color)
+
+  for (const { row, color } of changes) await db.categories.update(row.id, { ...touch(), color })
+  return changes.length
 }
 
 export async function wipeAll(): Promise<void> {

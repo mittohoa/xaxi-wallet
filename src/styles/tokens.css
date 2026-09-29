@@ -108,18 +108,10 @@
 
   --font: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
 
-  /* ---------- bộ màu biểu đồ ----------
-     Tám sắc, luôn vẽ trên nền mực nên dùng chung cho cả hai chế độ.
-     Thứ tự đã được tìm bằng cách thử mọi hoán vị để hai màu CẠNH NHAU
-     cách xa nhau nhất với người loạn sắc — đổi thứ tự là hỏng phép đo. */
-  --c-1: #73a434;
-  --c-2: #2b99e7;
-  --c-3: #db703b;
-  --c-4: #a17adf;
-  --c-5: #ac9008;
-  --c-6: #03aa8e;
-  --c-7: #6f8bed;
-  --c-8: #d4679f;
+  /* ---------- bộ màu danh mục ----------
+     KHÔNG nằm ở đây. Màu của một danh mục là DỮ LIỆU: nó được ghi vào CSDL
+     lúc tạo danh mục và đi theo bản ghi đó, nên CSS không bao giờ đọc tới.
+     Xem src/lib/palette.ts — kèm số liệu đo của bộ tám sắc. */
 }
 
 /* ============================================================

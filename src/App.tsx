@@ -4,7 +4,7 @@ import { ReconcileSheet } from './components/ReconcileSheet'
 import { StatementSheet } from './components/StatementSheet'
 import { TransactionSheet } from './components/TransactionSheet'
 import { TransferSheet } from './components/TransferSheet'
-import { seedIfEmpty } from './db/db'
+import { refreshCategoryColors, seedIfEmpty } from './db/db'
 import { migrateLegacyDatabase } from './db/migrate'
 import { runAttachmentHousekeeping } from './lib/attachments'
 import type { CommandName } from './lib/ask'
@@ -221,6 +221,8 @@ export default function App() {
     migrateLegacyDatabase()
       .catch(() => undefined)
       .then(() => seedIfEmpty())
+      // Đổi màu danh mục còn mang bộ màu cũ chưa qua kiểm định
+      .then(() => refreshCategoryColors())
       .then(() => setSeeded(true))
       // Don anh bien lai mo coi / qua han; khong chan man hinh dau tien
       .then(() => runAttachmentHousekeeping())

@@ -77,3 +77,38 @@ test('chỉ tokens.css được định nghĩa biến gốc', () => {
   }
   assert.deepEqual(elsewhere, [], 'định nghĩa biến ngoài tokens.css thì hệ thống mất một nguồn sự thật duy nhất')
 })
+
+/* ================= bộ màu danh mục ================= */
+
+/**
+ * Màu danh mục phải đến từ bộ đã đo, không phải từ chỗ khác.
+ *
+ * Bài kiểm này sinh ra từ một lỗ hổng thật: bộ tám sắc được sinh bằng công
+ * thức, đo bằng bộ kiểm palette, ghi vào tài liệu thiết kế — rồi KHÔNG được
+ * dùng ở đâu cả. Màu thật trong app vẫn là bộ cũ chưa qua kiểm định, và bộ cũ
+ * thì trượt: một màu đọc ra xám, hai màu khác mắt thường cũng khó phân biệt.
+ *
+ * Tài liệu nói một đằng, mã làm một nẻo, mà không gì báo.
+ */
+test('màu danh mục mặc định đều lấy từ bộ đã đo', async () => {
+  const { CATEGORY_COLORS, SYSTEM_COLOR } = await import('../src/lib/palette')
+  const db = readFileSync('src/db/db.ts', 'utf8')
+
+  // Mọi màu viết thẳng bằng mã hex trong bộ hạt giống đều là vi phạm
+  const hardcoded = [...db.matchAll(/color: ('#[0-9a-f]{6}')/g)].map((m) => m[1])
+  assert.deepEqual(hardcoded, [], 'màu danh mục phải trỏ tới palette.ts, không viết thẳng mã hex')
+
+  assert.equal(CATEGORY_COLORS.length, 8)
+  assert.equal(new Set(CATEGORY_COLORS).size, 8, 'không được trùng nhau')
+  assert.match(SYSTEM_COLOR, /^#[0-9a-f]{6}$/)
+})
+
+test('bộ màu danh mục không dùng lại màu của thương hiệu hay trạng thái', async () => {
+  const { CATEGORY_COLORS } = await import('../src/lib/palette')
+  // Chanh và đỏ của logo mang nghĩa riêng: nhấn, và cảnh báo. Một danh mục
+  // mang đúng màu đó thì hai nghĩa chồng lên nhau.
+  const danhRieng = ['#b8ff3d', '#e34948', '#0d1117']
+  for (const c of CATEGORY_COLORS) {
+    assert.equal(danhRieng.includes(c.toLowerCase()), false, `${c} trùng màu dành riêng`)
+  }
+})
