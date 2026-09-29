@@ -6,6 +6,7 @@ import { TransactionSheet } from './components/TransactionSheet'
 import { seedIfEmpty } from './db/db'
 import type { CommandName } from './lib/ask'
 import { postDueRecurring } from './lib/recurring'
+import { GapFiller } from './components/GapFiller'
 import { Budgets } from './pages/Budgets'
 import { Console } from './pages/Console'
 import { Reports } from './pages/Reports'
@@ -33,6 +34,7 @@ const SHEET_TITLE: Record<Exclude<CommandName, 'help'>, string> = {
   reconcile: 'Đối soát số dư',
   statement: 'Nhập sao kê',
   history: 'Lịch sử giao dịch',
+  gaps: 'Lấp khoảng trống',
 }
 
 /** Tam truot chiem ca man hinh, dung cho cac man hinh phu mo bang lenh */
@@ -120,6 +122,12 @@ function Shell() {
       {screen === 'history' && (
         <FullSheet title={SHEET_TITLE.history} onClose={close}>
           <Transactions onEdit={setEditing} />
+        </FullSheet>
+      )}
+
+      {screen === 'gaps' && (
+        <FullSheet title={SHEET_TITLE.gaps} onClose={close}>
+          <GapFiller />
         </FullSheet>
       )}
 

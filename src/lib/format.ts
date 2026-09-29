@@ -77,3 +77,26 @@ export function parseAmount(input: string): number {
     default: return n
   }
 }
+
+/**
+ * Tach con so va ky hieu tien te de hien rieng.
+ * Giao dien cho ky hieu nho va nhat hon, de mat bat ngay vao con so.
+ */
+export function splitMoney(value: number): { text: string; symbol: string } {
+  const parts = nf('cur', {
+    style: 'currency',
+    currency,
+    minimumFractionDigits: fractionDigits(),
+    maximumFractionDigits: fractionDigits(),
+  }).formatToParts(value)
+
+  const symbol = parts
+    .filter((p) => p.type === 'currency')
+    .map((p) => p.value)
+    .join('')
+  const text = parts
+    .filter((p) => p.type !== 'currency' && !(p.type === 'literal' && p.value.trim() === ''))
+    .map((p) => p.value)
+    .join('')
+  return { text, symbol }
+}

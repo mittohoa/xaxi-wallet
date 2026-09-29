@@ -26,6 +26,7 @@ export type CommandName =
   | 'reconcile'
   | 'statement'
   | 'history'
+  | 'gaps'
   | 'help'
 
 interface CommandSpec {
@@ -42,6 +43,7 @@ export const COMMANDS: CommandSpec[] = [
   { name: 'budgets', triggers: ['ngan sach', 'han muc'], label: 'Ngân sách', hint: 'đặt hạn mức theo danh mục' },
   { name: 'reports', triggers: ['bao cao', 'thong ke', 'bieu do'], label: 'Báo cáo', hint: 'sáu tháng gần nhất' },
   { name: 'statement', triggers: ['sao ke', 'nhap csv', 'import'], label: 'Nhập sao kê', hint: 'file CSV từ app ngân hàng' },
+  { name: 'gaps', triggers: ['lap khoang trong', 'ngay trong', 'ngay chua ghi', 'bo sot'], label: 'Lấp khoảng trống', hint: 'ngày nào chưa ghi, một chạm là xong' },
   { name: 'history', triggers: ['giao dich', 'lich su', 'so giao dich'], label: 'Lịch sử giao dịch', hint: 'lọc theo tháng, ví, danh mục' },
   { name: 'settings', triggers: ['cai dat', 'thiet lap', 'tuy chon', 'sao luu', 'xuat du lieu', 'backup'], label: 'Cài đặt', hint: 'danh mục, ví, sao lưu, giao diện' },
   { name: 'help', triggers: ['giup', 'huong dan', 'lam sao', 'go gi', '?'], label: 'Hướng dẫn', hint: 'gõ được những gì' },

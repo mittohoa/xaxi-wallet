@@ -2,7 +2,7 @@ import type { Answer } from '../lib/ask'
 import { formatDate, formatDateLong } from '../lib/date'
 import { formatMoney } from '../lib/format'
 import { useLookups } from '../store'
-import { Avatar } from './ui'
+import { Avatar, Figure, Money } from './ui'
 
 /**
  * Ve mot cau tra loi. Moi dang tra loi co mot cach trinh bay rieng,
@@ -18,7 +18,7 @@ export function AnswerView({ answer, onPick }: { answer: Answer; onPick?: (text:
       return (
         <div className="answer">
           <div className="answer-label">{answer.title}</div>
-          <div className={`answer-figure ${focus === 'income' ? 'income' : 'expense'}`}>{formatMoney(headline)}</div>
+          <div className={`answer-figure ${focus === 'income' ? 'income' : 'expense'}`}><Figure value={headline} /></div>
           <div className="answer-meta">
             {answer.count} giao dịch
             {focus === 'both' && totals.income > 0 && (
@@ -38,7 +38,7 @@ export function AnswerView({ answer, onPick }: { answer: Answer; onPick?: (text:
       return (
         <div className="answer">
           <div className="answer-label">{answer.title}</div>
-          <div className={`answer-figure ${answer.focus === 'income' ? 'income' : 'expense'}`}>{formatMoney(answer.total)}</div>
+          <div className={`answer-figure ${answer.focus === 'income' ? 'income' : 'expense'}`}><Figure value={answer.total} /></div>
           <div className="rank" style={{ marginTop: 14 }}>
             {answer.slices.slice(0, 8).map((s) => (
               <div key={s.category.id} className="rank-item">
@@ -64,7 +64,7 @@ export function AnswerView({ answer, onPick }: { answer: Answer; onPick?: (text:
       return (
         <div className="answer">
           <div className="answer-label">{answer.title}</div>
-          <div className="answer-figure expense">{formatMoney(Math.abs(answer.total))}</div>
+          <div className="answer-figure expense"><Figure value={Math.abs(answer.total)} /></div>
           <div className="answer-meta">{answer.transactions.length} giao dịch</div>
           <div className="list" style={{ marginTop: 10 }}>
             {answer.transactions.slice(0, 40).map((t) => {
@@ -78,9 +78,8 @@ export function AnswerView({ answer, onPick }: { answer: Answer; onPick?: (text:
                       {formatDate(t.date)} · {walletById.get(t.walletId)?.name ?? 'Ví đã xoá'}
                     </span>
                   </span>
-                  <span className={`trail amount ${t.kind}`}>
-                    {t.kind === 'expense' ? '−' : '+'}
-                    {formatMoney(t.amount)}
+                  <span className="trail">
+                    <Money value={t.amount} kind={t.kind} signed />
                   </span>
                 </div>
               )
@@ -93,7 +92,7 @@ export function AnswerView({ answer, onPick }: { answer: Answer; onPick?: (text:
       return (
         <div className="answer">
           <div className="answer-label">{answer.title}</div>
-          <div className="answer-figure">{formatMoney(answer.total)}</div>
+          <div className="answer-figure"><Figure value={answer.total} /></div>
           <div className="list" style={{ marginTop: 10 }}>
             {answer.wallets.map(({ wallet, balance }) => (
               <div key={wallet.id} className="row" style={{ cursor: 'default' }}>
@@ -117,7 +116,7 @@ export function AnswerView({ answer, onPick }: { answer: Answer; onPick?: (text:
       return (
         <div className="answer">
           <div className="answer-label">{answer.title}</div>
-          <div className="answer-figure">{formatMoney(Math.max(totalLimit - totalSpent, 0))}</div>
+          <div className="answer-figure"><Figure value={Math.max(totalLimit - totalSpent, 0)} /></div>
           <div className="answer-meta">
             còn lại trên tổng {formatMoney(totalLimit)}
           </div>
@@ -154,7 +153,7 @@ export function AnswerView({ answer, onPick }: { answer: Answer; onPick?: (text:
       return (
         <div className="answer">
           <div className="answer-label">{answer.title}</div>
-          <div className={`answer-figure ${answer.focus === 'income' ? 'income' : 'expense'}`}>{formatMoney(cur)}</div>
+          <div className={`answer-figure ${answer.focus === 'income' ? 'income' : 'expense'}`}><Figure value={cur} /></div>
           <div className="answer-meta">
             {answer.currentLabel} · {answer.previousLabel} là {formatMoney(prev)}
           </div>
@@ -176,6 +175,11 @@ export function AnswerView({ answer, onPick }: { answer: Answer; onPick?: (text:
               ? `Không bỏ sót ngày nào trong ${answer.window} ngày qua.`
               : `${answer.gaps.length}/${answer.window} ngày chưa ghi gì.`}
           </div>
+          {answer.gaps.length > 0 && (
+            <button type="button" className="btn sm primary" style={{ marginTop: 12 }} onClick={() => onPick?.('lấp khoảng trống')}>
+              Lấp ngay
+            </button>
+          )}
           {answer.gaps.length > 0 && (
             <div className="chips" style={{ marginTop: 12 }}>
               {answer.gaps.slice(0, 8).map((d) => (

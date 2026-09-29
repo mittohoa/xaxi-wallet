@@ -1,6 +1,6 @@
 import { useEffect, type ReactNode } from 'react'
 import { createPortal } from 'react-dom'
-import { formatMoney } from '../lib/format'
+import { splitMoney } from '../lib/format'
 
 export function Sheet({
   title,
@@ -63,13 +63,27 @@ export function Segmented<T extends string>({
   )
 }
 
+/**
+ * Con so lon: ky hieu tien te nho va nhat lai, de mat bat vao phan co nghia.
+ */
+export function Figure({ value }: { value: number }) {
+  const { text, symbol } = splitMoney(value)
+  return (
+    <>
+      {text}
+      <span className="sym">{symbol}</span>
+    </>
+  )
+}
+
 /** So tien co dau va mau theo loai giao dich */
 export function Money({ value, kind, signed }: { value: number; kind?: 'income' | 'expense'; signed?: boolean }) {
-  const sign = signed ? (kind === 'expense' ? '−' : '+') : ''
+  const { text, symbol } = splitMoney(Math.abs(value))
   return (
     <span className={kind ? `amount ${kind}` : 'amount'}>
-      {sign}
-      {formatMoney(Math.abs(value))}
+      {signed && <span className="sign">{kind === 'expense' ? '−' : '+'}</span>}
+      {text}
+      <span className="sym">{symbol}</span>
     </span>
   )
 }
@@ -86,9 +100,18 @@ export function Empty({ icon, title, hint }: { icon: string; title: string; hint
   )
 }
 
+/** Vong tron co vien mau manh — nhe hon nhieu so voi o vuong to dac */
 export function Avatar({ icon, color }: { icon: string; color: string }) {
   return (
-    <span className="avatar" style={{ background: `color-mix(in srgb, ${color} 18%, transparent)` }} aria-hidden="true">
+    <span
+      className="avatar"
+      style={{
+        // Nen trung tinh + vong mau manh: to mau thang vao nen lam emoji bi duc
+        background: 'var(--surface-2)',
+        boxShadow: `inset 0 0 0 1.5px color-mix(in srgb, ${color} 55%, transparent)`,
+      }}
+      aria-hidden="true"
+    >
       {icon}
     </span>
   )

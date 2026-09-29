@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { AnswerView } from '../components/AnswerView'
-import { Avatar } from '../components/ui'
+import { Avatar, Figure, Money } from '../components/ui'
 import { addTransaction, markNoSpend, suggestShortcuts, systemCategory } from '../lib/actions'
 import { detectRecurring, trainClassifier } from '../lib/learn'
 import { db } from '../db/db'
@@ -191,7 +191,7 @@ export function Console({
           <button type="button" className="icon-btn console-gear" onClick={() => onCommand('settings')} aria-label="Cài đặt">
             ⚙️
           </button>
-          <div className="hero-figure">{formatMoney(netWorth)}</div>
+          <div className="hero-figure"><Figure value={netWorth} /></div>
           <div className="hero-sub">
             {app.settings.currency === 'VND' ? 'tổng số dư' : 'balance'} · tháng {Number(month.slice(5, 7))}{' '}
             <b className={monthTotals.net < 0 ? 'amount expense' : 'amount income'}>
@@ -296,9 +296,8 @@ export function Console({
                             {formatDateLong(t.date)} · {cat?.name ?? 'đã xoá'}
                           </span>
                         </span>
-                        <span className={`trail amount ${t.kind}`}>
-                          {t.kind === 'expense' ? '−' : '+'}
-                          {formatMoney(t.amount)}
+                        <span className="trail">
+                          <Money value={t.amount} kind={t.kind} signed />
                         </span>
                       </button>
                     )
@@ -313,10 +312,7 @@ export function Console({
       <div className="composer">
         {intent.type === 'entry' && (
           <div className="composer-preview">
-            <span className={`amount ${intent.parse.kind}`}>
-              {intent.parse.kind === 'expense' ? '−' : '+'}
-              {formatMoney(intent.parse.amount)}
-            </span>
+            <Money value={intent.parse.amount} kind={intent.parse.kind} signed />
             <span className="sep">·</span>
             <span>
               {intent.category?.icon ?? '📦'} {intent.category?.name ?? 'Chưa phân loại'}
@@ -378,10 +374,7 @@ export function Console({
           <div className="composer-chips">
             {shortcuts.map((s, i) => (
               <button key={s.key} type="button" className="chip" onClick={() => runShortcut(i)}>
-                <span style={{ color: `var(--${s.kind})`, fontWeight: 600 }}>
-                  {s.kind === 'expense' ? '−' : '+'}
-                  {formatMoney(s.amount)}
-                </span>
+                <Money value={s.amount} kind={s.kind} signed />
                 <span className="nm">{s.label}</span>
               </button>
             ))}
