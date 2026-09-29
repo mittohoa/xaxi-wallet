@@ -21,7 +21,7 @@
 
     <style name="AppTheme.NoActionBarLaunch" parent="Theme.SplashScreen">
         <item name="android:background">@drawable/xaxi_splash</item>
-        <item name="windowSplashScreenBackground">@color/xaxi_page</item>
+        <item name="windowSplashScreenBackground">@color/xaxi_ink</item>
         <item name="postSplashScreenTheme">@style/AppTheme.NoActionBar</item>
     </style>
 </resources>

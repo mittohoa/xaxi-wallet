@@ -7,9 +7,10 @@
     Mot goc gap duy nhat moi duong, dat sau, de con doc duoc o 22px.
     Khong vi, khong dong xu, khong ky hieu tien te.
   -->
-  <rect width="512" height="512" rx="114" fill="#0D1117"/>
-  <g fill="none" stroke-width="58" stroke-linecap="round" stroke-linejoin="round">
+  <g transform="translate(108 108) scale(0.578)">
+    <g fill="none" stroke-width="58" stroke-linecap="round" stroke-linejoin="round">
     <path d="M100 120 L240 160 L412 400" stroke="#E34948"/>
     <path d="M100 392 L240 352 L412 112" stroke="#B8FF3D"/>
+    </g>
   </g>
 </svg>

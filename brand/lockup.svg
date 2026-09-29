@@ -1,0 +1,17 @@
+<svg preserveAspectRatio="xMidYMid meet" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 507.0 156.0" role="img" aria-label="XAXI WALLET">
+  <g transform="scale(0.30469)">
+    <rect width="512" height="512" rx="114" fill="#0D1117"/>
+    <g fill="none" stroke-width="58" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M100 120 L240 160 L412 400" stroke="#E34948"/>
+      <path d="M100 392 L240 352 L412 112" stroke="#B8FF3D"/>
+    </g>
+  </g>
+  <g transform="translate(209.0 0)">
+    <g fill="none" stroke="currentColor" stroke-width="20" stroke-linecap="butt" stroke-linejoin="miter">
+      <defs><clipPath id="lb"><rect x="-20" y="0" width="338.0" height="100"/></clipPath></defs><g clip-path="url(#lb)"><g transform="translate(0.00 0)"><path d="M0 -4 L70.0 104"/><path d="M70.0 -4 L0 104"/></g><g transform="translate(92.00 0)"><path d="M-1.6 104 L29.2 0 L42.8 0 L73.6 104"/><path d="M11.16 65.5 L60.839999999999996 65.5"/></g><g transform="translate(186.00 0)"><path d="M0 -4 L70.0 104"/><path d="M70.0 -4 L0 104"/></g><g transform="translate(278.00 0)"><path d="M10.0 0 L10.0 100"/></g></g>
+    </g>
+    <g transform="translate(1 126)" fill="none" stroke="currentColor" stroke-width="7.5" stroke-linejoin="miter" opacity="0.5">
+      <defs><clipPath id="ls"><rect x="-7.5" y="0" width="203.8" height="30"/></clipPath></defs><g clip-path="url(#ls)"><g transform="translate(0.00 0)"><path d="M0 0 L6.45 30 L15.0 12.0 L23.55 30 L30.0 0"/></g><g transform="translate(44.00 0)"><path d="M-0.6 34 L8.249999999999998 0 L13.35 0 L22.2 34"/><path d="M3.348 19.650000000000002 L18.252 19.650000000000002"/></g><g transform="translate(79.60 0)"><path d="M3.75 0 L3.75 30 L16.200000000000003 30"/></g><g transform="translate(109.80 0)"><path d="M3.75 0 L3.75 30 L16.200000000000003 30"/></g><g transform="translate(140.00 0)"><path d="M3.75 0 L3.75 30"/><path d="M0 3.75 L16.8 3.75"/><path d="M0 15.0 L15.0 15.0"/><path d="M0 26.25 L16.8 26.25"/></g><g transform="translate(170.80 0)"><path d="M0 3.75 L18.0 3.75"/><path d="M9.0 0 L9.0 30"/></g></g>
+    </g>
+  </g>
+</svg>
