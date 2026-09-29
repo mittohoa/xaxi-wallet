@@ -18,6 +18,7 @@ import {
   setNativeOverlayOpen,
 } from './lib/native/shell'
 import { GapFiller } from './components/GapFiller'
+import { GoalsView } from './components/GoalsView'
 import { Budgets } from './pages/Budgets'
 import { Console } from './pages/Console'
 import { Reports } from './pages/Reports'
@@ -53,6 +54,7 @@ const SHEET_TITLE: Record<Exclude<CommandName, 'help'>, string> = {
   gaps: 'Lấp khoảng trống',
   transfer: 'Chuyển tiền giữa ví',
   newEntry: 'Ghi đầy đủ',
+  goals: 'Mục tiêu tiết kiệm',
 }
 
 /** Tam truot chiem ca man hinh, dung cho cac man hinh phu mo bang lenh */
@@ -184,6 +186,12 @@ function Shell() {
       {screen === 'history' && (
         <FullSheet title={SHEET_TITLE.history} onClose={close}>
           <Transactions onEdit={setEditing} />
+        </FullSheet>
+      )}
+
+      {screen === 'goals' && (
+        <FullSheet title={SHEET_TITLE.goals} onClose={close}>
+          <GoalsView />
         </FullSheet>
       )}
 

@@ -661,3 +661,50 @@
   width: 62px;
   text-align: right;
 }
+
+/* ============================================================
+   MỤC TIÊU TIẾT KIỆM
+   ============================================================ */
+
+.goal-card.done {
+  /* Đạt rồi thì lùi lại một bậc — nó vẫn ở đó như một cột mốc, nhưng
+     không còn tranh chỗ với những mục tiêu đang chạy */
+  opacity: 0.72;
+}
+
+.goal-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--s-3);
+}
+
+.goal-name {
+  display: flex;
+  align-items: center;
+  gap: var(--s-2);
+  min-width: 0;
+  font-size: var(--t-lg);
+  font-weight: var(--w-semi);
+  letter-spacing: var(--track-snug);
+}
+
+.goal-name .nm {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.goal-figure {
+  flex: none;
+  font-size: var(--t-md);
+  font-weight: var(--w-semi);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Số cần đạt lùi lại để con số ĐÃ CÓ là thứ mắt bắt trước */
+.goal-target {
+  color: var(--text-muted);
+  font-weight: var(--w-normal);
+}

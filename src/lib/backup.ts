@@ -4,10 +4,15 @@ import { purgeOrphans } from './attachments'
 import type { BackupFile, Category, Transaction, Wallet } from '../types'
 import { formatDate } from './date'
 
-export const BACKUP_VERSION = 1
+/**
+ * Ban 2 them bang `goals`.
+ *
+ * Khong pha ban cu: tep ban 1 khong co truong do va duoc doc thanh mang rong.
+ */
+export const BACKUP_VERSION = 2
 
 export async function buildBackup(): Promise<BackupFile> {
-  const [categories, wallets, transactions, budgets, dayMarks, templates, recurring, settings] = await Promise.all([
+  const [categories, wallets, transactions, budgets, dayMarks, templates, recurring, settings, goals] = await Promise.all([
     db.categories.toArray(),
     db.wallets.toArray(),
     db.transactions.toArray(),
@@ -16,12 +21,13 @@ export async function buildBackup(): Promise<BackupFile> {
     db.templates.toArray(),
     db.recurring.toArray(),
     db.settings.toArray(),
+    db.goals.toArray(),
   ])
   return {
     app: 'xaxi',
     version: BACKUP_VERSION,
     exportedAt: new Date().toISOString(),
-    data: { categories, wallets, transactions, budgets, dayMarks, templates, recurring, settings },
+    data: { categories, wallets, transactions, budgets, dayMarks, templates, recurring, settings, goals },
   }
 }
 
@@ -37,7 +43,7 @@ export async function restoreBackup(file: BackupFile): Promise<void> {
   const d = file.data ?? ({} as BackupFile['data'])
   await db.transaction(
     'rw',
-    [db.categories, db.wallets, db.transactions, db.budgets, db.dayMarks, db.templates, db.recurring, db.settings],
+    [db.categories, db.wallets, db.transactions, db.budgets, db.dayMarks, db.templates, db.recurring, db.settings, db.goals],
     async () => {
       await Promise.all([
         db.categories.clear(),
@@ -48,6 +54,7 @@ export async function restoreBackup(file: BackupFile): Promise<void> {
         db.templates.clear(),
         db.recurring.clear(),
         db.settings.clear(),
+        db.goals.clear(),
       ])
       await Promise.all([
         db.categories.bulkAdd(d.categories ?? []),
@@ -58,6 +65,7 @@ export async function restoreBackup(file: BackupFile): Promise<void> {
         db.templates.bulkAdd(d.templates ?? []),
         db.recurring.bulkAdd(d.recurring ?? []),
         db.settings.bulkAdd(d.settings ?? []),
+        db.goals.bulkAdd(d.goals ?? []),
       ])
     },
   )

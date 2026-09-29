@@ -152,6 +152,29 @@ export interface Recurring extends Syncable {
   note?: string
 }
 
+/**
+ * Muc tieu tiet kiem.
+ *
+ * Tien do KHONG luu o day — no la so du cua `walletId`. Luu mot con so
+ * "da gop duoc" rieng nghia la co hai nguon su that phai tu giu khop nhau
+ * bang tay, va nguoi dung quen cap nhat thi thanh tien do dung yen ma van
+ * trong nhu that.
+ */
+export interface Goal extends Syncable {
+  id: Id
+  name: string
+  icon: string
+  /** so tien can dat */
+  target: number
+  /** vi duoc theo doi; tien do chinh la so du vi nay */
+  walletId: Id
+  /** han mong muon, 'YYYY-MM-DD'; khong bat buoc */
+  dueDate?: string
+  /** da cat di khoi danh sach dang theo doi */
+  archived?: boolean
+  createdAt: number
+}
+
 export interface Settings extends Syncable {
   id: Id
   currency: string
@@ -217,5 +240,7 @@ export interface BackupFile {
     templates: Template[]
     recurring: Recurring[]
     settings: Settings[]
+    /** them tu ban 2; ban sao luu cu khong co truong nay */
+    goals?: Goal[]
   }
 }

@@ -28,6 +28,7 @@ export type CommandName =
   | 'history'
   | 'gaps'
   | 'transfer'
+  | 'goals'
   | 'newEntry'
   | 'help'
 
@@ -44,7 +45,8 @@ export const COMMANDS: CommandSpec[] = [
   { name: 'newEntry', triggers: ['ghi day du', 'nhap day du', 'giao dich moi', 'them giao dich'], label: 'Ghi đầy đủ', hint: 'chọn ví, danh mục và ngày cụ thể' },
   { name: 'transfer', triggers: ['chuyen tien', 'chuyen khoan noi bo', 'rut tien', 'chuyen vi'], label: 'Chuyển tiền giữa ví', hint: 'không tính vào thu hay chi' },
   { name: 'reconcile', triggers: ['doi soat', 'so du that', 'kiem ke'], label: 'Đối soát số dư', hint: 'gõ một con số, app tự bù phần chưa ghi' },
-  { name: 'budgets', triggers: ['ngan sach', 'han muc'], label: 'Ngân sách', hint: 'đặt hạn mức theo danh mục' },
+  { name: 'budgets', triggers: ['ngan sach', 'han muc', 'sau hu', 'hu'], label: 'Ngân sách', hint: 'sáu hũ, hoặc hạn mức theo danh mục' },
+  { name: 'goals', triggers: ['muc tieu', 'tiet kiem', 'de danh'], label: 'Mục tiêu tiết kiệm', hint: 'tiến độ tự chạy theo số dư ví' },
   { name: 'reports', triggers: ['bao cao', 'thong ke', 'bieu do'], label: 'Báo cáo', hint: 'sáu tháng gần nhất' },
   { name: 'statement', triggers: ['sao ke', 'nhap csv', 'import'], label: 'Nhập sao kê', hint: 'file CSV từ app ngân hàng' },
   { name: 'gaps', triggers: ['lap khoang trong', 'ngay trong', 'ngay chua ghi', 'bo sot'], label: 'Lấp khoảng trống', hint: 'ngày nào chưa ghi, một chạm là xong' },

@@ -176,6 +176,7 @@ test('mọi lệnh đều mở được màn hình của nó', async () => {
     gaps: 'Lấp khoảng trống',
     transfer: 'Chuyển tiền giữa ví',
     newEntry: 'Giao dịch mới',
+    goals: 'Mục tiêu tiết kiệm',
     help: null,
   }
 

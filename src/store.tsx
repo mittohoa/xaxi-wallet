@@ -3,7 +3,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { DEFAULT_SETTINGS, db, stamp, touch } from './db/db'
 import { configureFormat } from './lib/format'
 import { applySystemTheme } from './lib/native/shell'
-import type { Budget, Category, DayMark, Id, Recurring, Settings, Template, Transaction, Wallet } from './types'
+import type { Budget, Category, DayMark, Goal, Id, Recurring, Settings, Template, Transaction, Wallet } from './types'
 
 export interface AppData {
   categories: Category[]
@@ -13,6 +13,7 @@ export interface AppData {
   dayMarks: DayMark[]
   templates: Template[]
   recurring: Recurring[]
+  goals: Goal[]
   settings: Settings
   /** false cho den khi IndexedDB tra ve lan dau */
   ready: boolean
@@ -52,7 +53,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useEffect(() => () => window.clearTimeout(timer.current), [])
 
   const raw = useLiveQuery(async () => {
-    const [categories, wallets, transactions, budgets, dayMarks, templates, recurring, settingsRows] = await Promise.all([
+    const [categories, wallets, transactions, budgets, dayMarks, templates, recurring, goals, settingsRows] = await Promise.all([
       db.categories.toArray(),
       db.wallets.toArray(),
       db.transactions.toArray(),
@@ -60,6 +61,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       db.dayMarks.toArray(),
       db.templates.toArray(),
       db.recurring.toArray(),
+      db.goals.toArray(),
       db.settings.toArray(),
     ])
     return {
@@ -70,6 +72,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       dayMarks,
       templates,
       recurring,
+      goals,
       settings: { ...FALLBACK_SETTINGS, ...(settingsRows[0] ?? {}) } as Settings,
     }
   }, [])
@@ -104,6 +107,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       dayMarks: raw?.dayMarks ?? [],
       templates: raw?.templates ?? [],
       recurring: raw?.recurring ?? [],
+      goals: raw?.goals ?? [],
       settings,
       ready: raw !== undefined,
       toast,

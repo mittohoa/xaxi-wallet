@@ -361,6 +361,53 @@ const CHECKS = [
       `),
   },
   {
+    name: 'mục tiêu tự tính tiến độ từ số dư ví',
+    run: (page) =>
+      page.eval(`
+        await lenh('mục tiêu');
+        let d = await wait(() => $('[role="dialog"]'));
+        const them = [...d.querySelectorAll('button')].find((b) => /Mục tiêu mới/.test(b.textContent || ''));
+        if (!them) { await dong(); return '✗ không thấy nút tạo mục tiêu' }
+        click(them); await sleep(700);
+
+        const ten = [...d.querySelectorAll('input')].find((i) => /tên mục tiêu/i.test(i.getAttribute('aria-label') || ''));
+        setValue(ten, 'Kiểm thử mục tiêu'); await sleep(250);
+        setValue($('#goal-target'), '10000000'); await sleep(350);
+        const luu = [...d.querySelectorAll('button')].find((b) => b.textContent.trim() === 'Tạo mục tiêu');
+        if (!luu || luu.disabled) { await dong(); return '✗ nút tạo đang tắt' }
+        click(luu); await sleep(1800);
+
+        const the = $('.goal-card');
+        if (!the) { await dong(); return '✗ không thấy thẻ mục tiêu sau khi tạo' }
+        // Đọc PHẦN TRĂM chứ không so chuỗi tiền: formatMoney dùng dấu cách không
+        // ngắt (U+00A0) giữa số và ký hiệu ₫, nên so với chuỗi gõ tay luôn trượt.
+        const dau = the.querySelector('.budget-foot span')?.textContent?.trim() ?? '';
+
+        // Ví mới lập nên tiến độ phải là 0; chuyển tiền vào là nó phải đổi theo
+        const s0 = await soLieu();
+        const vi = s0.wallets.find((w) => w.name === 'Kiểm thử mục tiêu');
+        if (!vi) { await dong(); return '✗ không tạo được ví đi kèm' }
+
+        await lenh('chuyển tiền');
+        d = await wait(() => $('[role="dialog"]'));
+        const sang = d.querySelector('#tf-to');
+        Object.getOwnPropertyDescriptor(HTMLSelectElement.prototype, 'value').set.call(sang, vi.id);
+        sang.dispatchEvent(new Event('change', { bubbles: true }));
+        setValue(d.querySelector('#tf-amount'), '2500000'); await sleep(500);
+        click([...d.querySelectorAll('button')].find((b) => b.textContent.trim() === 'Chuyển'));
+        await sleep(1800);
+
+        await lenh('mục tiêu');
+        await wait(() => $('.goal-card'));
+        await sleep(600);
+        const sau = $('.goal-card .budget-foot span')?.textContent?.trim() ?? '';
+        await dong();
+
+        if (dau !== '0%') return '✗ mục tiêu mới phải bắt đầu từ 0%, đang là ' + dau;
+        return sau === '25%' ? '✓ chuyển 2,5tr vào ví là tiến độ nhảy lên 25%' : '✗ tiến độ không chạy theo số dư ví: ' + sau;
+      `),
+  },
+  {
     name: 'đối soát sinh bút toán bù',
     run: (page) =>
       page.eval(`
@@ -382,15 +429,20 @@ const CHECKS = [
       page.eval(`
         await dong();
         const tong = (s) => s.transactions.filter((t) => t.kind === 'expense' && !t.transferId).reduce((a, t) => a + t.amount, 0);
-        const truoc = tong(await soLieu());
+        const s0 = await soLieu();
+        const truoc = tong(s0);
+        // Đếm CHÊNH LỆCH chứ không đếm tổng: phép kiểm khác chạy trước cũng có
+        // thể đã tạo cặp chuyển tiền, và một phép kiểm phụ thuộc thứ tự chạy
+        // thì sẽ đỏ vì lý do chẳng liên quan gì tới thứ nó đang kiểm.
+        const capTruoc = s0.transactions.filter((t) => t.transferId).length;
         await lenh('chuyển tiền');
         const d = await wait(() => $('[role="dialog"]'));
         setValue(d.querySelector('#tf-amount'), '500000'); await sleep(500);
         click([...d.querySelectorAll('button')].find((b) => b.textContent.trim() === 'Chuyển'));
         await sleep(1500);
         const s = await soLieu(); await dong();
-        const cap = s.transactions.filter((t) => t.transferId);
-        if (cap.length !== 2) return '✗ phải sinh đúng 2 bản ghi, đang có ' + cap.length;
+        const capSau = s.transactions.filter((t) => t.transferId).length;
+        if (capSau - capTruoc !== 2) return '✗ phải sinh đúng 2 bản ghi liên kết, sinh ra ' + (capSau - capTruoc);
         return tong(s) === truoc ? '✓ cặp liên kết, tổng chi giữ nguyên ' + truoc + '₫' : '✗ tổng chi đổi ' + truoc + ' → ' + tong(s);
       `),
   },

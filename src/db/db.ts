@@ -1,5 +1,5 @@
 import Dexie, { type Table } from 'dexie'
-import type { Attachment, Budget, Category, DayMark, Id, Recurring, Settings, Syncable, Template, Transaction, Wallet } from '../types'
+import type { Attachment, Budget, Category, DayMark, Goal, Id, Recurring, Settings, Syncable, Template, Transaction, Wallet } from '../types'
 import { CATEGORY_COLORS, SYSTEM_COLOR } from '../lib/palette'
 
 /**
@@ -20,6 +20,7 @@ export class XaxiDB extends Dexie {
   recurring!: Table<Recurring, Id>
   settings!: Table<Settings, Id>
   attachments!: Table<Attachment, Id>
+  goals!: Table<Goal, Id>
 
   constructor() {
     super(DB_NAME)
@@ -42,6 +43,10 @@ export class XaxiDB extends Dexie {
     this.version(2).stores({
       attachments: 'id, transactionId, createdAt',
     })
+
+    this.version(3).stores({
+      goals: 'id, walletId, archived, updatedAt',
+    })
   }
 }
 
@@ -57,6 +62,7 @@ export const SYNC_TABLES = [
   'templates',
   'recurring',
   'settings',
+  'goals',
 ] as const
 
 /**
