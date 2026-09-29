@@ -2,13 +2,14 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { AnswerView } from '../components/AnswerView'
 import { Avatar, Figure, Money, Tile } from '../components/ui'
 import { addTransaction, markNoSpend, suggestShortcuts, systemCategory } from '../lib/actions'
-import { detectRecurring, trainClassifier } from '../lib/learn'
+import { checkAmount, detectRecurring, trainClassifier } from '../lib/learn'
 import { db, stamp, touch } from '../db/db'
 import { listenOnce, stopListening, voiceReady } from '../lib/native/voice'
 import { haptic } from '../lib/native/shell'
 import { saveSettings } from '../store'
 import { helpAnswer, interpret, type Answer, type CommandName } from '../lib/ask'
 import { computeCoverage, firstActivity } from '../lib/coverage'
+import { forecast, upcoming } from '../lib/foresight'
 import { currentMonth, formatDateLong, monthRange, shiftMonth, todayISO } from '../lib/date'
 import { formatMoney } from '../lib/format'
 import { comparableRange, inRange, percentChange, sumTotals, walletBalances } from '../lib/stats'
@@ -99,6 +100,17 @@ export function Console({
 
   const intent = useMemo(() => interpret(text, askContext), [text, askContext])
 
+  /**
+   * Số tiền vừa gõ có lệch hẳn khỏi thói quen của danh mục đó không.
+   *
+   * Bắt lỗi thừa số 0 ngay lúc gõ. Sáu tháng sau nhìn lại "cà phê 350.000₫"
+   * thì không ai còn nhớ hôm đó có thật hay không — chặn ở đây là rẻ nhất.
+   */
+  const amountWarning = useMemo(() => {
+    if (intent.type !== 'entry' || !intent.parse.categoryId) return null
+    return checkAmount(intent.parse.amount, intent.parse.categoryId, intent.parse.kind, transactions)
+  }, [intent, transactions])
+
   const balances = useMemo(() => walletBalances(wallets, transactions), [wallets, transactions])
   const netWorth = useMemo(
     () => wallets.filter((w) => !w.archived).reduce((s, w) => s + (balances.get(w.id) ?? 0), 0),
@@ -129,6 +141,19 @@ export function Console({
     () => computeCoverage(transactions, dayMarks, settings.gapWindowDays, firstActivity(transactions, dayMarks)),
     [transactions, dayMarks, settings.gapWindowDays],
   )
+
+  /**
+   * Dự báo cuối kỳ và các khoản định kỳ sắp tới.
+   *
+   * Cả hai chỉ đọc dữ liệu đã có, không đòi người dùng nhập thêm gì. Dự báo
+   * nhận vào độ phủ dữ liệu và tự im lặng khi độ phủ quá thấp — dự báo từ dữ
+   * liệu thủng là bịa số.
+   */
+  const outlook = useMemo(
+    () => forecast(inRange(transactions, range.start, range.end), recurring, todayISO(), range, coverage.ratio),
+    [transactions, recurring, range.start, range.end, coverage.ratio],
+  )
+  const soonest = useMemo(() => upcoming(recurring, todayISO(), range.end), [recurring, range.end])
 
   const shortcuts = useMemo(() => suggestShortcuts(transactions, categories, 5), [transactions, categories])
   // Moi lan chuyen tien la hai ban ghi — chi hien mot dong de khoi roi mat
@@ -326,6 +351,48 @@ export function Console({
               </div>
             )}
 
+            {(outlook.confident || soonest.length > 0) && (
+              <>
+                <div className="console-section">sắp tới</div>
+                <div className="card">
+                  {outlook.confident && (
+                    <div className="forecast">
+                      <div className="forecast-figure">
+                        <Money value={outlook.projected} />
+                      </div>
+                      <div className="hint">
+                        Dự báo chi cả tháng theo nhịp hiện tại. Đã chi <b>{formatMoney(outlook.spent)}</b>, còn{' '}
+                        {outlook.daysLeft} ngày
+                        {outlook.committed > 0 && (
+                          <> · trong đó {formatMoney(outlook.committed)} là khoản định kỳ chắc chắn phát sinh</>
+                        )}
+                        .
+                      </div>
+                    </div>
+                  )}
+
+                  {soonest.map((u) => (
+                    <div key={u.rule.id} className="row" style={{ cursor: 'default' }}>
+                      <span className="avatar" style={{ background: 'var(--surface-2)' }} aria-hidden="true">
+                        🔁
+                      </span>
+                      <span className="body">
+                        <span className="name">{u.rule.name}</span>
+                        <span className="meta">
+                          {u.daysAway === 0 ? 'Hôm nay' : u.daysAway === 1 ? 'Ngày mai' : `Còn ${u.daysAway} ngày`} ·{' '}
+                          {formatDateLong(u.date)}
+                        </span>
+                      </span>
+                      <span className={`trail amount ${u.rule.kind}`}>
+                        {u.rule.kind === 'expense' ? '−' : '+'}
+                        {formatMoney(u.rule.amount)}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+
             {inbox.length > 0 && (
               <>
                 <div className="console-section">
@@ -422,6 +489,27 @@ export function Console({
             {intent.parse.reason === 'history' && <span className="tag">theo thói quen</span>}
             {intent.parse.reason === 'learned' && <span className="tag">app tự đoán</span>}
             {intent.parse.date !== today && <span className="tag">{formatDateLong(intent.parse.date)}</span>}
+          </div>
+        )}
+
+        {/*
+          Cảnh báo số tiền lệch hẳn thói quen, hiện TRƯỚC khi nhấn Enter.
+          Không chặn — người dùng vẫn ghi được nếu số đó đúng thật. App chỉ hỏi
+          lại, không phán xét.
+        */}
+        {amountWarning && (
+          <div className="composer-warn">
+            {amountWarning.likelyZeroTypo ? (
+              <>
+                Nghi thừa một số 0 — danh mục này thường quanh <b>{formatMoney(amountWarning.typical)}</b>. Nhấn Enter
+                nếu <b>{formatMoney(intent.type === 'entry' ? intent.parse.amount : 0)}</b> là đúng.
+              </>
+            ) : (
+              <>
+                Lớn gấp {Math.round(amountWarning.ratio)} lần mức thường gặp của danh mục này (<b>
+                {formatMoney(amountWarning.typical)}</b>). Nhấn Enter nếu đúng vậy.
+              </>
+            )}
           </div>
         )}
         {intent.type === 'command' && (

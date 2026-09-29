@@ -231,3 +231,75 @@ export function detectRecurring(
 
   return suggestions.sort((a, b) => b.confidence - a.confidence || b.amount - a.amount)
 }
+
+/* ================= bắt khoản bất thường ================= */
+
+export interface AmountWarning {
+  /** số tiền hay gặp của danh mục này — trung vị, không phải trung bình */
+  typical: number
+  /** lớn gấp bấy nhiêu lần trung vị */
+  ratio: number
+  /** nghi gõ thừa một số 0: chia mười thì vừa khớp thói quen */
+  likelyZeroTypo: boolean
+  samples: number
+}
+
+/** Cần ít nhất ngần này khoản cũ mới dám nói người dùng đang gõ sai */
+const MIN_AMOUNT_SAMPLES = 5
+
+/**
+ * Cảnh báo khi số tiền lệch hẳn khỏi thói quen của CHÍNH danh mục đó.
+ *
+ * Bắt lỗi thừa số 0 — loại lỗi nhập liệu phổ biến nhất, và khó phát hiện nhất
+ * về sau: sáu tháng sau nhìn lại "cà phê 350.000₫" thì không ai còn nhớ hôm đó
+ * có thật hay không. Chặn ngay lúc gõ là rẻ nhất.
+ *
+ * Ba điều kiện cùng lúc, cố ý đặt chặt để gần như không báo nhầm:
+ *
+ * 1. Đủ mẫu — dưới năm khoản cũ thì chưa biết gì về thói quen để mà so.
+ * 2. Gấp từ năm lần trung vị trở lên.
+ * 3. LỚN HƠN MỌI KHOẢN TỪNG GHI trong danh mục đó, thêm một nửa nữa.
+ *
+ * Điều kiện thứ ba là cái quan trọng nhất. Không có nó thì một bữa nhậu 500k
+ * trong danh mục Ăn uống thường 50k sẽ bị hỏi lại mỗi lần — và một cảnh báo hay
+ * báo nhầm thì chỉ vài lần là người dùng bấm bỏ qua theo phản xạ, đúng lúc nó
+ * báo đúng cũng bị bỏ qua nốt.
+ *
+ * Chỉ cảnh báo chiều LỚN. Gõ thiếu một số 0 thì tổng bị hụt, khó chịu nhưng
+ * không méo hẳn báo cáo; gõ thừa thì một khoản nuốt trọn ngân sách cả tháng.
+ */
+export function checkAmount(
+  amount: number,
+  categoryId: Id,
+  kind: TxKind,
+  history: Transaction[],
+): AmountWarning | null {
+  if (!Number.isFinite(amount) || amount <= 0) return null
+
+  const past = history
+    .filter(
+      (t) =>
+        t.categoryId === categoryId &&
+        t.kind === kind &&
+        t.transferId === undefined &&
+        t.source !== 'reconcile' &&
+        !t.estimated,
+    )
+    .map((t) => t.amount)
+    .sort((a, b) => a - b)
+
+  if (past.length < MIN_AMOUNT_SAMPLES) return null
+
+  const median = past[Math.floor(past.length / 2)]
+  const max = past[past.length - 1]
+  if (median <= 0) return null
+
+  const ratio = amount / median
+  if (ratio < 5 || amount <= max * 1.5) return null
+
+  // Chia mười ra mà rơi vào khoảng quen thuộc thì gần như chắc là thừa số 0
+  const tenth = amount / 10
+  const likelyZeroTypo = tenth >= median * 0.5 && tenth <= median * 2
+
+  return { typical: median, ratio: Math.round(ratio * 10) / 10, likelyZeroTypo, samples: past.length }
+}

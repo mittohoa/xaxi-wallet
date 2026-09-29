@@ -521,3 +521,63 @@
   color: var(--text-muted);
   margin: var(--s-6) 0 0;
 }
+
+/* ============================================================
+   NHÌN VỀ PHÍA TRƯỚC
+   ============================================================ */
+
+/**
+ * Dự báo cuối kỳ.
+ *
+ * Con số to nhưng KHÔNG to bằng con số dẫn dắt ở đầu màn hình: đây là ước
+ * tính, không phải sự thật, và thứ bậc thị giác phải nói ra điều đó trước
+ * khi người dùng kịp đọc chữ.
+ */
+.forecast {
+  display: flex;
+  flex-direction: column;
+  gap: var(--s-2);
+  padding-bottom: var(--s-3);
+}
+
+.forecast-figure {
+  font-size: var(--t-2xl);
+  font-weight: var(--w-bold);
+  letter-spacing: var(--track-tight);
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+}
+
+.forecast + .row {
+  border-top: 1px solid var(--line);
+}
+
+/* Hàng khoản sắp tới nằm trong thẻ, không trong danh sách nên phải tự lùi lề */
+.card > .row {
+  padding-inline: 0;
+}
+
+.card > .row + .row::before {
+  left: 52px;
+}
+
+/**
+ * Cảnh báo số tiền, ngay trên ô nhập.
+ *
+ * Màu cảnh báo chứ không phải màu lỗi: người dùng chưa làm gì sai, app chỉ
+ * đang hỏi lại. Và nó không chặn — nhấn Enter là vẫn ghi.
+ */
+.composer-warn {
+  background: var(--warning-soft);
+  color: var(--text-secondary);
+  border-radius: var(--r-sm);
+  padding: var(--s-2) var(--s-3);
+  margin: 0 var(--s-1) var(--s-2);
+  font-size: var(--t-sm);
+  line-height: var(--leading-snug);
+  animation: slide-up var(--dur-base) var(--ease);
+}
+
+.composer-warn b {
+  color: var(--text-primary);
+}

@@ -307,7 +307,7 @@ không qua được bộ lọc đều nằm ở mục cuối.
 
 Xếp theo **giá trị chia cho công sức**, cao nhất trước.
 
-### 7.1 Khoản sắp tới — ★ làm ngay
+### 7.1 Khoản sắp tới — **✅ xong**
 
 Bộ tham khảo nào cũng có khối "Upcoming Payments". XAXI **đã có sẵn dữ liệu**:
 bảng `recurring` với `nextDate`. Chỉ thiếu việc hiện ba khoản gần nhất lên màn
@@ -318,7 +318,7 @@ hỏi trước khi tiêu: *"từ giờ tới cuối tháng còn phải trả nh�
 
 Công: một khối nhỏ trên Console. Dữ liệu và phép tính đã có.
 
-### 7.2 Dự báo cuối kỳ — ★ làm ngay
+### 7.2 Dự báo cuối kỳ — **✅ xong**
 
 *"Theo nhịp hiện tại, cuối tháng bạn sẽ chi khoảng 16,8 triệu."*
 
@@ -331,7 +331,7 @@ chỉ còn hối tiếc.
 **Điều kiện:** phải nói rõ là *ước tính*, và không dự báo khi độ phủ dữ liệu
 dưới một ngưỡng — dự báo từ dữ liệu thủng là bịa số.
 
-### 7.3 Bắt khoản bất thường ngay lúc nhập — ★ làm ngay
+### 7.3 Bắt khoản bất thường ngay lúc nhập — **✅ xong**
 
 Gõ `cà phê 350k`, app hỏi lại: *"Cà phê thường 35.000₫. Có phải bạn định gõ
 35k?"*
@@ -379,7 +379,7 @@ Nhưng nó **đòi nhập liệu** (đặt mục tiêu, gán tiến độ), nên
 tiến độ **tự tính** từ số dư ví thay vì bắt người dùng cập nhật tay. Gán một ví
 cho một mục tiêu, tiến độ chạy theo số dư ví đó.
 
-### 7.8 So sánh kỳ trước ở mọi con số — ★★ đang làm dở
+### 7.8 So sánh kỳ trước ở mọi con số — ★★ đang làm dở (xong phần ô Thu/Chi)
 
 Đã làm cho hai ô Thu/Chi trên màn hình chính. Còn thiếu: mỗi danh mục trong
 Báo cáo.
@@ -406,3 +406,4 @@ tuần, hoặc đúng ngày nhận lương).
 | Gói trả phí, "Get Pro" | Không có |
 | Theo dõi đầu tư, danh mục cổ phiếu | Bài toán khác hẳn, kéo theo dữ liệu thời gian thực từ mạng |
 | Thông báo thường trú để ghi nhanh | Hiệu quả, nhưng phiền — trái với "app không làm phiền người dùng" |
+,---,,## 8. Ghi chú khi làm 7.1–7.3,,Ba tính năng này đều nói với người dùng một con số mà họ không tự tính được.,Nên phần khó không phải là tính ra số, mà là **biết khi nào phải im lặng** —,một con số sai trong app tài chính tệ hơn là không có con số nào.,,**Dự báo im lặng khi:** chưa đủ năm ngày trong kỳ · còn dưới ba ngày là hết kỳ,(lúc đó dự báo gần bằng số đã chi, đúng nhưng vô dụng, mà một ô vô dụng chiếm,chỗ thì lần sau người dùng thôi nhìn vào đó) · độ phủ dữ liệu dưới 50% · chưa,ghi khoản nào.,,**Dự báo tách chi định kỳ khỏi chi biến đổi trước khi suy ra nhịp.** Không tách,thì tiền nhà ghi ngày mùng 3 bị nhân lên cho cả tháng và dự báo phóng đại gấp,mấy lần.,,**Cảnh báo số tiền có ba điều kiện cùng lúc**, trong đó điều kiện thứ ba quan,trọng nhất: số tiền phải lớn hơn **mọi khoản từng ghi** trong danh mục đó thêm,một nửa nữa. Không có nó thì một bữa nhậu 500k trong danh mục Ăn uống thường,50k sẽ bị hỏi lại mỗi lần — và một cảnh báo hay báo nhầm thì chỉ vài lần là bị,bấm bỏ qua theo phản xạ, đúng lúc nó báo đúng cũng bị bỏ qua nốt.,,Đo trên dữ liệu mẫu thật (141 khoản Ăn uống, trung vị 73k, lớn nhất 118k):,,| Gõ vào | Kết quả |,|---|---|,| `cà phê 73k` | im lặng |,| `cà phê 150k` | im lặng — gấp đôi vẫn là bữa đắt, không phải lỗi |,| `cà phê 350k` | im lặng — gấp 4,8 lần, dưới ngưỡng 5 |,| `cà phê 730k` | *"Nghi thừa một số 0 — danh mục này thường quanh 73.000 ₫"* |,| `xăng 2tr` | *"Lớn gấp 42 lần mức thường gặp (48.000 ₫)"* |,| `tiền nhà 4tr5` | im lặng — đúng mức thường của danh mục đó |,,Cảnh báo **không chặn**. Nhấn Enter là vẫn ghi. App hỏi lại, không phán xét.,
