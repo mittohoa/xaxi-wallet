@@ -28,7 +28,17 @@ export function Budgets() {
     return map
   }, [monthTx, categories])
 
-  const expenseCategories = categories.filter((c) => c.kind === 'expense' && c.slug !== 'reconcile-expense')
+  /**
+   * Danh muc dat duoc han muc.
+   *
+   * Bo 'reconcile-expense' vi do la phan chenh lech do doi soat sinh ra, khong
+   * phai khoan nguoi dung chu dong tieu. Bo 'transfer-out' vi chuyen tien giua
+   * hai vi bi loai khoi MOI phep tinh thu/chi — dat han muc cho no thi o "da
+   * chi" mai mai hien 0, tuc mot o nhap khong bao gio lam duoc viec gi.
+   */
+  const expenseCategories = categories.filter(
+    (c) => c.kind === 'expense' && c.slug !== 'reconcile-expense' && c.slug !== 'transfer-out',
+  )
   const monthBudgets = useMemo(() => budgets.filter((b) => b.month === month), [budgets, month])
 
   // Ty le thoi gian da troi qua trong thang, de biet dang tieu nhanh hay cham
