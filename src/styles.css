@@ -543,6 +543,10 @@ textarea.input {
 .row .body {
   flex: 1;
   min-width: 0;
+  /* .name va .meta la span inline — khong co dong nay chung se dinh lien mot hang */
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .row .name {
@@ -566,6 +570,8 @@ textarea.input {
   font-weight: 650;
   font-size: 14.5px;
   white-space: nowrap;
+  /* Khong duoc co lai, nhung cung khong duoc day hang rong qua man hinh */
+  flex: none;
 }
 
 .empty {
@@ -927,7 +933,9 @@ textarea.input {
   }
 }
 
-@media (max-width: 420px) {
+/* Chi gay xuong mot cot tren may that su hep — dien thoai pho thong rong ~390-430px
+   van du cho hai o nam canh nhau */
+@media (max-width: 359px) {
   .grid-2 {
     grid-template-columns: 1fr;
   }
@@ -1283,4 +1291,47 @@ textarea.input {
   font-size: 12px;
   color: var(--text-muted);
   margin: 22px 0 0;
+}
+
+/* ============================================================
+   Man hinh cam ung — moi vung cham phai du lon cho ngon tay cai.
+   Khoi nay phai nam cuoi file: cac quy tac o tren cung do dac hieu,
+   ai dung sau thi thang.
+   ============================================================ */
+@media (pointer: coarse) {
+  .btn.sm {
+    min-height: 40px;
+    padding: 8px 14px;
+  }
+
+  .input.sm,
+  .gap-input,
+  .budget-input {
+    min-height: 42px;
+  }
+
+  .icon-btn {
+    width: 44px;
+    height: 44px;
+  }
+
+  .chip {
+    min-height: 42px;
+  }
+
+  .segmented button {
+    min-height: 40px;
+  }
+
+  /* Link chu nho trong tieu de the ('Bao cao →', 'Tat ca →') */
+  .card-title a,
+  a.hint {
+    display: inline-block;
+    padding: 12px 2px;
+  }
+
+  .row {
+    padding-top: 13px;
+    padding-bottom: 13px;
+  }
 }

@@ -79,26 +79,47 @@ macOS và Linux dùng đúng cấu hình này — `bundle.targets` đã khai bá
 
 ## Android — Capacitor
 
-Cần cài thêm: **JDK 17+** (máy này đang là JDK 11) và **Android Studio** (SDK + platform-tools).
+Đã kiểm thử thật trên **Galaxy A50s** (Android 13, API 33, arm64-v8a).
+
+Cần JDK 17+ và Android SDK. Nếu máy đã cài Android Studio thì có sẵn cả hai, chỉ cần trỏ đúng:
 
 ```bash
-npx cap add android      # chỉ chạy một lần
-npm run android:open     # build web, đồng bộ, mở Android Studio
-npm run android:build    # xuất APK release
+export JAVA_HOME="C:\Program Files\Android\Android Studio\jbr"      # JBR đi kèm Android Studio
+export ANDROID_HOME="$LOCALAPPDATA/Android/Sdk"
 ```
 
-Để app nhận được nội dung từ menu *Chia sẻ* của Android, thêm intent-filter sau vào
-`android/app/src/main/AndroidManifest.xml` trong thẻ `<activity>` chính:
-
-```xml
-<intent-filter>
-  <action android:name="android.intent.action.SEND" />
-  <category android:name="android.intent.category.DEFAULT" />
-  <data android:mimeType="text/plain" />
-</intent-filter>
+```bash
+npm run android:add       # chỉ lần đầu — sinh thư mục android/ rồi vá manifest
+npm run android:apk       # build + đồng bộ + vá + đóng gói APK debug
+npm run android:install    # như trên, rồi cài thẳng vào máy đang cắm
+npm run android:open      # mở Android Studio nếu muốn dùng giao diện
 ```
 
-App **không** khai báo quyền `READ_SMS`, `RECEIVE_SMS` hay `BIND_NOTIFICATION_LISTENER_SERVICE` — và không nên thêm.
+APK nằm ở `android/app/build/outputs/apk/debug/app-debug.apk` (~3,9 MB). Lần build đầu mất khoảng 6 phút
+vì Gradle phải tải bản phân phối; những lần sau nhanh hơn nhiều.
+
+Dùng `assembleDebug` chứ không phải `assembleRelease` — APK release chưa ký thì Android từ chối cài. Muốn bản
+release phải tạo keystore và khai `signingConfigs` trong `android/app/build.gradle`.
+
+### Về quyền
+
+Thư mục `android/` không được commit vì Capacitor sinh lại mỗi lần. Phần intent-filter cho menu *Chia sẻ*
+do `scripts/patch-android-manifest.mjs` vá tự động sau mỗi lần sinh — chạy lại nhiều lần không nhân đôi.
+
+Script đó cũng **chặn đường lùi**: nếu manifest xuất hiện bất kỳ quyền nào trong danh sách cấm
+(`READ_SMS`, `RECEIVE_SMS`, `BIND_NOTIFICATION_LISTENER_SERVICE`, `BIND_ACCESSIBILITY_SERVICE`,
+`PACKAGE_USAGE_STATS`…) thì build dừng ngay với lỗi.
+
+Kiểm chứng trên máy thật bằng `adb shell dumpsys package app.xaxi.wallet`:
+
+```
+requested permissions:
+  android.permission.INTERNET
+  app.xaxi.wallet.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
+```
+
+Chỉ có vậy. `ACTION_SEND` là intent-filter chứ không phải permission — hệ điều hành chỉ chuyển văn bản
+sang app khi bạn chủ động bấm *Chia sẻ*.
 
 ## iOS (bật sau)
 
