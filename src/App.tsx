@@ -6,6 +6,7 @@ import { TransactionSheet } from './components/TransactionSheet'
 import { seedIfEmpty } from './db/db'
 import type { CommandName } from './lib/ask'
 import { postDueRecurring } from './lib/recurring'
+import { requestPersistence } from './lib/storage'
 import { GapFiller } from './components/GapFiller'
 import { Budgets } from './pages/Budgets'
 import { Console } from './pages/Console'
@@ -145,6 +146,8 @@ export default function App() {
   const [seeded, setSeeded] = useState(false)
 
   useEffect(() => {
+    // Xin bao ve du lieu khoi bi he thong don — lam som nhat co the
+    requestPersistence()
     seedIfEmpty().then(() => setSeeded(true))
   }, [])
 

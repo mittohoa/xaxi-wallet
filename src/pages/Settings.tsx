@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { RecurringSheet } from '../components/RecurringSheet'
 import { StatementSheet } from '../components/StatementSheet'
 import { ConfirmButton, Empty, Segmented } from '../components/ui'
@@ -7,6 +7,7 @@ import { buildBackup, downloadFile, readTextFile, restoreBackup, toCSV } from '.
 import { loadDemoData, primeOpeningBalances } from '../lib/demo'
 import { formatDate, todayISO } from '../lib/date'
 import { formatMoney, parseAmount } from '../lib/format'
+import { formatBytes, readStorageStatus, requestPersistence, type StorageStatus } from '../lib/storage'
 import { saveSettings, useApp } from '../store'
 import type { Recurring, Settings as SettingsType, TxKind, WalletKind } from '../types'
 
@@ -33,6 +34,14 @@ export function Settings() {
   const [armedWipe, setArmedWipe] = useState(false)
   const [armedDemo, setArmedDemo] = useState(false)
   const restoreInput = useRef<HTMLInputElement>(null)
+
+  const [storage, setStorage] = useState<StorageStatus | null>(null)
+  const [asking, setAsking] = useState(false)
+
+  const refreshStorage = () => readStorageStatus().then(setStorage)
+  useEffect(() => {
+    refreshStorage()
+  }, [])
 
   const [newWallet, setNewWallet] = useState({ name: '', kind: 'cash' as WalletKind, opening: '' })
   const [newCategory, setNewCategory] = useState({ name: '', kind: 'expense' as TxKind, icon: '🏷️' })
@@ -339,6 +348,90 @@ export function Settings() {
             Thêm
           </button>
         </div>
+      </div>
+
+      <div className="card">
+        <div className="card-title">Lưu trữ trên máy</div>
+        {storage === null ? (
+          <div className="hint">Đang đọc…</div>
+        ) : (
+          <>
+            {storage.protection === 'app-private' && (
+              <div className="store-state ok">
+                <b>Dữ liệu nằm trong vùng riêng của ứng dụng</b>
+                <div className="hint" style={{ marginTop: 4 }}>
+                  Hệ thống dọn dung lượng chỉ xoá bộ nhớ đệm, không đụng tới đây. Dữ liệu chỉ mất khi bạn gỡ app hoặc
+                  bấm "Xoá dữ liệu" trong cài đặt máy.
+                </div>
+              </div>
+            )}
+
+            {storage.protection === 'persisted' && (
+              <div className="store-state ok">
+                <b>Trình duyệt đã cam kết giữ dữ liệu</b>
+                <div className="hint" style={{ marginTop: 4 }}>
+                  Sẽ không bị xoá khi máy thiếu dung lượng.
+                </div>
+              </div>
+            )}
+
+            {storage.protection === 'best-effort' && (
+              <div className="store-state warn">
+                <b>Dữ liệu chưa được trình duyệt cam kết giữ</b>
+                <div className="hint" style={{ marginTop: 4 }}>
+                  Khi máy gần hết dung lượng, trình duyệt được phép xoá dữ liệu của XAXI mà không báo trước. Thêm XAXI
+                  vào màn hình chính sẽ giúp được cấp.
+                </div>
+              </div>
+            )}
+
+            {storage.protection === 'unknown' && (
+              <div className="hint">Thiết bị này không cho biết tình trạng lưu trữ.</div>
+            )}
+
+            {storage.quotaBytes > 0 && (
+              <>
+                <div className="meter" style={{ marginTop: 14 }}>
+                  <i
+                    style={{
+                      width: `${Math.max(Math.min((storage.usageBytes / storage.quotaBytes) * 100, 100), 0.5)}%`,
+                      background: 'var(--accent)',
+                    }}
+                  />
+                </div>
+                <div className="hint" style={{ marginTop: 6 }}>
+                  Đang dùng <b>{formatBytes(storage.usageBytes)}</b> trên {formatBytes(storage.quotaBytes)} máy cho phép
+                </div>
+              </>
+            )}
+
+            {storage.canRequest && (
+              <button
+                type="button"
+                className="btn sm primary"
+                style={{ marginTop: 14 }}
+                disabled={asking}
+                onClick={async () => {
+                  setAsking(true)
+                  const granted = await requestPersistence()
+                  await refreshStorage()
+                  setAsking(false)
+                  toast(
+                    granted
+                      ? 'Đã bật bảo vệ dữ liệu'
+                      : 'Trình duyệt chưa cấp. Thêm XAXI vào màn hình chính rồi thử lại.',
+                  )
+                }}
+              >
+                {asking ? 'Đang xin…' : 'Xin trình duyệt giữ dữ liệu'}
+              </button>
+            )}
+
+            <div className="hint" style={{ marginTop: 12 }}>
+              Dù ở mức nào, gỡ app vẫn xoá sạch. Hãy xuất bản sao lưu định kỳ.
+            </div>
+          </>
+        )}
       </div>
 
       <div className="card">

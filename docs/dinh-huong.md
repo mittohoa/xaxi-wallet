@@ -186,7 +186,7 @@ Thiết bị thứ hai nhập cùng cụm mật khẩu là đọc được — k
 
 | # | Việc | Phá nguyên tắc nào không | Ghi chú |
 |---|---|---|---|
-| 0a | **Xin lưu trữ bền vững** | không | rủi ro mất sạch dữ liệu — xem §6.1.B, sửa rất rẻ |
+| ~~0a~~ | ~~Xin lưu trữ bền vững~~ | — | **xong** — kèm phát hiện rằng bản Android vốn đã an toàn, xem §6.1.B |
 | 0b | **Chuyển tiền giữa ví** | không | báo cáo đang sai — xem §6.1.A |
 | 0c | **Đổi khoá chính sang UUID + thêm `updatedAt`/`deletedAt`/`deviceId`** | không | làm sớm rẻ, làm muộn rất đắt — xem §3.6 |
 | 1 | Thử OCR và giọng nói bằng phần cứng thật | không | chưa xong, chặn việc khẳng định hai tính năng này chạy được |
@@ -221,13 +221,23 @@ Hậu quả: rút 2 triệu từ ngân hàng ra tiền mặt, người dùng bu�
 
 Đây là lỗi tính toán, không phải thiếu tiện nghi. Cần thêm loại giao dịch thứ ba (`transfer`) với hai bản ghi liên kết bị **loại khỏi mọi phép tính thu/chi**.
 
-#### B. Không xin lưu trữ bền vững — **có thể mất sạch dữ liệu**
+#### B. Lưu trữ bền vững — **đã làm, nhưng kết luận ban đầu của tôi sai**
 
-CapMoney có "xin chế độ lưu trữ bền vững". XAXI chưa gọi `navigator.storage.persist()` lần nào.
+Nhận định đầu tiên là "rủi ro nặng nhất, có thể mất sạch dữ liệu ở mọi nền tảng". Đo trên máy thật thì **không đúng với bản Android**:
 
-IndexedDB ở chế độ mặc định là **"best-effort"**: trình duyệt và WebView được phép xoá nó khi máy thiếu dung lượng, **không báo trước, không hỏi**. Với một app mà toàn bộ lời hứa là "dữ liệu nằm trên máy bạn", đây là rủi ro nặng nhất trong cả danh sách.
+| | |
+|---|---|
+| IndexedDB nằm ở | `/data/data/app.xaxi.wallet/app_webview/Default/IndexedDB` |
+| Đó là vùng | **app data**, không phải `cache/` |
+| Android dọn dung lượng xoá | `cache/` — không đụng app data |
 
-Sửa rẻ: gọi `navigator.storage.persist()` lúc khởi động, và hiện trạng thái trong Cài đặt để người dùng biết dữ liệu của mình đang ở chế độ nào.
+`navigator.storage.persist()` trả `false` trong WebView, nhưng **không phải vì dữ liệu bấp bênh** — mà vì Chromium cấp chế độ bền vững dựa trên tín hiệu "trang đã được cài đặt", thứ không tồn tại với một origin trong WebView. Trên bản đóng gói, dữ liệu vốn đã nằm trong vùng riêng của ứng dụng.
+
+**Rủi ro thật chỉ có ở bản web.** Trình duyệt được phép xoá kho best-effort khi máy thiếu dung lượng; Chromium thường chỉ cấp bền vững sau khi người dùng thêm app vào màn hình chính.
+
+Đã làm: `src/lib/storage.ts` phân biệt bốn mức (`app-private` / `persisted` / `best-effort` / `unknown`), nói đúng sự thật theo từng nền tảng thay vì doạ chung một câu, và chỉ mời xin ở nơi việc xin có nghĩa.
+
+Bài học ghi lại: **đo trước khi báo động.** Suýt nữa thì hiện cảnh báo đỏ cho người dùng Android về một rủi ro không tồn tại.
 
 #### C. Bản web không thật sự chạy offline
 

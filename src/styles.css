@@ -1677,3 +1677,19 @@ textarea.input {
     transition: none !important;
   }
 }
+
+/* ---------- Trạng thái lưu trữ ---------- */
+.store-state {
+  border-radius: var(--r-md);
+  padding: 13px 14px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.store-state.ok {
+  background: color-mix(in srgb, var(--good) 12%, var(--surface-2));
+}
+
+.store-state.warn {
+  background: color-mix(in srgb, var(--warning) 16%, var(--surface-2));
+}
