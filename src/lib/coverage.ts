@@ -23,6 +23,12 @@ export function computeCoverage(
   windowDays: number,
   firstActivityDate?: string,
 ): Coverage {
+  // Chua tung ghi gi thi khong co gi de "bo sot" — nguoi moi cai app khong the
+  // dang no 13 ngay. Khong co dong nay thi man hinh dau tien da trach nguoi dung.
+  if (transactions.length === 0 && dayMarks.length === 0) {
+    return { gaps: [], window: 0, ratio: 1, currentGapStreak: 0 }
+  }
+
   const today = todayISO()
   const covered = new Set<string>()
   for (const t of transactions) covered.add(t.date)

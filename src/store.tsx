@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import { useLiveQuery } from 'dexie-react-hooks'
 import { DEFAULT_SETTINGS, db, stamp, touch } from './db/db'
 import { configureFormat } from './lib/format'
+import { applySystemTheme } from './lib/native/shell'
 import type { Budget, Category, DayMark, Id, Recurring, Settings, Template, Transaction, Wallet } from './types'
 
 export interface AppData {
@@ -73,7 +74,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const dark = settings.theme === 'dark' || (settings.theme === 'system' && media.matches)
       root.classList.toggle('theme-dark', dark)
       root.dataset.theme = dark ? 'dark' : 'light'
-      document.querySelector('meta[name="theme-color"]')?.setAttribute('content', dark ? '#0d0d0d' : '#f9f9f7')
+      const background = dark ? '#0b0b0d' : '#f3f3f5'
+      document.querySelector('meta[name="theme-color"]')?.setAttribute('content', background)
+      applySystemTheme(dark, background)
     }
     apply()
     media.addEventListener('change', apply)

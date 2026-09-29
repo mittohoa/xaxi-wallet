@@ -6,6 +6,7 @@ import { walletBalances } from '../lib/stats'
 import { useApp } from '../store'
 import type { Id } from '../types'
 import { Sheet } from './ui'
+import { haptic } from '../lib/native/shell'
 
 /**
  * Chuyen tien giua hai vi.
@@ -45,6 +46,7 @@ export function TransferSheet({ onClose }: { onClose: () => void }) {
       )
       const from = wallets.find((w) => w.id === fromId)
       const to = wallets.find((w) => w.id === toId)
+      haptic('heavy')
       toast(`Đã chuyển ${formatMoney(Math.round(amount))} · ${from?.name} → ${to?.name}`)
       onClose()
     } catch (e) {

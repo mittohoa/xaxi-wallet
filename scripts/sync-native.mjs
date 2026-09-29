@@ -84,6 +84,64 @@ function patchGradle() {
   return missing.map((d) => d.line)
 }
 
+/**
+ * Cau hinh ky so cho ban phat hanh.
+ *
+ * Khoa ky KHONG nam trong repo. Build doc tu android/keystore.properties —
+ * tep do bi gitignore, va neu khong co thi ban release van build duoc nhung
+ * chua ky, de nguoi dung tu ky sau.
+ */
+const SIGNING_BLOCK = `
+    signingConfigs {
+        release {
+            // Doc tu android/keystore.properties neu co; xem README muc Android
+            def props = new Properties()
+            def file = rootProject.file('keystore.properties')
+            if (file.exists()) {
+                props.load(new FileInputStream(file))
+                storeFile rootProject.file(props['storeFile'])
+                storePassword props['storePassword']
+                keyAlias props['keyAlias']
+                keyPassword props['keyPassword']
+            }
+        }
+    }
+`
+
+function patchGradleSigning() {
+  const path = join(TARGET, 'app', 'build.gradle')
+  let text = readFileSync(path, 'utf8')
+  const changes = []
+
+  if (!text.includes('signingConfigs {')) {
+    const marker = text.indexOf('android {')
+    const insertAt = text.indexOf('\n', marker) + 1
+    text = text.slice(0, insertAt) + SIGNING_BLOCK + text.slice(insertAt)
+    changes.push('khối signingConfigs đọc từ keystore.properties')
+  }
+
+  // Ban release: ky so + rut gon ma, nhung chi khi that su co khoa
+  if (!text.includes('signingConfig signingConfigs.release')) {
+    text = text.replace(
+      /buildTypes \{\s*release \{/,
+      `buildTypes {
+        release {
+            if (rootProject.file('keystore.properties').exists()) {
+                signingConfig signingConfigs.release
+            }`,
+    )
+    changes.push('bản release dùng khoá ký khi có')
+  }
+
+  if (text.includes('minifyEnabled false')) {
+    text = text.replace('minifyEnabled false', 'minifyEnabled true\n            shrinkResources true')
+    changes.push('bật rút gọn mã và tài nguyên cho bản release')
+  }
+
+  if (changes.length) writeFileSync(path, text, 'utf8')
+  return changes
+}
+
 function patchManifestForVoice() {
   const path = join(TARGET, 'app', 'src', 'main', 'AndroidManifest.xml')
   let text = readFileSync(path, 'utf8')
@@ -140,6 +198,14 @@ console.log(
     ? 'Đã khai báo tải sẵn mô hình OCR qua Google Play Services.'
     : 'Manifest đã khai báo tải mô hình OCR.',
 )
+
+const signingChanges = patchGradleSigning()
+if (signingChanges.length) {
+  console.log('Đã cấu hình bản phát hành:')
+  for (const c of signingChanges) console.log(`  ${c}`)
+} else {
+  console.log('build.gradle đã đủ cấu hình phát hành.')
+}
 
 const voiceChanges = patchManifestForVoice()
 if (voiceChanges.length) {

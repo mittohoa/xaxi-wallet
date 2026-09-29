@@ -422,3 +422,11 @@ test('isTransfer và spendable nhận đúng cặp chuyển tiền', () => {
   assert.equal(isTransfer(chuyen), true)
   assert.deepEqual(spendable([thuong, chuyen]), [thuong])
 })
+
+test('máy mới cài chưa có dữ liệu thì không bị trách là bỏ sót ngày nào', () => {
+  const coverage = computeCoverage([], [], 14, undefined)
+  assert.equal(coverage.gaps.length, 0, 'chưa ghi gì thì không có gì để bỏ sót')
+  assert.equal(coverage.currentGapStreak, 0, 'không được báo đang trống nhiều ngày')
+  assert.equal(coverage.ratio, 1)
+  assert.equal(coverage.window, 0)
+})

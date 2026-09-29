@@ -109,7 +109,7 @@ Tệp và văn bản được xử lý ngay trên máy, không gửi đi đâu.
 ```bash
 npm install
 npm run dev        # http://localhost:5173
-npm test           # 70 test: phần lõi, bộ hiểu ngôn ngữ, và render thật app trên jsdom
+npm test           # 96 test: phần lõi, bộ hiểu ngôn ngữ, và render thật app trên jsdom
 npm run build      # xuất ra dist/
 ```
 
@@ -144,42 +144,69 @@ macOS và Linux dùng đúng cấu hình này — `bundle.targets` đã khai bá
 Cần JDK 17+ và Android SDK. Nếu máy đã cài Android Studio thì có sẵn cả hai, chỉ cần trỏ đúng:
 
 ```bash
-export JAVA_HOME="C:\Program Files\Android\Android Studio\jbr"      # JBR đi kèm Android Studio
+export JAVA_HOME="C:\Program Files\Android\Android Studio\jbr"
 export ANDROID_HOME="$LOCALAPPDATA/Android/Sdk"
 ```
 
 ```bash
-npm run android:add       # chỉ lần đầu — sinh thư mục android/ rồi vá manifest
-npm run android:apk       # build + đồng bộ + vá + đóng gói APK debug
-npm run android:install    # như trên, rồi cài thẳng vào máy đang cắm
-npm run android:open      # mở Android Studio nếu muốn dùng giao diện
+npm run android:add       # chỉ lần đầu — sinh thư mục android/, vá manifest, chép mã native
+npm run android:apk       # bản debug
+npm run android:install   # bản debug, cài thẳng vào máy đang cắm
+npm run android:release   # bản phát hành, đã rút gọn mã
+npm run android:open      # mở Android Studio
 ```
 
-APK nằm ở `android/app/build/outputs/apk/debug/app-debug.apk` (~3,9 MB). Lần build đầu mất khoảng 6 phút
-vì Gradle phải tải bản phân phối; những lần sau nhanh hơn nhiều.
+| | Kích thước | Ghi chú |
+|---|---|---|
+| Debug | ~6,7 MB | có gỡ lỗi WebView, dùng để phát triển |
+| **Release** | **~1,7 MB** | R8 rút gọn mã và tài nguyên |
 
-Dùng `assembleDebug` chứ không phải `assembleRelease` — APK release chưa ký thì Android từ chối cài. Muốn bản
-release phải tạo keystore và khai `signingConfigs` trong `android/app/build.gradle`.
+R8 đổi tên lớp nên đừng kiểm tra bằng cách tìm tên trong file `.dex` — đó là phép thử sai. Tra
+`android/app/build/outputs/mapping/release/mapping.txt` mới đúng; ở đó thấy 710 lớp ML Kit vẫn còn,
+`TextRecognition` chỉ bị đổi tên thành `i2.b`.
+
+### Ký bản phát hành
+
+Khoá ký **không nằm trong repo** và tôi không tạo hộ — mất khoá là không bao giờ cập nhật được app nữa
+nếu đã lên Play Store, nên nó phải là của bạn.
+
+```bash
+keytool -genkeypair -v -keystore android/xaxi-release.jks   -keyalg RSA -keysize 4096 -validity 10000 -alias xaxi
+```
+
+Rồi chép `android-keystore.example.properties` thành `android/keystore.properties` và điền mật khẩu.
+Có tệp đó thì `npm run android:release` tự ký; không có thì vẫn build được nhưng APK chưa ký.
+
+`android/keystore.properties`, `*.jks`, `*.keystore` đều đã nằm trong `.gitignore`.
+
+**Sao lưu tệp `.jks` và mật khẩu ra ngoài máy này.** Đây là thứ duy nhất trong dự án không tái tạo được.
+
+### Mã native
+
+Thư mục `android/` bị Capacitor sinh lại mỗi lần đồng bộ nên không commit được. Nguồn thật nằm ở
+`android-native/` và được `scripts/sync-native.mjs` chép đè sau mỗi lần `cap sync`, kèm việc tự thêm
+phụ thuộc vào `build.gradle`, khai báo manifest, và cấu hình ký số.
+
+| Plugin | Việc |
+|---|---|
+| `OcrPlugin` | đọc chữ từ ảnh bằng ML Kit, không mở camera, không xin quyền camera |
+| `VoicePlugin` | đọc chính tả, ưu tiên nhận dạng ngay trên máy |
+| `ShellPlugin` | rung phản hồi, màu thanh trạng thái theo chủ đề |
 
 ### Về quyền
 
-Thư mục `android/` không được commit vì Capacitor sinh lại mỗi lần. Phần intent-filter cho menu *Chia sẻ*
-do `scripts/patch-android-manifest.mjs` vá tự động sau mỗi lần sinh — chạy lại nhiều lần không nhân đôi.
-
-Script đó cũng **chặn đường lùi**: nếu manifest xuất hiện bất kỳ quyền nào trong danh sách cấm
-(`READ_SMS`, `RECEIVE_SMS`, `BIND_NOTIFICATION_LISTENER_SERVICE`, `BIND_ACCESSIBILITY_SERVICE`,
-`PACKAGE_USAGE_STATS`…) thì build dừng ngay với lỗi.
-
-Kiểm chứng trên máy thật bằng `adb shell dumpsys package app.xaxi.wallet`:
+`scripts/patch-android-manifest.mjs` **chặn build** nếu manifest xuất hiện bất kỳ quyền nào thuộc danh
+sách cấm (`READ_SMS`, `RECEIVE_SMS`, `BIND_NOTIFICATION_LISTENER_SERVICE`, `BIND_ACCESSIBILITY_SERVICE`,
+`PACKAGE_USAGE_STATS`). Kiểm chứng trên máy thật bằng `adb shell dumpsys package app.xaxi.wallet`:
 
 ```
 requested permissions:
   android.permission.INTERNET
-  app.xaxi.wallet.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION
+  android.permission.RECORD_AUDIO      <- granted=false, chỉ hỏi lúc bấm micro
+  android.permission.ACCESS_NETWORK_STATE
 ```
 
-Chỉ có vậy. `ACTION_SEND` là intent-filter chứ không phải permission — hệ điều hành chỉ chuyển văn bản
-sang app khi bạn chủ động bấm *Chia sẻ*.
+Không có quyền CAMERA — ảnh do app camera của hệ thống chụp hộ qua `<input type="file" capture>`.
 
 ## iOS (bật sau)
 
@@ -213,7 +240,7 @@ src/
   components/        ô trả lời, biên lai, đối soát, sao kê, biểu đồ
   pages/Console.tsx  màn hình duy nhất — ô nhập làm tất cả
   pages/             Ngân sách · Báo cáo · Lịch sử · Cài đặt (mở bằng lệnh)
-tests/               70 test: phần lõi, bộ hiểu, và tích hợp trên jsdom
+tests/               96 test: phần lõi, bộ hiểu, và tích hợp trên jsdom
 ```
 
 ## Về biểu đồ

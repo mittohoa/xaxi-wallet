@@ -3,8 +3,9 @@ import { AnswerView } from '../components/AnswerView'
 import { Avatar, Figure, Money } from '../components/ui'
 import { addTransaction, markNoSpend, suggestShortcuts, systemCategory } from '../lib/actions'
 import { detectRecurring, trainClassifier } from '../lib/learn'
-import { db, stamp } from '../db/db'
+import { db, stamp, touch } from '../db/db'
 import { listenOnce, stopListening, voiceReady } from '../lib/native/voice'
+import { haptic } from '../lib/native/shell'
 import { saveSettings } from '../store'
 import { helpAnswer, interpret, type Answer, type CommandName } from '../lib/ask'
 import { computeCoverage, firstActivity } from '../lib/coverage'
@@ -131,6 +132,17 @@ export function Console({
       .slice(0, 8)
   }, [transactions])
 
+  // Hop cho phan loai: cac khoan da ghi nhung chua ro danh muc.
+  // Tong tien van dung — phan loai luc nao ranh cung duoc.
+  const inbox = useMemo(() => {
+    const pending = new Set(
+      categories.filter((c) => c.slug === 'uncategorized-expense' || c.slug === 'uncategorized-income').map((c) => c.id),
+    )
+    return transactions
+      .filter((t) => pending.has(t.categoryId) && t.source !== 'reconcile' && !t.transferId)
+      .sort((a, b) => b.createdAt - a.createdAt)
+  }, [transactions, categories])
+
   const today = todayISO()
   const todayLogged = transactions.some((t) => t.date === today) || dayMarks.some((m) => m.date === today)
   const defaultWalletId = wallets.find((w) => !w.archived)?.id ?? null
@@ -174,6 +186,7 @@ export function Console({
     })
     setText('')
     setAnswer(null)
+    haptic()
     toast(`${parse.kind === 'expense' ? '−' : '+'}${formatMoney(parse.amount)} · ${category.name}`)
   }
 
@@ -188,6 +201,7 @@ export function Console({
       note: s.note,
       source: 'quick',
     })
+    haptic()
     toast(`${s.kind === 'expense' ? '−' : '+'}${formatMoney(s.amount)} · ${s.label}`)
   }
 
@@ -267,6 +281,7 @@ export function Console({
                           note: suggestion.name,
                         }),
                       )
+                      haptic('heavy')
                       toast(`Đã tự động hoá "${suggestion.name}"`)
                     }}
                   >
@@ -281,6 +296,51 @@ export function Console({
                   </button>
                 </div>
               </div>
+            )}
+
+            {inbox.length > 0 && (
+              <>
+                <div className="console-section">
+                  chờ phân loại · {inbox.length} khoản
+                </div>
+                <div className="list">
+                  {inbox.slice(0, 3).map((t) => (
+                    <div key={t.id} className="row inbox-pending">
+                      <span className="body">
+                        <span className="name">{t.note || 'Không có ghi chú'}</span>
+                        <span className="meta">{formatDateLong(t.date)}</span>
+                      </span>
+                      <span className="trail">
+                        <Money value={t.amount} kind={t.kind} signed />
+                      </span>
+                      <select
+                        className="input sm inbox-pick"
+                        value=""
+                        aria-label={`Chọn danh mục cho khoản ${formatMoney(t.amount)}`}
+                        onChange={async (e) => {
+                          if (!e.target.value) return
+                          await db.transactions.update(t.id, { ...touch(), categoryId: e.target.value })
+                          toast('Đã phân loại')
+                        }}
+                      >
+                        <option value="">Chọn…</option>
+                        {categories
+                          .filter((c) => c.kind === t.kind && !c.slug)
+                          .map((c) => (
+                            <option key={c.id} value={c.id}>
+                              {c.icon} {c.name}
+                            </option>
+                          ))}
+                      </select>
+                    </div>
+                  ))}
+                </div>
+                {inbox.length > 3 && (
+                  <button type="button" className="btn ghost sm" style={{ marginTop: 8 }} onClick={() => onCommand('history')}>
+                    Xem tất cả {inbox.length} khoản
+                  </button>
+                )}
+              </>
             )}
 
             {recent.length === 0 ? (

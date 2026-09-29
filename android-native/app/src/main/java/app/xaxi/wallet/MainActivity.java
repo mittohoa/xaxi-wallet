@@ -13,6 +13,7 @@ public class MainActivity extends BridgeActivity {
     public void onCreate(Bundle savedInstanceState) {
         registerPlugin(OcrPlugin.class);
         registerPlugin(VoicePlugin.class);
+        registerPlugin(ShellPlugin.class);
         super.onCreate(savedInstanceState);
     }
 }

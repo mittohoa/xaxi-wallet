@@ -16,3 +16,8 @@ tests/.out
 .env
 .env.*
 !.env.example
+
+# Khoá ký bản phát hành — KHÔNG BAO GIỜ commit
+android/keystore.properties
+*.jks
+*.keystore
