@@ -226,6 +226,8 @@ export interface Settings extends Syncable {
    * JSON thuong la duong lui duy nhat.
    */
   syncReadyAt?: number
+  /** Lan cuoi xuat hoac nhap tep dong bo — dung de nhac khi de lau qua */
+  lastSyncAt?: number
 }
 
 /**

@@ -17,6 +17,7 @@ import { comparableRange, inRange, percentChange, sumTotals, walletBalances } fr
 import { useApp, useLookups } from '../store'
 import type { Transaction } from '../types'
 import { Icon } from '../components/Icon'
+import { syncReminder } from '../lib/sync/reminder'
 
 const PLACEHOLDERS = [
   'cà phê 35k',
@@ -252,6 +253,17 @@ export function Console({
 
   const nudge = settings.nudgeAfterGapDays > 0 && coverage.currentGapStreak >= settings.nudgeAfterGapDays
 
+  /*
+   * Nhắc mang dữ liệu sang máy kia.
+   *
+   * Đồng bộ là BẤM NÚT — không có máy chủ thì không có cách nào khác (xem
+   * lib/sync/reminder.ts). Lời nhắc này là nửa còn lại của quyết định đó.
+   */
+  const syncNhac = useMemo(
+    () => syncReminder(settings.lastSyncAt, transactions.map((t) => t.updatedAt)),
+    [settings.lastSyncAt, transactions],
+  )
+
   /**
    * Giữ bản tóm tắt của tiện ích màn hình chính khớp với dữ liệu.
    *
@@ -386,6 +398,18 @@ export function Console({
                   </button>
                   <button type="button" className="btn sm" onClick={() => onCommand('receipt')}>
                     Dán biên lai
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {!nudge && syncNhac && (
+              <div className="nudge">
+                <b>{syncNhac.pending} khoản chưa mang sang máy kia.</b> Lần đồng bộ gần nhất là {syncNhac.days} ngày
+                trước.
+                <div className="nudge-actions">
+                  <button type="button" className="btn sm primary" onClick={() => onCommand('settings')}>
+                    Mở đồng bộ
                   </button>
                 </div>
               </div>

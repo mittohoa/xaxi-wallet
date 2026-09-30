@@ -175,10 +175,10 @@ Khoá sinh từ một cụm mật khẩu người dùng đặt, qua hàm dẫn x
 
 Thiết bị thứ hai nhập cùng cụm mật khẩu là đọc được — không cần đăng nhập, không cần máy chủ xác thực.
 
-#### Việc chưa quyết
+#### Hai câu hỏi này đã chốt
 
-- Có cho nhiều người dùng chung một ví không (vợ chồng chung chi tiêu)? Điều này đổi hẳn mô hình khoá.
-- Đồng bộ tự động hay bấm nút? Tự động tốn pin và dễ gây bất ngờ; bấm nút thì lại quên.
+Cả hai đều đã trả lời, xem **§18**: không làm chế độ chung ví riêng, và đồng bộ
+là **bấm nút** — kèm lời nhắc cho nửa "thì lại quên".
 
 ---
 
@@ -910,11 +910,9 @@ Sau khi sửa, đo lại đúng đường đó: số dư ra 1.854.000 đ = 2.000
 
 ---
 
-### Việc chưa quyết, vẫn chưa quyết
+### Hai câu hỏi cuối §3.6
 
-Hai câu hỏi cuối §3.6 còn nguyên: chung ví giữa nhiều người (đổi hẳn mô hình
-khoá), và đồng bộ tự động hay bấm nút. Bản này là **bấm nút** — không chạy nền,
-không tốn pin, không bất ngờ.
+Đã chốt cả hai — xem §18.
 
 ## 17. Chạy bộ rà trên máy đang có dữ liệu thật
 
@@ -944,3 +942,53 @@ app; quên lọc một chỗ thì khoản đã xoá hiện lại đúng ở đó
 được điều đó, vì chúng gọi thẳng vào hàm chứ không đi qua giao diện.
 
 Kết quả: **21/21 đạt**, và bộ rà tự trả lại dữ liệu ban đầu sau khi chạy.
+
+## 18. Hai câu hỏi cuối, và câu trả lời
+
+§3.6 để ngỏ hai điều. Để ngỏ mãi thì chúng biến thành nợ: mỗi tính năng sau này
+đều phải chừa chỗ cho một khả năng có thể không bao giờ làm.
+
+### Chung ví giữa nhiều người — **không làm chế độ riêng**
+
+Câu hỏi gốc: có cho vợ chồng dùng chung một sổ không, và điều đó đổi hẳn mô hình
+khoá.
+
+Hoá ra **trường hợp đơn giản đã chạy được rồi, không cần viết thêm dòng nào**:
+hai người cùng đặt một cụm mật khẩu, trao tệp `.xaxi` cho nhau, và bộ hợp nhất
+lo phần còn lại. Nó vốn được thiết kế cho hai máy, mà hai máy của hai người thì
+cũng chỉ là hai máy.
+
+Thứ **không** chạy là chia sẻ MỘT PHẦN: chi tiêu chung thì chung, chi tiêu riêng
+thì riêng. Cái đó đòi mã hoá theo từng phạm vi, tức hai hệ khoá song song, và nó
+phá vỡ lời hứa đang rất gọn — *một cụm mật khẩu, toàn bộ dữ liệu của bạn*. Với
+một cặp đã dùng chung sổ thì câu "ai tiêu khoản này" trả lời được bằng một danh
+mục hoặc một dòng ghi chú, rẻ hơn nhiều so với chẻ đôi mô hình khoá.
+
+**Chốt:** không xây chế độ chung ví. Ai cần chung hoàn toàn thì đã dùng được
+ngay hôm nay. Ai cần chung một phần thì dùng hai sổ.
+
+### Tự động hay bấm nút — **bấm nút, và không phải vì pin**
+
+Câu hỏi gốc cân nhắc pin và sự bất ngờ. Nhưng lý do thật nằm chỗ khác.
+
+Đồng bộ tự động đòi một chỗ chứa mà **app tự tới được**: một tài khoản, một
+client id nhúng sẵn trong bản phát hành, và quyền ra mạng. Đó đúng là ba thứ app
+hứa không có. Nên "bấm nút" không phải một sự nhân nhượng để tiết kiệm pin — nó
+là **hệ quả** của việc không có máy chủ. Muốn tự động thì phải bỏ lời hứa trước.
+
+### Nửa còn lại: "bấm nút thì lại quên"
+
+Nửa này là thật, và nó có câu trả lời riêng. `lib/sync/reminder.ts` theo dõi mốc
+đồng bộ gần nhất; quá bảy ngày **và** có giao dịch ghi sau mốc đó thì màn hình
+chính hiện một dòng nhắc kèm số khoản chưa mang đi.
+
+Hai điều kiện, không phải một:
+
+- **Chưa bao giờ đồng bộ thì không nhắc.** Người dùng chưa chọn dùng tính năng
+  này; nhắc lúc đó là chào hàng, không phải giúp.
+- **Không có gì mới thì không nhắc**, dù đã ba mươi ngày. Nhắc trong lúc không có
+  gì để mang đi là dạy người dùng bỏ qua lời nhắc — rồi họ bỏ qua luôn lần thật
+  sự cần.
+
+Lời nhắc đồng bộ nhường chỗ cho lời nhắc "đã lâu chưa ghi gì": hai dòng cùng lúc
+thì không dòng nào được đọc.

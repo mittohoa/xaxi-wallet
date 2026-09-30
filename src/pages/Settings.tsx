@@ -138,6 +138,7 @@ export function Settings() {
         () => downloadFile(syncFileName(), JSON.stringify(envelope), 'application/octet-stream'),
         'Đã xuất tệp đồng bộ',
       )
+      await saveSettings({ lastSyncAt: Date.now() })
     } finally {
       setDangDongBo(false)
     }
@@ -155,6 +156,7 @@ export function Settings() {
         r.updated > 0 && `${r.updated} bản cập nhật`,
         r.collapsed > 0 && `${r.collapsed} bản trùng đã gộp`,
       ].filter(Boolean)
+      await saveSettings({ lastSyncAt: Date.now() })
       toast(phan.length > 0 ? `Đã hợp nhất · ${phan.join(' · ')}` : 'Không có gì mới — hai máy đã giống nhau')
     } catch (e) {
       toast(e instanceof Error ? e.message : 'Không đọc được tệp đồng bộ')
