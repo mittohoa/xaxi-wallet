@@ -369,3 +369,71 @@ test('dữ liệu mẫu tạo ra đủ các tình huống app cần minh hoạ',
   const again = await loadDemoData()
   assert.equal((await db.transactions.toArray()).length, again.transactions)
 })
+
+/**
+ * Cổng khoá của thẻ Đồng bộ.
+ *
+ * §3.6 đòi: phải xuất một bản sao lưu thường TRƯỚC khi bật đồng bộ. Lý do thật
+ * chứ không phải thủ tục — tệp đồng bộ mã hoá bằng cụm mật khẩu, quên là mất
+ * sạch, không ai khôi phục được. Bản JSON thường là đường lui duy nhất.
+ *
+ * Luật này từng được viết thành một phép kiểm trên máy thật, nhưng nó phải ghi
+ * lại settings rồi nạp lại trang để giao diện đổi — mà `location.reload()` xoá
+ * luôn ngữ cảnh gỡ lỗi, nên phép kiểm không bao giờ trả về gì và làm đổ cả bộ
+ * rà. Đây là logic hiển thị thuần, nên chỗ của nó là ở đây.
+ *
+ * Tự dựng lại cây giao diện: một bài kiểm phía trên đã gọi `root.unmount()`, nên
+ * từ đó trở đi trong tệp này không còn màn hình nào để bấm.
+ */
+test('thẻ đồng bộ khoá cho tới khi đã xuất bản sao lưu', async () => {
+  const rootMoi = createRoot(container)
+  await act(async () => {
+    rootMoi.render(createElement(App))
+  })
+  await waitFor(() => Boolean(container.querySelector('.composer-input')))
+
+  const mo = async () => {
+    const input = container.querySelector('.composer-input') as HTMLInputElement
+    await act(async () => {
+      type(input, 'cài đặt')
+    })
+    await act(async () => {
+      pressEnter(input)
+    })
+    await waitFor(() => Boolean(container.querySelector('[role="dialog"]')))
+  }
+  const dong = async () => {
+    const x = container.querySelector('[role="dialog"] button[aria-label="Đóng"]') as HTMLButtonElement | null
+    await act(async () => {
+      x?.click()
+    })
+    await waitFor(() => !container.querySelector('[role="dialog"]'))
+  }
+
+  // Xoá mốc sao lưu để về đúng trạng thái của một máy vừa cài
+  const s = (await db.settings.toArray())[0]
+  await act(async () => {
+    await db.settings.update(s.id, { syncReadyAt: undefined, updatedAt: Date.now() })
+  })
+
+  await mo()
+  assert.equal(container.querySelector('#sync-pass'), null, 'chưa sao lưu mà đã cho nhập cụm mật khẩu')
+  const nut = [...container.querySelectorAll('[role="dialog"] button')].find((b) =>
+    (b.textContent ?? '').includes('Xuất bản sao lưu rồi bật'),
+  )
+  assert.ok(nut, 'phải có nút xuất bản sao lưu để mở khoá')
+  await dong()
+
+  // Đã có mốc sao lưu: ô cụm mật khẩu hiện ra
+  await act(async () => {
+    await db.settings.update(s.id, { syncReadyAt: Date.now(), updatedAt: Date.now() })
+  })
+  await mo()
+  await waitFor(() => Boolean(container.querySelector('#sync-pass')))
+  assert.ok(container.querySelector('#sync-pass'), 'đã sao lưu thì phải mở khoá')
+  await dong()
+
+  await act(async () => {
+    rootMoi.unmount()
+  })
+})

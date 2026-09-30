@@ -1023,3 +1023,41 @@ bộ lệnh đáng giá hơn nhiều bài kiểm chuyên biệt gộp lại.
 
 `lib/version.ts` hỏi `typeof` trước khi dùng, nên mã không còn phụ thuộc vào một
 bộ đóng gói cụ thể.
+
+## 20. Bộ rà giờ có chạm tới đồng bộ
+
+Đồng bộ là đoạn mã nguy hiểm nhất trong app: nó ghi đè toàn bộ cơ sở dữ liệu.
+Mà bộ rà 21 mục lại không chạm tới nó — nên khi thử tay, tìm ra **hai lỗi chặn
+hẳn tính năng, cả hai đều đã qua được 280 bài kiểm**. Giờ có ba mục mới:
+
+| Mục | Nó bắt cái gì mà bài kiểm trên máy tính không bắt được |
+|---|---|
+| Mã hoá và nén chạy được trong WebView | Node có bản WebCrypto riêng. WebView cũ có thể thiếu `CompressionStream`, và lúc đó tệp tạo ra được nhưng mở lại không được |
+| Nhập tệp, gộp trùng, nối lại khoá ngoại | Đi qua đúng ô chọn tệp thật của giao diện, và ghi vào IndexedDB thật |
+| Nhập lại lần hai không sinh thêm gì | Hội tụ — nếu sai thì mỗi lần đồng bộ lại thấy có thay đổi, mãi mãi |
+
+Phép kiểm tự dựng tệp `.xaxi` ngay trong trang bằng đúng những nguyên thuỷ mà
+app dùng. Không gọi hàm của app được — cầu nối gỡ lỗi chạy trong trang, còn các
+module thì đã bị đóng gói và không nằm trên `window`. Nhờ vậy nó còn đối chiếu
+luôn rằng **định dạng phong bì thực sự là thứ ta nghĩ**.
+
+### Ba lỗi của chính bộ rà, tìm ra khi viết ba mục này
+
+**Một — trùng tên biến.** Hàm nén tôi thêm vào phần dùng chung tên là `nen`,
+trùng đúng biến `nen` (nền thu nhập) trong phép kiểm sáu hũ. Một mục đang xanh
+bỗng đỏ, và nguyên nhân không liên quan gì tới nó.
+
+**Hai — `location.reload()` giết ngữ cảnh eval.** Mục kiểm cổng khoá cần ghi lại
+settings rồi nạp lại trang để giao diện đổi. Nạp lại xong thì `page.eval` không
+bao giờ trả về gì. Luật đó là logic hiển thị thuần nên đã chuyển sang
+`tests/app.test.tsx` — đúng chỗ hơn, và chạy trong một phần trăm giây.
+
+**Ba — một mục trả về `undefined` làm đổ cả bộ rà.** Nó in xong 27 dòng kết quả
+rồi mới vỡ ở dòng tổng kết, mất sạch. Giờ mục không trả về gì thì tính là trượt,
+và bộ rà vẫn tổng kết được.
+
+Ba lỗi này đều ở chính công cụ kiểm, không ở app. Đáng ghi lại: một bộ rà hỏng
+lặng lẽ còn tệ hơn không có bộ rà, vì nó cho cảm giác đã kiểm rồi.
+
+Kết quả: **24/24 đạt** trên A50s, dữ liệu thật giữ nguyên nhờ
+`npm run android:debug-signed`.

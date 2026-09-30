@@ -141,6 +141,52 @@ const HELPERS = `
   const tepGia = (ten, noiDung, kieu) => {
     const dt = new DataTransfer(); dt.items.add(new File([noiDung], ten, { type: kieu })); return dt.files;
   };
+
+  /*
+   * Dung mot tep .xaxi ngay trong trang, bang dung nhung nguyen thuy ma app dung.
+   *
+   * KHONG goi ham cua app duoc: cau noi go loi chay trong trang, con cac module
+   * thi da bi dong goi va khong nam tren window. Nen phep kiem tu dung phong bi
+   * theo dung dinh dang — va nho vay no con doi chieu luon rang dinh dang thuc
+   * su la thu ta nghi.
+   */
+  const b64 = (bytes) => {
+    let t = '';
+    for (let i = 0; i < bytes.length; i += 0x8000) t += String.fromCharCode(...bytes.subarray(i, i + 0x8000));
+    return btoa(t);
+  };
+  const nenDeflate = async (bytes) => {
+    const st = new Blob([bytes]).stream().pipeThrough(new CompressionStream('deflate-raw'));
+    const parts = []; const r = st.getReader();
+    for (;;) { const { done, value } = await r.read(); if (done) break; parts.push(value); }
+    const n = parts.reduce((a, c) => a + c.length, 0); const out = new Uint8Array(n);
+    let at = 0; for (const c of parts) { out.set(c, at); at += c.length; }
+    return out;
+  };
+  const taoTepDongBo = async (data, matKhau) => {
+    const salt = crypto.getRandomValues(new Uint8Array(16));
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(matKhau), 'PBKDF2', false, ['deriveKey']);
+    const key = await crypto.subtle.deriveKey(
+      { name: 'PBKDF2', salt, iterations: 250000, hash: 'SHA-256' }, base,
+      { name: 'AES-GCM', length: 256 }, false, ['encrypt', 'decrypt']);
+    const payload = { app: 'xaxi', version: 1, exportedAt: new Date().toISOString(), data };
+    const json = new TextEncoder().encode(JSON.stringify(payload));
+    const than = await nenDeflate(json);
+    const sealed = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, than);
+    return JSON.stringify({ app: 'xaxi-sync', v: 1, kdf: 'PBKDF2-SHA256', iter: 250000,
+      salt: b64(salt), iv: b64(iv), zip: true, data: b64(new Uint8Array(sealed)) });
+  };
+
+  /** Mo the Dong bo trong Cai dat va dien cum mat khau */
+  const moDongBo = async (matKhau) => {
+    await lenh('cài đặt');
+    const d = await wait(() => $('[role="dialog"]'));
+    const o = d.querySelector('#sync-pass');
+    if (!o) return null;
+    setValue(o, matKhau); await sleep(300);
+    return d;
+  };
 `
 
 /* ============================================================
@@ -526,6 +572,119 @@ const CHECKS = [
         return r ? '✓ ' + r.amount + '₫ ' + r.freq + ', lần tới ' + r.nextDate : '✗ không ghi được quy tắc';
       `),
   },
+  /* ---------------- đồng bộ đa thiết bị ---------------- */
+
+  {
+    /*
+     * Thu nhat: nguyen thuy ma hoa co that su chay trong WebView nay khong.
+     *
+     * Bai kiem tren may tinh dung WebCrypto cua Node — mot ban cai dat khac han.
+     * WebView cu co the thieu CompressionStream, va luc do tep dong bo tao ra
+     * duoc nhung mo lai khong duoc: hong im lang, chi lo ra khi nguoi dung that
+     * su can den no.
+     */
+    name: 'mã hoá và nén chạy được trong WebView',
+    run: (page) =>
+      page.eval(`
+        if (typeof CompressionStream === 'undefined') return '✗ WebView thiếu CompressionStream';
+        const tep = await taoTepDongBo({ categories: [], wallets: [], transactions: [] }, 'mat-khau-kiem');
+        const e = JSON.parse(tep);
+        if (e.app !== 'xaxi-sync' || !e.data) return '✗ phong bì sai định dạng';
+        return '✓ PBKDF2 + AES-GCM + deflate-raw đều chạy';
+      `),
+  },
+
+  /*
+   * KHONG kiem cong khoa ("chua sao luu thi the dong bo con khoa") o day.
+   *
+   * Kiem no doi ghi lai settings roi nap lai trang de giao dien thay doi —
+   * ma location.reload() xoa luon ngu canh eval, nen phep kiem khong bao gio
+   * tra ve gi. Da thu, va no lam do ca bo ra sau khi da in xong 27 dong ket qua.
+   *
+   * Luat do la logic hien thi thuan, nen no nam trong tests/app.test.tsx —
+   * dung cho hop hon, va chay trong mot phan tram giay.
+   */
+  {
+    /*
+     * Phep kiem quan trong nhat cua nhom nay.
+     *
+     * Dung mot tep .xaxi cua "may thu hai" voi danh muc TRUNG TEN nhung khac
+     * UUID — dung canh xay ra khi cai app len may moi. Roi dua qua dung o chon
+     * tep that cua giao dien.
+     */
+    name: 'nhập tệp đồng bộ, gộp trùng và nối lại khoá ngoại',
+    run: (page) =>
+      page.eval(`
+        const truoc = await soLieu();
+        const ten = truoc.categories.find((c) => !c.deletedAt && !c.builtin);
+        if (!ten) return '✗ không có danh mục nào để thử';
+
+        const cat = { id: 'kiem-db-cat', name: ten.name, kind: ten.kind, icon: '🍜', color: '#73a434',
+          updatedAt: Date.now(), deviceId: 'may-kiem' };
+        const vi = { id: 'kiem-db-vi', name: truoc.wallets[0].name, kind: 'cash', icon: '👛', color: '#73a434',
+          openingBalance: 0, updatedAt: 0, deviceId: 'may-kiem' };
+        const tx = (n, so) => ({ id: 'kiem-db-tx' + n, date: '2026-09-15', kind: 'expense', amount: so,
+          note: 'kiểm đồng bộ ' + n, categoryId: cat.id, walletId: vi.id, createdAt: Date.now(),
+          updatedAt: Date.now(), deviceId: 'may-kiem' });
+
+        const tep = await taoTepDongBo({ categories: [cat], wallets: [vi], transactions: [tx(1, 11000), tx(2, 22000)],
+          budgets: [], dayMarks: [], templates: [], recurring: [], settings: [], goals: [] }, 'mat-khau-kiem');
+
+        const d = await moDongBo('mat-khau-kiem');
+        if (!d) return '✗ thẻ đồng bộ chưa mở khoá';
+        const inp = [...d.querySelectorAll('input[type=file]')].find((i) => !i.accept);
+        if (!inp) return '✗ không thấy ô chọn tệp đồng bộ';
+        inp.files = tepGia('may-hai.xaxi', tep, 'application/octet-stream');
+        inp.dispatchEvent(new Event('change', { bubbles: true }));
+        await sleep(4000);
+        await dong();
+
+        const sau = await soLieu();
+        const moi = sau.transactions.filter((t) => /kiểm đồng bộ/.test(t.note || ''));
+        if (moi.length !== 2) return '✗ nhập được ' + moi.length + '/2 giao dịch';
+
+        const cungTen = sau.categories.filter((c) => !c.deletedAt && c.name === ten.name);
+        if (cungTen.length !== 1) return '✗ còn ' + cungTen.length + ' danh mục cùng tên, chưa gộp';
+        if (moi.some((t) => t.categoryId !== cungTen[0].id)) return '✗ giao dịch còn trỏ vào danh mục đã bị gộp';
+
+        return '✓ 2 giao dịch · gộp về 1 danh mục · khoá ngoại đã nối lại';
+      `),
+  },
+
+  {
+    /*
+     * Hop nhat phai HOI TU: nhap lai dung tep do khong duoc sinh them gi. Neu
+     * khong thi moi lan dong bo lai thay co thay doi, mai mai.
+     */
+    name: 'nhập lại lần hai không sinh thêm gì',
+    run: (page) =>
+      page.eval(`
+        const truoc = await soLieu();
+        const cat = truoc.categories.find((c) => !c.deletedAt && !c.builtin);
+        const goc = truoc.transactions.filter((t) => /kiểm đồng bộ/.test(t.note || ''));
+        if (goc.length !== 2) return '✗ chưa có dữ liệu từ phép kiểm trước';
+
+        const tep = await taoTepDongBo({
+          categories: [], wallets: [], transactions: goc,
+          budgets: [], dayMarks: [], templates: [], recurring: [], settings: [], goals: [],
+        }, 'mat-khau-kiem');
+
+        const d = await moDongBo('mat-khau-kiem');
+        const inp = [...d.querySelectorAll('input[type=file]')].find((i) => !i.accept);
+        inp.files = tepGia('lai.xaxi', tep, 'application/octet-stream');
+        inp.dispatchEvent(new Event('change', { bubbles: true }));
+        await sleep(3500);
+        await dong();
+
+        const sau = await soLieu();
+        const conLai = sau.transactions.filter((t) => /kiểm đồng bộ/.test(t.note || ''));
+        if (conLai.length !== 2) return '✗ sinh thêm bản ghi: ' + conLai.length + ' thay vì 2';
+        if (cat && sau.categories.filter((c) => !c.deletedAt && c.name === cat.name).length !== 1)
+          return '✗ sinh thêm danh mục trùng';
+        return '✓ đứng yên — hai máy đã hội tụ';
+      `),
+  },
+
   {
     name: 'khôi phục từ bản sao lưu',
     run: (page) =>
@@ -707,7 +866,14 @@ for (const check of SHELL_CHECKS) {
 
 adb(['forward', '--remove-all'])
 
-const failed = results.filter((r) => !r.text.startsWith('✓'))
+/*
+ * Phep kiem tra ve undefined thi tinh la TRUOT, khong duoc lam do ca bo ra.
+ *
+ * Da xay ra that: mot phep kiem goi location.reload() giua chung, nen ngu
+ * canh eval bien mat va khong bao gio tra ve gi. Ca bo ra da in xong 27 dong
+ * ket qua roi moi vo o dong tong ket — mat sach.
+ */
+const failed = results.filter((r) => !String(r.text ?? '✗ không trả về kết quả').startsWith('✓'))
 console.log(`\n═══ ${results.length - failed.length}/${results.length} đạt ═══`)
 if (failed.length) {
   console.log('\nKhông đạt:')
