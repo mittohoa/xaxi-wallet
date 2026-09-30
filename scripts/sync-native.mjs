@@ -157,6 +157,33 @@ function patchGradleSigning() {
     changes.push('bật rút gọn mã và tài nguyên cho bản release')
   }
 
+  /*
+   * Ky ban debug bang khoa PHAT HANH — chi khi duoc yeu cau ro rang.
+   *
+   * VI SAO CAN: bo ra `npm run device:check` lai qua cong go loi WebView, ma
+   * ban phat hanh co y tat cong do. Cai ban debug de len thi Android tu choi vi
+   * khac chu ky, con go app ra la XOA SACH du lieu tai chinh that cua nguoi
+   * dung. Ky cung mot khoa thi cai de duoc, giu nguyen du lieu, va bo ra chay
+   * duoc tren chinh may that.
+   *
+   * VI SAO PHAI CO CONG BAT: mot ban debug ky bang khoa phat hanh la mot ban
+   * cap nhat hop le cua app that — no mo cong go loi va khong rut gon ma. De
+   * mac dinh thi som muon co ban nhu vay di ra ngoai. Bien moi truong bat buoc
+   * bien no thanh mot viec phai co y lam.
+   */
+  if (!text.includes('XAXI_DEBUG_RELEASE_SIGNED')) {
+    text = text.replace(
+      /buildTypes \{/,
+      `buildTypes {
+        debug {
+            if (System.getenv('XAXI_DEBUG_RELEASE_SIGNED') == '1' && rootProject.file('keystore.properties').exists()) {
+                signingConfig signingConfigs.release
+            }
+        }`,
+    )
+    changes.push('ban debug ky bang khoa phat hanh khi XAXI_DEBUG_RELEASE_SIGNED=1')
+  }
+
   if (changes.length) writeFileSync(path, text, 'utf8')
   return changes
 }

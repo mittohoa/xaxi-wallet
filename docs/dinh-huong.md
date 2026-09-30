@@ -915,3 +915,32 @@ Sau khi sửa, đo lại đúng đường đó: số dư ra 1.854.000 đ = 2.000
 Hai câu hỏi cuối §3.6 còn nguyên: chung ví giữa nhiều người (đổi hẳn mô hình
 khoá), và đồng bộ tự động hay bấm nút. Bản này là **bấm nút** — không chạy nền,
 không tốn pin, không bất ngờ.
+
+## 17. Chạy bộ rà trên máy đang có dữ liệu thật
+
+`npm run device:check` lái app qua cổng gỡ lỗi WebView, mà bản phát hành **cố
+ý tắt** cổng đó. Cài bản debug thường đè lên thì Android từ chối vì khác chữ
+ký, còn gỡ app ra là xoá sạch dữ liệu tài chính thật của người dùng — tức là bộ
+rà chỉ chạy được trên máy trống, đúng nơi nó ít giá trị nhất.
+
+`npm run android:debug-signed` ký bản debug bằng **khoá phát hành**. Cùng chữ
+ký thì cài đè được, dữ liệu giữ nguyên, và bộ rà chạy trên chính máy thật.
+
+### Vì sao phải có cổng bật, không để mặc định
+
+Một bản debug ký bằng khoá phát hành là **một bản cập nhật hợp lệ của app**: nó
+mở cổng gỡ lỗi và không rút gọn mã. Để mặc định thì sớm muộn có bản như vậy đi
+ra ngoài. Nên khối ký chỉ có tác dụng khi biến môi trường
+`XAXI_DEBUG_RELEASE_SIGNED=1` — biến nó thành một việc phải cố ý làm.
+
+Rà xong phải cài lại bản phát hành ngay. Kiểm được: chuyển tiếp cổng
+`webview_devtools_remote_<pid>` rồi gọi `/json/list`; bản phát hành phải từ chối.
+
+### Lần chạy đầu sau khi làm bia mộ
+
+Đây là lý do việc này đáng làm. Bia mộ đụng vào **mọi đường đọc dữ liệu** trong
+app; quên lọc một chỗ thì khoản đã xoá hiện lại đúng ở đó, mà các chỗ khác vẫn
+đúng nên nó nhìn như dữ liệu hỏng chứ không như lỗi mã. 282 bài kiểm không thấy
+được điều đó, vì chúng gọi thẳng vào hàm chứ không đi qua giao diện.
+
+Kết quả: **21/21 đạt**, và bộ rà tự trả lại dữ liệu ban đầu sau khi chạy.
