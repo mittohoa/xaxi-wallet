@@ -14,6 +14,7 @@
     "android:apk": "npm run android:sync && node scripts/gradle.mjs assembleDebug",
     "android:install": "npm run android:apk && node scripts/install-apk.mjs",
     "android:release": "npm run android:sync && node scripts/gradle.mjs assembleRelease",
+    "android:bundle": "npm run android:sync && node scripts/gradle.mjs bundleRelease",
     "android:debug-signed": "node scripts/debug-signed.mjs",
     "android:open": "npm run android:sync && cap open android",
     "tauri": "tauri",

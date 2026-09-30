@@ -16,6 +16,7 @@ import android.view.Window;
 import android.view.WindowManager;
 
 import androidx.core.content.FileProvider;
+import androidx.core.view.WindowCompat;
 import androidx.core.view.WindowInsetsControllerCompat;
 
 import java.io.File;
@@ -165,12 +166,33 @@ public class ShellPlugin extends Plugin {
 
             window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
             window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
+
+            /*
+             * Tu API 35 (edge-to-edge bat buoc), setStatusBarColor va
+             * setNavigationBarColor la HAM RONG — he dieu hanh khong con cho app
+             * to thanh he thong nua, noi dung web hien thang qua duoi do.
+             *
+             * Van goi cho may cu (API 34 tro xuong) van dung duoc.
+             */
             window.setStatusBarColor(color);
             window.setNavigationBarColor(color);
 
-            // Nen sang thi bieu tuong phai toi, va nguoc lai
+            /*
+             * Khong con to duoc thanh he thong thi MAU BIEU TUONG tren no la thu
+             * duy nhat con dieu khien duoc — va no thanh bat buoc.
+             *
+             * Do tren may ao Android 17: nen sang ma bieu tuong van trang, tuc
+             * gio, song, pin BIEN MAT hoan toan. Nguoi dung mat dong ho va vach
+             * pin ngay khi mo app.
+             *
+             * Phai bao he dieu hanh rang app tu lo phan long khung TRUOC, roi moi
+             * lay bo dieu khien qua WindowCompat. Dung `new
+             * WindowInsetsControllerCompat(...)` truc tiep thi tren API moi no
+             * khong gan vao dung cua so.
+             */
+            WindowCompat.setDecorFitsSystemWindows(window, false);
             WindowInsetsControllerCompat controller =
-                new WindowInsetsControllerCompat(window, window.getDecorView());
+                WindowCompat.getInsetsController(window, window.getDecorView());
             controller.setAppearanceLightStatusBars(!dark);
             controller.setAppearanceLightNavigationBars(!dark);
         });

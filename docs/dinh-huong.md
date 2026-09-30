@@ -1221,3 +1221,66 @@ năm độ phân giải đổi theo.
 đầu toạ độ chạy từ 33 đến 93 và chữ X bị cắt mép ngay trên màn hình chính. Toạ
 độ tính bằng cách chiếu hệ 512 của `brand/icon.svg` vào khung 108:
 `x' = 54 + (x - 256) * 66/512`.
+
+## 25. Nâng lên API 36 để phát hành lên Play
+
+```
+minSdkVersion     22   giữ nguyên — mức sàn thiết bị, không liên quan Play
+compileSdkVersion 36
+targetSdkVersion  36   ngưỡng Play đòi
+```
+
+Bản Capacitor sinh ra mặc định là **34** — hai thế hệ cũ, và bị chặn ngay ở
+bước tải lên. `minSdk` thì **không** nâng: đó là mức sàn của thiết bị chạy được,
+nâng nó lên là cắt bỏ mọi máy Android cũ, kể cả chính máy đang dùng để thử.
+
+Phải vá bằng script (`patch-sdk-versions.mjs`): `android/variables.gradle` do
+Capacitor sinh và thư mục `android/` thì gitignore. Sửa tay là mất ngay lần
+`cap add android` kế tiếp — **mà mất trong im lặng**: build vẫn chạy, chỉ là app
+tụt về API cũ và Play từ chối lúc tải lên.
+
+### Điều targetSdk 36 kéo theo, và lỗi nó làm lộ ra
+
+Từ API 35, Android **ép edge-to-edge**: nội dung tràn xuống dưới thanh trạng
+thái và thanh điều hướng, còn `setStatusBarColor()` và `setNavigationBarColor()`
+thành **hàm rỗng** — app không còn được tô thanh hệ thống nữa.
+
+Phần bố cục thì app đã sẵn sàng từ trước nhờ `viewport-fit=cover` và
+`env(safe-area-inset-*)`. Nhưng khi không tô được thanh nữa thì **màu biểu tượng
+trên nó là thứ duy nhất còn điều khiển được — và nó thành bắt buộc.**
+
+Đo trên máy ảo Android 17: nền sáng mà biểu tượng vẫn trắng, tức **giờ, sóng,
+pin biến mất hoàn toàn**. Người dùng mất đồng hồ và vạch pin ngay khi mở app.
+
+Gốc rễ: `new WindowInsetsControllerCompat(window, decorView)` dựng trực tiếp thì
+trên API mới không gắn vào đúng cửa sổ. Phải báo hệ điều hành rằng app tự lo
+phần lồng khung **trước**, rồi mới lấy bộ điều khiển:
+
+```java
+WindowCompat.setDecorFitsSystemWindows(window, false);
+WindowInsetsControllerCompat c = WindowCompat.getInsetsController(window, decorView);
+c.setAppearanceLightStatusBars(!dark);
+```
+
+### Vì sao phải có máy ảo
+
+Máy thử thật chạy Android 13, mà edge-to-edge chỉ bị ép từ Android 15. Nâng
+targetSdk trên máy đó thì **không thấy gì khác cả** — lỗi nằm im cho tới khi có
+người dùng máy mới.
+
+Máy ảo `Pixel_6_Pro` sẵn có chạy android-37 nên dùng được ngay. Đã kiểm cả nền
+sáng lẫn nền tối trên đó, rồi cài lại lên máy thật để chắc Android 13 không hỏng
+theo.
+
+### Số liệu cho Play
+
+| | |
+|---|---|
+| App ID | `com.mittohoa.xaxi_wallet` — **không đổi được** sau lần phát hành đầu |
+| SHA-256 (khoá tải lên) | `7A:62:6C:25:…:AD:F3` — xem bằng `keytool -list -v` |
+| AAB | `npm run android:bundle` → `android/app/build/outputs/bundle/release/app-release.aab` |
+
+**Một chỗ rất dễ nhầm:** Play mặc định bật Play App Signing, nên Google ký lại
+app bằng chứng chỉ của họ. SHA-256 ở trên là **chứng chỉ TẢI LÊN**, chỉ để Play
+xác nhận đúng người gửi. Mọi tích hợp cần vân tay (deep link, Google API) phải
+lấy **app signing certificate** trong Play Console, không phải con số này.

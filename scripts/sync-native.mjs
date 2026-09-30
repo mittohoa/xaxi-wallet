@@ -10,6 +10,7 @@
 import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs'
 import { buildVersion } from './version.mjs'
 import { APP_LABEL, patchAppLabel } from './patch-app-label.mjs'
+import { TARGET_SDK, patchSdkVersions } from './patch-sdk-versions.mjs'
 import { dirname, join, relative, resolve } from 'node:path'
 
 const SOURCE = resolve('android-native')
@@ -305,4 +306,12 @@ if (labelChanges.length) {
   for (const c of labelChanges) console.log(`  ${c}`)
 } else {
   console.log(`Nhan app da la "${APP_LABEL}".`)
+}
+
+const sdkChanges = patchSdkVersions(TARGET)
+if (sdkChanges.length) {
+  console.log('Da dat muc SDK:')
+  for (const c of sdkChanges) console.log(`  ${c}`)
+} else {
+  console.log(`Muc SDK da la ${TARGET_SDK}.`)
 }
