@@ -878,6 +878,38 @@ sáng nó lùi lại một ngày, nên bản sao lưu ghi 30/09 còn tệp đồ
 vài giây ghi 29/09 — người dùng không biết tệp nào mới hơn. Đã đổi sang
 `todayISO()` như cả phần còn lại của app.
 
+### Hai lỗi chỉ lộ ra khi bấm nút thật trên máy
+
+Cả hai đều qua được 280 bài kiểm, và cả hai đều chặn hẳn tính năng.
+
+**Một — không chọn nổi chính tệp app vừa xuất.** Ô chọn tệp đặt
+`accept=".xaxi,application/json"`. Nhưng Android dựng bộ chọn tệp theo MIME chứ
+không theo đuôi; `.xaxi` không có MIME nào nên phần đó bị bỏ qua hoàn toàn, và
+tệp hiện ra trong danh sách **bị làm mờ, không bấm được**. Bỏ hẳn bộ lọc: chọn
+nhầm tệp khác thì đã có thông báo rõ ràng đỡ, còn một bộ lọc giấu mất tệp duy
+nhất mà tính năng sinh ra thì tệ hơn hẳn.
+
+**Hai — máy mới xoá mất số dư của máy cũ.** Đây là lỗi nặng, và nó nằm ngay ở
+lần dùng thật đầu tiên.
+
+Cài app lên máy mới, nó gieo "Tiền mặt" với số dư đầu kỳ 0 vào lúc T2. Nhập tệp
+từ máy cũ có "Tiền mặt" thật, sửa lần cuối lúc T1 < T2. Hai ví cùng tên bị gộp —
+và cái **mới hơn**, tức cái **trắng**, thắng. Số dư đầu kỳ biến mất, không một
+lời báo.
+
+Đo trên máy thật trước khi sửa: nhập một tệp chứa ba giao dịch tổng 146.000 đ mà
+số dư tụt 2.146.000 đ. Hai triệu chênh ra chính là số dư đầu kỳ bị ví trắng ghi
+đè.
+
+Gốc rễ: bản ghi gieo sẵn **không phải một chỉnh sửa của người dùng**, nó là chỗ
+trống có sẵn tên — nên nó phải THUA mọi bản thật. `seedStamp()` đóng mốc sửa
+bằng 0. Người dùng đổi tên hay đặt số dư thì `touch()` nâng mốc lên và bản đó
+thắng bình thường.
+
+Sau khi sửa, đo lại đúng đường đó: số dư ra 1.854.000 đ = 2.000.000 − 146.000.
+
+---
+
 ### Việc chưa quyết, vẫn chưa quyết
 
 Hai câu hỏi cuối §3.6 còn nguyên: chung ví giữa nhiều người (đổi hẳn mô hình

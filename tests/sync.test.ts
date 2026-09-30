@@ -278,3 +278,39 @@ test('tệp sao lưu bản cũ không có goals thì đọc thành mảng rỗng
   const { data } = mergeData(cu, { ...rong(), goals: [] })
   assert.deepEqual(data.goals, [])
 })
+
+/**
+ * Bản ghi gieo sẵn phải THUA bản thật, dù nó mới hơn về thời gian.
+ *
+ * Hỏng đúng ở lần dùng thật đầu tiên: cài app lên máy mới, nó gieo "Tiền mặt"
+ * số dư 0 vào lúc T2; nhập tệp từ máy cũ có "Tiền mặt" thật sửa lần cuối T1 <
+ * T2. Hai ví cùng tên bị gộp, cái TRẮNG thắng vì mới hơn, và số dư đầu kỳ biến
+ * mất không một lời báo.
+ *
+ * Đã đo trên máy thật trước khi sửa: nhập tệp chứa ba giao dịch 146.000 đ mà số
+ * dư tụt 2.146.000 đ.
+ */
+test('ví gieo sẵn trên máy mới không được ghi đè ví thật của máy cũ', () => {
+  const viGieo = { id: 'w-moi', name: 'Tiền mặt', kind: 'cash', openingBalance: 0, updatedAt: 0, deviceId: 'may-moi' } as never
+  const viThat = { id: 'w-cu', name: 'Tiền mặt', kind: 'cash', openingBalance: 2_000_000, updatedAt: 100, deviceId: 'may-cu' } as never
+
+  const { data } = mergeData({ ...rong(), wallets: [viGieo] }, { ...rong(), wallets: [viThat] }, 999)
+
+  const song = data.wallets.filter((w) => !w.deletedAt)
+  assert.equal(song.length, 1)
+  assert.equal((song[0] as { openingBalance: number }).openingBalance, 2_000_000, 'số dư đầu kỳ thật phải sống sót')
+  assert.equal(song[0].id, 'w-cu')
+})
+
+test('hai máy đều mới gieo thì vẫn ra cùng một kết quả', () => {
+  const a = { id: 'w-A', name: 'Tiền mặt', kind: 'cash', openingBalance: 0, updatedAt: 0, deviceId: 'may-A' } as never
+  const b = { id: 'w-B', name: 'Tiền mặt', kind: 'cash', openingBalance: 0, updatedAt: 0, deviceId: 'may-B' } as never
+
+  const x = mergeData({ ...rong(), wallets: [a] }, { ...rong(), wallets: [b] }, 999)
+  const y = mergeData({ ...rong(), wallets: [b] }, { ...rong(), wallets: [a] }, 999)
+  assert.equal(
+    x.data.wallets.filter((w) => !w.deletedAt)[0].id,
+    y.data.wallets.filter((w) => !w.deletedAt)[0].id,
+    'hoà thì phá thế hoà bằng deviceId, không phải theo thứ tự tham số',
+  )
+})

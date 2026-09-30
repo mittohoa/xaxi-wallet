@@ -708,13 +708,18 @@ export function Settings() {
                 <Icon name="download" /> Nhập tệp từ máy khác
               </button>
             </div>
-            <input
-              ref={syncInput}
-              type="file"
-              accept=".xaxi,application/json"
-              hidden
-              onChange={(e) => nhapDongBo(e.target.files?.[0])}
-            />
+            {/*
+              KHÔNG lọc theo kiểu tệp — cố ý.
+
+              Android dựng bộ chọn tệp theo MIME chứ không theo đuôi. Đuôi
+              `.xaxi` không có MIME nào, nên `accept=".xaxi"` bị bỏ qua hoàn
+              toàn và tệp hiện ra trong danh sách nhưng BỊ LÀM MỜ, không chọn
+              được. Người dùng không nhập nổi chính tệp app vừa xuất ra.
+
+              Chọn nhầm tệp khác thì đã có thông báo rõ ràng đỡ — một bộ lọc
+              giấu mất tệp duy nhất mà tính năng này sinh ra thì tệ hơn hẳn.
+            */}
+            <input ref={syncInput} type="file" hidden onChange={(e) => nhapDongBo(e.target.files?.[0])} />
 
             <div className="hint" style={{ marginTop: 10 }}>
               Nhập là <b>hợp nhất</b>, không phải ghi đè: bản nào mới hơn thắng, khoản đã xoá ở máy này không mọc lại từ

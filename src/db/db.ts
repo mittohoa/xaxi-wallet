@@ -110,6 +110,25 @@ export function stamp<T extends object>(record: T): T & { id: Id } & Syncable {
   return { id: newId(), updatedAt: Date.now(), deviceId: deviceId(), ...record } as T & { id: Id } & Syncable
 }
 
+/**
+ * Như `stamp()`, nhưng mốc sửa là 0 — dành cho BỘ HẠT GIỐNG.
+ *
+ * Bản ghi gieo sẵn không phải một chỉnh sửa của người dùng, nó là chỗ trống có
+ * sẵn tên. Nên nó phải THUA mọi bản thật khi hợp nhất.
+ *
+ * Nếu để `Date.now()` thì hỏng đúng ở lần dùng thật đầu tiên: cài app lên máy
+ * mới, nó gieo "Tiền mặt" với số dư đầu kỳ 0 vào lúc T2; nhập tệp từ máy cũ có
+ * "Tiền mặt" thật sửa lần cuối lúc T1 < T2. Hai ví cùng tên bị gộp, và cái mới
+ * hơn — tức cái TRẮNG — thắng. Số dư đầu kỳ của người dùng biến mất, không có
+ * gì báo.
+ *
+ * Đã đo trên máy thật: nhập một tệp chứa ba giao dịch 146.000 đ mà số dư tụt
+ * 2.146.000 đ. Hai triệu chênh ra chính là số dư đầu kỳ bị ví trắng ghi đè.
+ */
+export function seedStamp<T extends object>(record: T): T & { id: Id } & Syncable {
+  return { ...stamp(record), updatedAt: 0 }
+}
+
 /** Mốc sửa cho một lần cập nhật — luôn đi kèm mọi lệnh update */
 export function touch(): Pick<Syncable, 'updatedAt' | 'deviceId'> {
   return { updatedAt: Date.now(), deviceId: deviceId() }
@@ -221,10 +240,10 @@ export async function seedIfEmpty(): Promise<void> {
     // Đếm bản còn sống, không đếm bia mộ: người dùng xoá hết danh mục rồi mở
     // lại app thì phải được gieo lại bộ mặc định, chứ không phải nhìn màn trống
     if (live(await db.categories.toArray()).length === 0)
-      await db.categories.bulkAdd(DEFAULT_CATEGORIES.map((c, i) => stamp({ ...c, createdAt: i })))
+      await db.categories.bulkAdd(DEFAULT_CATEGORIES.map((c, i) => seedStamp({ ...c, createdAt: i })))
     if (live(await db.wallets.toArray()).length === 0)
-      await db.wallets.bulkAdd(DEFAULT_WALLETS.map((w, i) => stamp({ ...w, createdAt: i })))
-    if (live(await db.settings.toArray()).length === 0) await db.settings.add(stamp(DEFAULT_SETTINGS))
+      await db.wallets.bulkAdd(DEFAULT_WALLETS.map((w, i) => seedStamp({ ...w, createdAt: i })))
+    if (live(await db.settings.toArray()).length === 0) await db.settings.add(seedStamp(DEFAULT_SETTINGS))
 
     // Du lieu chuyen sang tu ban cu chua co hai danh muc chuyen tien
     const slugs = new Set(live(await db.categories.toArray()).map((c) => c.slug).filter(Boolean))
@@ -233,7 +252,7 @@ export async function seedIfEmpty(): Promise<void> {
     )
     if (missing.length) {
       await db.categories.bulkAdd(
-        missing.map((c) => stamp({ ...c, createdAt: DEFAULT_CATEGORIES.indexOf(c) })),
+        missing.map((c) => seedStamp({ ...c, createdAt: DEFAULT_CATEGORIES.indexOf(c) })),
       )
     }
   })
