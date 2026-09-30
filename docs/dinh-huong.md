@@ -1102,3 +1102,33 @@ Hai bản vá, cả hai đều cần:
 ra là đường hay hỏng nhất — nó chạm vào hệ điều hành, vào quyền, vào khả năng
 của trình duyệt — và cũng là đường mà người dùng tin tưởng nhất, vì họ tưởng dữ
 liệu đã an toàn ở đâu đó.
+
+## 22. Bản desktop đã hỏng từ lâu mà không ai biết
+
+`npm run desktop:build` chưa chạy được lần nào kể từ commit đổi mã định danh
+sang `com.mittohoa.xaxi_wallet`. Lý do: **Tauri từ chối dấu gạch dưới** trong
+bundle identifier. Bản vá cho Android đã lặng lẽ làm hỏng bản desktop, và vì
+không ai mở bản desktop nên nó nằm im như thế qua rất nhiều commit.
+
+Đổi phía Tauri sang `com.mittohoa.xaxi-wallet`. **Không** đổi phía Android: đó
+là `applicationId` của gói đã cài trên máy người dùng, đổi nó nghĩa là một app
+khác hẳn và mất sạch dữ liệu. Hai nền tảng không cần trùng mã định danh.
+
+### Và một lỗi thứ hai, cùng khuôn với `adb`
+
+`cargo` có trên máy nhưng **không nằm trong PATH** của cả PowerShell lẫn bash —
+rustup chỉ thêm `~/.cargo/bin` vào shell đăng nhập. Nên lệnh đổ ngay dòng đầu
+với "cargo not found", dù bộ công cụ đã cài đủ.
+
+Đây là lần thứ ba dự án gặp đúng chuyện này: JDK, rồi `adb`, giờ `cargo`. Cách
+giải đã thành khuôn — **đừng tin PATH, đi tìm**. `scripts/desktop.mjs` dò
+`~/.cargo/bin` rồi tự thêm vào PATH của tiến trình con.
+
+### Kết quả
+
+Dựng xong trong 6 phút 17 (lần đầu, biên dịch từ đầu), ra `xaxi.exe` 3,1 MB.
+Chạy thử: cửa sổ mở được, tiêu đề "XAXI — Quản lý thu chi".
+
+Bốn mặt của app giờ đều đã được mở ít nhất một lần trong cùng một đợt: Android
+(bản phát hành trên A50s), web (Chrome thật), desktop (Windows), và bộ rà 24 mục
+chạy qua giao diện thật.
