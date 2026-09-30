@@ -1284,3 +1284,44 @@ theo.
 app bằng chứng chỉ của họ. SHA-256 ở trên là **chứng chỉ TẢI LÊN**, chỉ để Play
 xác nhận đúng người gửi. Mọi tích hợp cần vân tay (deep link, Google API) phải
 lấy **app signing certificate** trong Play Console, không phải con số này.
+
+## 26. Bộ dựng biểu tượng PNG, không thêm gói nào
+
+`npm run icons:build` sinh 18 tệp PNG và một tệp `.ico` từ **một nguồn hình duy
+nhất**.
+
+Đổi logo xong thì Android đúng ngay vì nó dùng vector, nhưng PNG cho PWA và bản
+desktop nằm lại với nền cũ. Máy này không có bộ dựng ảnh nào, và thêm một gói
+phụ thuộc chỉ để vẽ **hai đường thẳng với một hình chữ nhật bo góc** là cái giá
+không đáng — cùng lý lẽ đã dùng cho ZIP, IMAP và MIME.
+
+### Vẽ thẳng từ toạ độ, không đọc tệp SVG
+
+Đọc SVG thì phải viết bộ phân tích SVG — một việc lớn hơn nhiều so với việc cần
+làm. Hình được dựng từ chính các hằng số toạ độ, trùng bộ với `brand/icon.svg`.
+
+Cách vẽ: mỗi điểm ảnh lấy 16 mẫu con, mỗi mẫu hỏi ba câu — nằm trong khung bo
+góc không, cách đường vào bao xa, cách đường ra bao xa — rồi lấy trung bình.
+Không có thư viện đồ hoạ nào, chỉ là hình học phẳng.
+
+**Đầu tròn và góc tròn có sẵn, không phải xử lý riêng.** Khoảng cách tới một
+đường gấp khúc là nhỏ nhất qua từng đoạn; quanh mỗi điểm mút, tập hợp các điểm
+cách đều chính là một hình tròn.
+
+### Một chi tiết nhỏ nhưng thấy ngay nếu sai
+
+Màu trung bình phải chia cho **số mẫu CÓ MÀU**, không phải tổng số mẫu. Ngoài
+khung bo góc là trong suốt; gộp chúng vào phép chia thì bốn góc cong bị viền tối
+— thứ nhìn ra ngay ở cỡ 512 và không ai giải thích nổi nếu không biết vì sao.
+
+### `.ico` chứa PNG bên trong
+
+ICO vốn chứa ảnh bitmap thô, nhưng từ Windows Vista nó nhận thẳng PNG — gọn hơn
+nhiều và không phải viết bộ mã hoá BMP thứ hai. Tệp sinh ra gồm sáu cỡ
+(16…256), tổng 8,4 KB.
+
+Bài kiểm thật cho nó là **bản desktop**: Tauri từ chối build nếu biểu tượng hỏng.
+Đã dựng lại và chạy thử — cửa sổ mở được.
+
+**Chưa làm:** `icon.icns` (chỉ dùng khi dựng bản macOS). Đó là định dạng riêng
+của Apple, và chưa có nhu cầu.

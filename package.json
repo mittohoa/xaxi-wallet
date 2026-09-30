@@ -24,6 +24,7 @@
     "device:check": "node scripts/device-check.mjs",
     "bank:inbox": "node scripts/bank-inbox.mjs",
     "icons:sheet": "node scripts/icon-sheet.mjs",
+    "icons:build": "node scripts/make-icons.mjs",
     "telegram:bot": "node scripts/telegram-bot.mjs"
   },
   "dependencies": {
