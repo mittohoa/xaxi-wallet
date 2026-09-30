@@ -11,6 +11,7 @@ import { formatMoney, parseAmount } from '../lib/format'
 import { formatBytes, readStorageStatus, requestPersistence, type StorageStatus } from '../lib/storage'
 import { nativeShareAvailable } from '../lib/native/shell'
 import { nextCategoryColor } from '../lib/palette'
+import { APP_VERSION } from '../lib/version'
 import { applySyncFile, buildSyncFile, syncFileName } from '../lib/sync/apply'
 import { saveSettings, useApp } from '../store'
 import type { Id, Recurring, Settings as SettingsType, TxKind, WalletKind } from '../types'
@@ -742,7 +743,7 @@ export function Settings() {
         </ul>
       </div>
 
-      <p className="footnote">XAXI · phiên bản 1.0 · hoạt động offline</p>
+      <p className="footnote">XAXI · {APP_VERSION} · hoạt động offline</p>
 
       {sheet === 'statement' && <StatementSheet onClose={() => setSheet(null)} />}
       {editingRule && <RecurringSheet editing={editingRule} onClose={() => setEditingRule(null)} />}

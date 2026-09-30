@@ -992,3 +992,34 @@ Hai điều kiện, không phải một:
 
 Lời nhắc đồng bộ nhường chỗ cho lời nhắc "đã lâu chưa ghi gì": hai dòng cùng lúc
 thì không dòng nào được đọc.
+
+## 19. Số hiệu bản dựng
+
+`versionCode` và `versionName` sinh từ git mỗi lần đồng bộ sang Android:
+
+```
+XAXI · 1.0.0+46* · a1aabc3 · hoạt động offline
+```
+
+`46` là số commit, `a1aabc3` là mã commit, dấu `*` nghĩa là bản này dựng từ cây
+làm việc còn thay đổi chưa commit.
+
+Trước đây cả hai viết cứng thành `1`/"1.0", nên **mọi bản dựng đều giống nhau**.
+Trong một buổi chiều đã có hơn chục bản cài chồng lên nhau; nếu có lỗi thì không
+ai nói được máy đang chạy bản nào, và bản vừa sửa với bản hỏng nhìn y hệt.
+
+Android còn đòi `versionCode` **tăng dần** thì mới nhận bản cập nhật. Số commit
+thoả điều đó một cách tự nhiên, không cần ai nhớ tăng tay.
+
+### Một bài kiểm bắt được điều mà mắt không thấy
+
+Bản đầu dùng thẳng `__APP_VERSION__` — biến do **Vite** thay lúc build — trong
+màn hình Cài đặt. Bản web chạy đúng. Nhưng bộ chạy kiểm dùng esbuild, không biết
+biến đó, nên Cài đặt ném `ReferenceError` ngay khi render.
+
+Bài kiểm bắt được không phải bài nào về phiên bản, mà là **"mọi lệnh đều mở được
+màn hình của nó"** — nó có đi qua Cài đặt. Đó chính là lý do bài kiểm quét toàn
+bộ lệnh đáng giá hơn nhiều bài kiểm chuyên biệt gộp lại.
+
+`lib/version.ts` hỏi `typeof` trước khi dùng, nên mã không còn phụ thuộc vào một
+bộ đóng gói cụ thể.

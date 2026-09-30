@@ -8,6 +8,7 @@
  * Goi nhieu lan khong sao — moi thay doi deu co kiem tra truoc khi ghi.
  */
 import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs'
+import { buildVersion } from './version.mjs'
 import { dirname, join, relative, resolve } from 'node:path'
 
 const SOURCE = resolve('android-native')
@@ -171,6 +172,24 @@ function patchGradleSigning() {
    * mac dinh thi som muon co ban nhu vay di ra ngoai. Bien moi truong bat buoc
    * bien no thanh mot viec phai co y lam.
    */
+  /*
+   * So hieu ban dung, sinh tu git.
+   *
+   * Truoc day versionCode 1 va versionName "1.0" viet cung, nen MOI ban dung
+   * deu la "1.0" — khong ai noi duoc may dang chay ban nao. Android con doi
+   * versionCode phai TANG DAN thi moi nhan ban cap nhat; so commit thoa dieu do
+   * mot cach tu nhien va khong can ai nho tang tay.
+   *
+   * Thay moi lan dong bo, nen build nao cung mang dung so hieu cua no.
+   */
+  {
+    const v = buildVersion()
+    const truoc = text
+    text = text.replace(/versionCode\s+\S+/, `versionCode ${v.code}`)
+    text = text.replace(/versionName\s+"[^"]*"/, `versionName "${v.name}"`)
+    if (text !== truoc) changes.push(`so hieu ban dung ${v.name} (code ${v.code})`)
+  }
+
   if (!text.includes('XAXI_DEBUG_RELEASE_SIGNED')) {
     text = text.replace(
       /buildTypes \{/,

@@ -68,13 +68,6 @@ public class OcrPlugin extends Plugin {
                 JSObject result = new JSObject();
                 result.put("text", text.getText());
 
-                // Tra ve tung khoi de lop web co the uu tien dong chua so tien
-                JSArray blocks = new JSArray();
-                for (Text.TextBlock block : text.getTextBlocks()) {
-                    blocks.put(block.getText());
-                }
-                result.put("blocks", blocks);
-
                 /*
                  * Tra ve tung DONG kem TOA DO.
                  *

@@ -9,7 +9,7 @@ import { Capacitor, registerPlugin } from '@capacitor/core'
 import { type OcrLine, rebuildLayout } from '../receipt-layout'
 
 interface OcrPlugin {
-  recognize(options: { image: string }): Promise<{ text: string; blocks: string[]; lines?: OcrLine[] }>
+  recognize(options: { image: string }): Promise<{ text: string; lines?: OcrLine[] }>
   isAvailable(): Promise<{ available: boolean }>
 }
 
@@ -44,7 +44,6 @@ export type { OcrLine }
 
 export interface OcrResult {
   text: string
-  blocks: string[]
   lines: OcrLine[]
 }
 
@@ -57,7 +56,6 @@ export async function recognizeImage(file: File): Promise<OcrResult> {
     // Bo cuc dung lai tu toa do luon dung hon chuoi ML Kit tu ghep; ban cu chi
     // dung khi plugin chua tra ve toa do (ban Android cu hon)
     text: (lines.length > 0 ? rebuildLayout(lines) : result.text) ?? '',
-    blocks: result.blocks ?? [],
     lines,
   }
 }
