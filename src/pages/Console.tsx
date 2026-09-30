@@ -351,12 +351,6 @@ export function Console({
     <div className="console">
       <div className="console-scroll">
         <header className="console-hero">
-          {/* Hàng riêng cho bánh răng: đặt tuyệt đối thì thẻ số dư che mất nó */}
-          <div className="hero-top">
-            <button type="button" className="icon-btn console-gear" onClick={() => onCommand('settings')} aria-label="Cài đặt">
-              <Icon name="settings" />
-            </button>
-          </div>
           {/*
             Số dư nằm TRONG một tấm thẻ, không trôi trần trên nền.
 
@@ -370,18 +364,34 @@ export function Console({
             `.panel-ink` (§2 hệ thống thiết kế): màu thương hiệu là cố định, nhờ
             vậy chỉ cần kiểm định một lần.
           */}
-          <div className="hero-card">
-            <span className="hero-card-label">
-              {app.settings.currency === 'VND' ? 'Tổng số dư' : 'Balance'}
-            </span>
-            <div className="hero-figure"><Figure value={netWorth} /></div>
-            <div className="hero-sub">
-              tháng {Number(month.slice(5, 7))}{' '}
-              <b>
-                {monthTotals.net < 0 ? '−' : '+'}
-                {formatMoney(Math.abs(monthTotals.net))}
-              </b>
+          <div className="hero-wrap">
+            <div className="hero-card">
+              <span className="hero-card-label">
+                {app.settings.currency === 'VND' ? 'Tổng số dư' : 'Balance'}
+              </span>
+              <div className="hero-figure"><Figure value={netWorth} /></div>
+              <div className="hero-sub">
+                tháng {Number(month.slice(5, 7))}{' '}
+                <b>
+                  {monthTotals.net < 0 ? '−' : '+'}
+                  {formatMoney(Math.abs(monthTotals.net))}
+                </b>
+              </div>
             </div>
+
+            {/*
+              Nút lồng vào chỗ khuyết, và nó phải là ANH EM của thẻ chứ không
+              nằm trong thẻ: `mask` cắt cả con bên trong, nên đặt vào trong là
+              nút bị cắt mất cùng với góc.
+            */}
+            <button
+              type="button"
+              className="icon-btn console-gear"
+              onClick={() => onCommand('settings')}
+              aria-label="Cài đặt"
+            >
+              <Icon name="settings" />
+            </button>
           </div>
 
           {/*

@@ -15,20 +15,29 @@
 }
 
 /*
- * Hàng trên cùng, chỉ chứa bánh răng.
+ * Thẻ số dư và nút lồng trong góc khuyết của nó.
  *
- * Trước đây bánh răng đặt tuyệt đối ở góc phải. Khi số dư còn là con số trần
- * thì không sao, nhưng thẻ số dư cao hơn nhiều và CHE MẤT nó — nút vẫn bấm được
- * mà gần như không nhìn thấy.
+ * Kích thước nút lấy từ luật vùng chạm (§7): không gì chạm được nhỏ hơn 44px.
+ * Bán kính chỗ khuyết = nửa nút + khe, nên đổi một con số là cả hai đi theo.
  */
-.hero-top {
-  display: flex;
-  justify-content: flex-end;
-  padding: 0 var(--s-2) var(--s-2);
+.hero-wrap {
+  position: relative;
+  margin: 0 var(--s-2);
+  --nut: 44px;
+  --khe: 7px;
 }
 
 .console-gear {
-  opacity: 0.5;
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: var(--nut);
+  height: var(--nut);
+  /*
+   * Đậm hơn một chút so với các nút phụ khác: đây là lối DUY NHẤT vào Cài đặt,
+   * mà Cài đặt là nơi chứa sao lưu, đồng bộ và xoá dữ liệu.
+   */
+  opacity: 0.75;
 }
 
 .console-gear:active {
@@ -45,10 +54,30 @@
  * Chữ dùng `--accent-ink` (mực) chứ không phải token chữ thường: nền lime luôn
  * sáng, nên chữ luôn phải tối — kể cả khi cả app đang ở chế độ tối.
  */
+/*
+ * Góc khuyết.
+ *
+ * `mask` với một vòng tròn trong suốt ở góc trên phải cắt một miếng khỏi thẻ,
+ * và nút cài đặt lồng vừa vào đó. Đây là hình khối làm bộ mẫu tham khảo đáng
+ * nhớ — nhưng chỉ đáng làm khi có thứ để đặt vào: một chỗ khuyết trống rỗng chỉ
+ * là một vết mẻ.
+ *
+ * Mask cắt CẢ CON BÊN TRONG, nên nút phải là anh em của thẻ, không nằm trong.
+ */
 .hero-card {
   position: relative;
-  margin: 0 var(--s-2);
   padding: var(--s-6) var(--s-5) var(--s-5);
+  --mask-r: calc(var(--nut) / 2 + var(--khe));
+  -webkit-mask-image: radial-gradient(
+    circle var(--mask-r) at calc(100% - var(--nut) / 2) calc(var(--nut) / 2),
+    transparent 100%,
+    #000 100%
+  );
+  mask-image: radial-gradient(
+    circle var(--mask-r) at calc(100% - var(--nut) / 2) calc(var(--nut) / 2),
+    transparent 100%,
+    #000 100%
+  );
   border-radius: var(--r-lg);
   background: linear-gradient(150deg, var(--accent), color-mix(in srgb, var(--accent) 72%, #4a7c0f));
   color: var(--accent-ink);
@@ -77,6 +106,9 @@
 
 .hero-card-label {
   position: relative;
+  display: inline-block;
+  /* Chừa chỗ cho góc khuyết, nếu không nhãn chui vào dưới nút */
+  max-width: calc(100% - var(--nut));
   font-size: var(--t-2xs);
   font-weight: var(--w-semi);
   text-transform: uppercase;

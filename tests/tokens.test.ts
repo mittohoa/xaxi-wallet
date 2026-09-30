@@ -45,8 +45,14 @@ test('mọi biến CSS được dùng đều đã được định nghĩa', () =
   const missing: string[] = []
   for (const file of files) {
     const text = readFileSync(file, 'utf8')
+    /*
+     * Biến cục bộ tính là đã định nghĩa, nhưng CHỈ trong chính tệp khai báo nó.
+     * Cho phép rộng hơn thì `var(--go-nham)` lại lọt lưới — mà đó đúng là thứ
+     * bài kiểm này sinh ra để chặn: CSS im lặng đổ về mặc định, không báo gì.
+     */
+    const cucBo = new Set([...text.matchAll(/(--[a-z0-9-]+)\s*:/g)].map((m) => m[1]))
     for (const m of text.matchAll(/var\((--[a-z0-9-]+)/g)) {
-      if (!have.has(m[1])) missing.push(`${file}: ${m[1]}`)
+      if (!have.has(m[1]) && !cucBo.has(m[1])) missing.push(`${file}: ${m[1]}`)
     }
   }
 
@@ -67,15 +73,36 @@ test('không được ghép tên biến CSS bằng chuỗi', () => {
   )
 })
 
-test('chỉ tokens.css được định nghĩa biến gốc', () => {
-  const elsewhere: string[] = []
+/**
+ * Luật là TOKEN THIẾT KẾ phải có một nguồn duy nhất — không phải cấm mọi biến.
+ *
+ * Bản đầu cấm mọi dòng `--x:` nằm ngoài tokens.css. Nhưng biến cục bộ của một
+ * bộ phận — như `--nut` trong thẻ số dư, để nút cài đặt và chỗ khuyết luôn khớp
+ * nhau khi đổi một con số — là cách viết CSS bình thường và tốt. Nó không phải
+ * token: không ai ngoài bộ phận đó dùng tới.
+ *
+ * Thứ thật sự nguy hiểm là định nghĩa ĐÈ LÊN GỐC ở nơi khác. Lúc đó cùng một
+ * tên token mang hai giá trị tuỳ tệp nào nạp sau, và đó mới là mất nguồn sự
+ * thật duy nhất.
+ */
+test('không tệp nào ngoài tokens.css được định nghĩa biến ở gốc', () => {
+  const loi: string[] = []
   for (const file of files) {
     if (file.replace(/\\/g, '/') === TOKENS) continue
     if (extname(file) !== '.css') continue
+
     const text = readFileSync(file, 'utf8')
-    for (const m of text.matchAll(/^\s*(--[a-z0-9-]+)\s*:/gim)) elsewhere.push(`${file}: ${m[1]}`)
+    // Tách theo khối: phần trước `{` là bộ chọn, phần sau là thân
+    for (const khoi of text.split('}')) {
+      const at = khoi.lastIndexOf('{')
+      if (at < 0) continue
+      const boChon = khoi.slice(0, at)
+      const than = khoi.slice(at + 1)
+      if (!/(^|[\s,])(:root|html|body)([\s,:]|$)/.test(boChon)) continue
+      for (const m of than.matchAll(/(--[a-z0-9-]+)\s*:/g)) loi.push(`${file}: ${m[1]}`)
+    }
   }
-  assert.deepEqual(elsewhere, [], 'định nghĩa biến ngoài tokens.css thì hệ thống mất một nguồn sự thật duy nhất')
+  assert.deepEqual(loi, [], 'định nghĩa token ở gốc ngoài tokens.css thì hệ thống mất một nguồn sự thật duy nhất')
 })
 
 /* ================= bộ màu danh mục ================= */

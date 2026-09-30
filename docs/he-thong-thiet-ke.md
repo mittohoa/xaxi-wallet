@@ -368,6 +368,22 @@ mà không phải đoán nên gõ chữ nào.
 Chip "Ghi đầy đủ" ở đáy bị bỏ — nút tròn đã gọi đúng lệnh đó và nổi hơn nhiều.
 Chỗ trống nhường cho các lối tắt app tự học từ thói quen người dùng.
 
+### Góc khuyết — chỉ đáng làm khi có thứ để đặt vào
+
+Thẻ số dư bị cắt một miếng tròn ở góc trên phải, và nút Cài đặt lồng vừa vào đó.
+Đây là hình khối làm bộ mẫu tham khảo đáng nhớ.
+
+Nhưng nó chỉ đáng làm vì có thứ để nhét vào: **một chỗ khuyết trống rỗng chỉ là
+một vết mẻ.** Nhờ nút vào nằm trong khuyết mà hàng riêng cho bánh răng — vừa
+thêm ở bước trước — bỏ được luôn, nên bố cục còn gọn hơn lúc đầu.
+
+Cách làm: `mask` với một vòng tròn trong suốt ở góc. Một chi tiết bắt buộc phải
+nhớ — **`mask` cắt cả con bên trong**, nên nút phải là *anh em* của thẻ chứ
+không nằm trong thẻ; đặt vào trong là nút bị cắt mất cùng với góc.
+
+Bán kính chỗ khuyết tính từ cỡ nút: `--mask-r: calc(var(--nut) / 2 + var(--khe))`.
+Đổi một con số là cả hai đi theo, không bao giờ lệch nhau.
+
 ### Một bài kiểm hỏi sai câu
 
 Bài "các nút mở màn hình trên trang chính vẫn còn" khoá cứng vào `.chip` chứa
