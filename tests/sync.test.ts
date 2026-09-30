@@ -314,3 +314,38 @@ test('hai máy đều mới gieo thì vẫn ra cùng một kết quả', () => {
     'hoà thì phá thế hoà bằng deviceId, không phải theo thứ tự tham số',
   )
 })
+
+/* ================= ngữ cảnh không an toàn ================= */
+
+/**
+ * `crypto.subtle` chỉ tồn tại trong "ngữ cảnh an toàn".
+ *
+ * HTTPS, localhost, Tauri và Capacitor đều an toàn. Nhưng bản web tự dựng trên
+ * một địa chỉ LAN qua HTTP thường thì nó là `undefined`, và lời gọi đầu tiên ném
+ * ra `TypeError: Cannot read properties of undefined` — câu đó không nói với
+ * người dùng điều gì cả.
+ *
+ * Nặng hơn: nút "Xuất tệp đồng bộ" từng bọc trong `try/finally` KHÔNG CÓ `catch`,
+ * nên lỗi biến mất hoàn toàn — nút hết mờ, và hết. Đúng kiểu hỏng đã từng làm
+ * mất đường xuất bản sao lưu trên Android.
+ */
+test('không có WebCrypto thì nói rõ lý do, không ném lỗi khó hiểu', async () => {
+  const that = globalThis.crypto
+  // `globalThis.crypto` chỉ có getter trong Node, nên phải định nghĩa đè
+  const dat = (v: unknown) => Object.defineProperty(globalThis, 'crypto', { value: v, configurable: true })
+  dat({ getRandomValues: that.getRandomValues.bind(that) })
+  try {
+    await assert.rejects(
+      () => encryptSync({ a: 1 }, 'mat khau du dai'),
+      (e: Error) => {
+        assert.ok(e instanceof SyncCryptoError, 'phải là lỗi của app, không phải TypeError')
+        assert.ok(/kết nối không an toàn/.test(e.message), 'phải nói vì sao')
+        assert.ok(/HTTPS|localhost/.test(e.message), 'phải nói cách khắc phục')
+        return true
+      },
+    )
+    await assert.rejects(() => decryptSync({ app: 'xaxi-sync', v: 1 }, 'mk'), SyncCryptoError)
+  } finally {
+    dat(that)
+  }
+})

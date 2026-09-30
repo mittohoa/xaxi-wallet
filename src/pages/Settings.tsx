@@ -140,6 +140,15 @@ export function Settings() {
         'Đã xuất tệp đồng bộ',
       )
       await saveSettings({ lastSyncAt: Date.now() })
+    } catch (e) {
+      /*
+       * KHÔNG được để im lặng.
+       *
+       * Trước đây khối này chỉ có `finally`, nên buildSyncFile ném lỗi là người
+       * dùng nhận được đúng con số không: nút hết mờ, và hết. Đó chính là kiểu
+       * hỏng đã làm mất đường xuất bản sao lưu trên Android một lần rồi.
+       */
+      toast(e instanceof Error ? e.message : 'Không tạo được tệp đồng bộ')
     } finally {
       setDangDongBo(false)
     }

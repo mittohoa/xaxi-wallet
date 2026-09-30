@@ -1061,3 +1061,44 @@ lặng lẽ còn tệ hơn không có bộ rà, vì nó cho cảm giác đã ki�
 
 Kết quả: **24/24 đạt** trên A50s, dữ liệu thật giữ nguyên nhờ
 `npm run android:debug-signed`.
+
+## 21. Bản web: một lỗi im lặng nữa, cùng đúng một kiểu
+
+Bản web và bản desktop không được mở lần nào trong suốt đợt làm biểu tượng, bia
+mộ, đồng bộ và OCR. Mở ra thì giao diện chạy bình thường — nhưng đường xuất tệp
+đồng bộ có một lỗ.
+
+```js
+try {
+  const envelope = await buildSyncFile(cumMatKhau)   // ném lỗi ở đây thì…
+  …
+} finally {
+  setDangDongBo(false)                                // …chỉ có dòng này chạy
+}
+```
+
+Không có `catch`. `buildSyncFile` ném lỗi là người dùng nhận được **đúng con số
+không**: nút hết mờ, và hết. Đây là lần thứ ba trong dự án gặp đúng kiểu hỏng
+này — hai lần trước là đường xuất bản sao lưu trên Android (báo thành công mà
+không tạo ra tệp nào) và đường chia sẻ văn bản.
+
+### Và có một nguyên nhân cụ thể, không phải giả định
+
+`crypto.subtle` **chỉ tồn tại trong ngữ cảnh an toàn**. HTTPS, localhost, Tauri
+và Capacitor đều an toàn — nhưng bản web tự dựng trên một địa chỉ LAN qua HTTP
+thường thì nó là `undefined`, và lời gọi đầu tiên ném ra
+`TypeError: Cannot read properties of undefined`. Câu đó không nói với người
+dùng điều gì cả, mà ở đây nó còn không bao giờ tới được người dùng.
+
+Hai bản vá, cả hai đều cần:
+
+- `crypto.ts` kiểm WebCrypto **trước**, và nói thẳng: trang đang mở qua kết nối
+  không an toàn, hãy dùng HTTPS, localhost, hoặc bản cài trên máy.
+- Nút xuất có `catch` hiện lỗi ra. Không lỗi nào được phép biến mất.
+
+### Bài học lặp lại đủ ba lần thì đáng thành luật
+
+**Mọi thao tác đưa dữ liệu ra khỏi app đều phải có `catch` hiện lỗi.** Đường đi
+ra là đường hay hỏng nhất — nó chạm vào hệ điều hành, vào quyền, vào khả năng
+của trình duyệt — và cũng là đường mà người dùng tin tưởng nhất, vì họ tưởng dữ
+liệu đã an toàn ở đâu đó.

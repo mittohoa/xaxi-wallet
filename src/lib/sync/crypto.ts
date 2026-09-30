@@ -34,6 +34,25 @@ const IV_BYTES = 12
 
 export class SyncCryptoError extends Error {}
 
+/**
+ * WebCrypto chỉ tồn tại trong "ngữ cảnh an toàn".
+ *
+ * HTTPS, localhost, Tauri và Capacitor đều là ngữ cảnh an toàn. Nhưng bản web
+ * tự dựng trên một địa chỉ LAN qua HTTP thường thì `crypto.subtle` là
+ * `undefined` — và lời gọi đầu tiên ném ra `TypeError` không nói lên điều gì.
+ *
+ * Kiểm trước và nói thẳng: người dùng cần biết vì sao, chứ không cần biết tên
+ * thuộc tính nào bị thiếu.
+ */
+function doiWebCrypto(): void {
+  if (typeof crypto === 'undefined' || !crypto.subtle) {
+    throw new SyncCryptoError(
+      'Trình duyệt này không cho mã hoá vì trang đang mở qua kết nối không an toàn. ' +
+        'Hãy mở app qua HTTPS, qua localhost, hoặc dùng bản cài trên máy.',
+    )
+  }
+}
+
 /* ---------------- base64 ---------------- */
 
 /**
@@ -124,6 +143,7 @@ export interface Envelope {
  * không mở được tệp của mình.
  */
 export async function encryptSync(payload: unknown, passphrase: string): Promise<Envelope> {
+  doiWebCrypto()
   if (!passphrase) throw new SyncCryptoError('Chưa có cụm mật khẩu.')
 
   const salt = crypto.getRandomValues(new Uint8Array(SALT_BYTES))
@@ -149,6 +169,7 @@ export async function encryptSync(payload: unknown, passphrase: string): Promise
 }
 
 export async function decryptSync(envelope: unknown, passphrase: string): Promise<unknown> {
+  doiWebCrypto()
   const e = envelope as Partial<Envelope>
   if (!e || e.app !== 'xaxi-sync') throw new SyncCryptoError('Đây không phải tệp đồng bộ của XAXI.')
   if (typeof e.v !== 'number' || e.v > VERSION) {
