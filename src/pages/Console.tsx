@@ -351,16 +351,64 @@ export function Console({
     <div className="console">
       <div className="console-scroll">
         <header className="console-hero">
-          <button type="button" className="icon-btn console-gear" onClick={() => onCommand('settings')} aria-label="Cài đặt">
-            <Icon name="settings" />
-          </button>
-          <div className="hero-figure"><Figure value={netWorth} /></div>
-          <div className="hero-sub">
-            {app.settings.currency === 'VND' ? 'tổng số dư' : 'balance'} · tháng {Number(month.slice(5, 7))}{' '}
-            <b className={monthTotals.net < 0 ? 'amount expense' : 'amount income'}>
-              {monthTotals.net < 0 ? '−' : '+'}
-              {formatMoney(Math.abs(monthTotals.net))}
-            </b>
+          {/* Hàng riêng cho bánh răng: đặt tuyệt đối thì thẻ số dư che mất nó */}
+          <div className="hero-top">
+            <button type="button" className="icon-btn console-gear" onClick={() => onCommand('settings')} aria-label="Cài đặt">
+              <Icon name="settings" />
+            </button>
+          </div>
+          {/*
+            Số dư nằm TRONG một tấm thẻ, không trôi trần trên nền.
+
+            Đây là khác biệt lớn nhất so với bộ mẫu tham khảo: mẫu nào cũng biến
+            số dư thành một *vật thể* có nền, có màu thương hiệu, có thông tin
+            phụ nằm bên trong. Con số trần thì màn hình chỉ có trọng tâm chữ chứ
+            không có trọng tâm thị giác — nhìn ra một bảng điều khiển, không ra
+            một app.
+
+            Thẻ mang màu lime ở CẢ hai chế độ sáng và tối, cùng luật với
+            `.panel-ink` (§2 hệ thống thiết kế): màu thương hiệu là cố định, nhờ
+            vậy chỉ cần kiểm định một lần.
+          */}
+          <div className="hero-card">
+            <span className="hero-card-label">
+              {app.settings.currency === 'VND' ? 'Tổng số dư' : 'Balance'}
+            </span>
+            <div className="hero-figure"><Figure value={netWorth} /></div>
+            <div className="hero-sub">
+              tháng {Number(month.slice(5, 7))}{' '}
+              <b>
+                {monthTotals.net < 0 ? '−' : '+'}
+                {formatMoney(Math.abs(monthTotals.net))}
+              </b>
+            </div>
+          </div>
+
+          {/*
+            Bốn lối tắt hay dùng nhất.
+
+            Không thay ô nhập — gõ vẫn là đường chính. Nhưng bộ mẫu nào cũng có
+            một hàng như thế này ngay dưới thẻ, và nó làm hai việc: cho màn hình
+            một cấu trúc, và cho người mới biết app làm được gì mà không phải
+            đoán nên gõ chữ nào.
+          */}
+          <div className="hero-actions">
+            <button type="button" onClick={() => onCommand('newEntry')}>
+              <span className="ha-ico"><Icon name="plus" /></span>
+              Ghi khoản
+            </button>
+            <button type="button" onClick={() => onCommand('transfer')}>
+              <span className="ha-ico"><Icon name="swap" /></span>
+              Chuyển ví
+            </button>
+            <button type="button" onClick={() => onCommand('reconcile')}>
+              <span className="ha-ico"><Icon name="check" /></span>
+              Đối soát
+            </button>
+            <button type="button" onClick={() => onCommand('reports')}>
+              <span className="ha-ico"><Icon name="chart" /></span>
+              Báo cáo
+            </button>
           </div>
 
           <div className="hero-tiles">
@@ -690,9 +738,11 @@ export function Console({
 
         {!text && (
           <div className="composer-chips">
-            <button type="button" className="chip" onClick={() => onCommand('newEntry')}>
-              <Icon name="plus" /> Ghi đầy đủ
-            </button>
+            {/*
+              Bỏ chip "Ghi đầy đủ": hàng nút tròn phía trên đã gọi đúng lệnh đó,
+              và nút tròn nổi hơn nhiều. Chỗ trống ở đây nhường cho các lối tắt
+              app tự học từ thói quen — thứ có giá trị riêng cho từng người.
+            */}
             {shortcuts.map((s, i) => (
               <button key={s.key} type="button" className="chip" onClick={() => runShortcut(i)}>
                 <Money value={s.amount} kind={s.kind} signed />

@@ -11,14 +11,23 @@
 
 .console-hero {
   position: relative;
-  text-align: center;
-  padding: calc(var(--s-8) + var(--safe-t)) var(--s-2) var(--s-6);
+  padding: calc(var(--s-3) + var(--safe-t)) var(--s-2) var(--s-6);
+}
+
+/*
+ * Hàng trên cùng, chỉ chứa bánh răng.
+ *
+ * Trước đây bánh răng đặt tuyệt đối ở góc phải. Khi số dư còn là con số trần
+ * thì không sao, nhưng thẻ số dư cao hơn nhiều và CHE MẤT nó — nút vẫn bấm được
+ * mà gần như không nhìn thấy.
+ */
+.hero-top {
+  display: flex;
+  justify-content: flex-end;
+  padding: 0 var(--s-2) var(--s-2);
 }
 
 .console-gear {
-  position: absolute;
-  top: calc(var(--s-4) + var(--safe-t));
-  right: 0;
   opacity: 0.5;
 }
 
@@ -26,7 +35,57 @@
   transform: scale(0.9);
 }
 
+/*
+ * Thẻ số dư — vật thể lớn nhất của màn hình chính.
+ *
+ * Mang màu lime thương hiệu ở CẢ hai chế độ sáng và tối, cùng luật với
+ * `.panel-ink` (§2): màu thương hiệu là cố định, nên chỉ phải kiểm định một lần
+ * thay vì hai.
+ *
+ * Chữ dùng `--accent-ink` (mực) chứ không phải token chữ thường: nền lime luôn
+ * sáng, nên chữ luôn phải tối — kể cả khi cả app đang ở chế độ tối.
+ */
+.hero-card {
+  position: relative;
+  margin: 0 var(--s-2);
+  padding: var(--s-6) var(--s-5) var(--s-5);
+  border-radius: var(--r-lg);
+  background: linear-gradient(150deg, var(--accent), color-mix(in srgb, var(--accent) 72%, #4a7c0f));
+  color: var(--accent-ink);
+  box-shadow: var(--lift-2);
+  text-align: left;
+  overflow: hidden;
+}
+
+/*
+ * Vệt sáng chéo rất nhạt.
+ *
+ * Một mảng màu phẳng cỡ này nhìn ra tấm giấy dán; bộ mẫu tham khảo tấm nào cũng
+ * có chuyển sắc hoặc hình khối bên trong. Đây là cách rẻ nhất để thẻ có chiều
+ * sâu mà không thêm ảnh nào.
+ */
+.hero-card::after {
+  content: '';
+  position: absolute;
+  inset: -55% -18% auto auto;
+  width: 72%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.13);
+  pointer-events: none;
+}
+
+.hero-card-label {
+  position: relative;
+  font-size: var(--t-2xs);
+  font-weight: var(--w-semi);
+  text-transform: uppercase;
+  letter-spacing: var(--track-caps);
+  opacity: 0.62;
+}
+
 .hero-figure {
+  position: relative;
   font-size: var(--t-figure);
   font-weight: var(--w-bold);
   letter-spacing: var(--track-tight);
@@ -34,9 +93,57 @@
 }
 
 .hero-sub {
-  margin-top: var(--s-2);
+  position: relative;
+  margin-top: var(--s-1);
   font-size: var(--t-xs);
-  color: var(--text-muted);
+  opacity: 0.7;
+}
+
+.hero-sub b {
+  font-weight: var(--w-bold);
+}
+
+/*
+ * Hàng lối tắt.
+ *
+ * Không thay ô nhập — gõ vẫn là đường chính. Nhưng nó cho màn hình một cấu
+ * trúc, và cho người mới biết app làm được gì mà không phải đoán nên gõ chữ nào.
+ */
+.hero-actions {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--s-2);
+  margin: var(--s-5) var(--s-2) 0;
+}
+
+.hero-actions button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--s-2);
+  padding: var(--s-2) 0;
+  border: 0;
+  background: none;
+  color: var(--text-secondary);
+  font-size: var(--t-2xs);
+  font-weight: var(--w-semi);
+  cursor: pointer;
+}
+
+.hero-actions .ha-ico {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: var(--r-pill);
+  background: var(--surface-2);
+  color: var(--text-primary);
+  font-size: var(--t-lg);
+  transition: transform var(--dur-fast) var(--ease);
+}
+
+.hero-actions button:active .ha-ico {
+  transform: scale(0.9);
 }
 
 .hero-sub b {

@@ -240,11 +240,23 @@ test('mọi lệnh đều mở được màn hình của nó', async () => {
 test('các nút mở màn hình trên trang chính vẫn còn', async () => {
   assert.ok(container.querySelector('.console-gear'), 'mất nút bánh răng thì không vào được Cài đặt')
 
-  const chips = [...container.querySelectorAll('.chip')].map((c) => c.textContent ?? '')
+  /*
+   * Kiểm Ý ĐỊNH, không kiểm chỗ đặt.
+   *
+   * Bản đầu khoá cứng vào `.chip` chứa chữ "Ghi đầy đủ". Khi lối tắt đó chuyển
+   * lên hàng nút tròn dưới thẻ số dư, bài kiểm đỏ lên dù chẳng mất gì — nó canh
+   * đúng thứ nhưng hỏi sai câu, và một bài kiểm như thế chỉ dạy người ta bỏ qua
+   * nó.
+   */
+  const nhan = [...container.querySelectorAll('button')].map((b) => b.textContent ?? '')
+
   assert.ok(
-    chips.some((t) => t.includes('Ghi đầy đủ')),
-    'mất chip Ghi đầy đủ thì không mở được biểu mẫu chọn ví / danh mục / ngày',
+    nhan.some((t) => /Ghi khoản|Ghi đầy đủ/.test(t)),
+    'mất lối vào biểu mẫu chọn ví / danh mục / ngày',
   )
+  for (const canCo of ['Chuyển ví', 'Đối soát', 'Báo cáo']) {
+    assert.ok(nhan.some((t) => t.includes(canCo)), `mất lối tắt ${canCo} trên trang chính`)
+  }
 
   await act(async () => {
     root.unmount()

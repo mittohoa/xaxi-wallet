@@ -334,3 +334,45 @@ Cần bản **debug** đang cài: bản phát hành cố ý không mở cổng g
 
 Vài phép kiểm nạp dữ liệu mẫu, tức ghi đè giao dịch. Script sao lưu toàn bộ CSDL
 trước khi chạy và trả lại sau, kể cả khi có phép kiểm hỏng giữa chừng.
+
+---
+
+## 12. Số dư là một VẬT THỂ, không phải một con số trôi trên nền
+
+Đặt màn hình chính cạnh bộ mẫu tham khảo trong `docs/template/UI/`, khác biệt
+lớn nhất không phải màu hay phông: **mẫu nào cũng biến số dư thành một tấm thẻ**
+— có nền, có màu thương hiệu, có thông tin phụ nằm bên trong nó.
+
+Bản cũ để con số trần trên nền. Kết quả là màn hình có trọng tâm CHỮ nhưng không
+có trọng tâm THỊ GIÁC: mắt không biết nhìn vào đâu trước, và cả trang đọc ra như
+một bảng điều khiển chứ không ra một app.
+
+`.hero-card` mang màu lime ở **cả hai** chế độ sáng và tối, cùng luật với
+`.panel-ink` (§2): màu thương hiệu là cố định, nên chỉ phải kiểm định một lần.
+Chữ trên thẻ dùng `--accent-ink` chứ không phải token chữ thường — nền lime luôn
+sáng, nên chữ luôn phải tối, kể cả khi cả app đang ở chế độ tối.
+
+Vệt sáng chéo trong thẻ là hình tròn trắng 13% bị cắt bởi `overflow: hidden`.
+Một mảng màu phẳng cỡ đó nhìn ra tấm giấy dán; đây là cách rẻ nhất để có chiều
+sâu mà không thêm một tệp ảnh nào.
+
+### Hàng lối tắt: cấu trúc, và một câu trả lời cho "app này làm được gì"
+
+Bốn nút tròn có nhãn ngay dưới thẻ — Ghi khoản · Chuyển ví · Đối soát · Báo cáo.
+
+Chúng **không thay ô nhập**; gõ vẫn là đường chính và vẫn nhanh nhất. Nhưng bộ
+mẫu nào cũng có một hàng như thế, và nó làm hai việc mà ô nhập không làm được:
+cho màn hình một cấu trúc để mắt bám vào, và cho người mới biết app làm được gì
+mà không phải đoán nên gõ chữ nào.
+
+Chip "Ghi đầy đủ" ở đáy bị bỏ — nút tròn đã gọi đúng lệnh đó và nổi hơn nhiều.
+Chỗ trống nhường cho các lối tắt app tự học từ thói quen người dùng.
+
+### Một bài kiểm hỏi sai câu
+
+Bài "các nút mở màn hình trên trang chính vẫn còn" khoá cứng vào `.chip` chứa
+chữ "Ghi đầy đủ". Lối tắt đó chuyển lên hàng nút tròn là nó đỏ lên, dù chẳng mất
+gì cả — nó canh đúng thứ nhưng hỏi sai câu.
+
+Đã đổi sang duyệt **mọi nút** và tìm theo nhãn, đồng thời canh luôn cả ba lối
+tắt còn lại. Một bài kiểm đỏ lên vì lý do sai chỉ dạy người ta bỏ qua nó.
