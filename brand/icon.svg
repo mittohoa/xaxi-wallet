@@ -2,14 +2,15 @@
   <!--
     XAXI - X-FLOW
     Hai duong xu huong cat nhau tao thanh chu X:
-      lime  #B8FF3D  gan phang roi vot len  = dong tien vao, tang truong
+      muc   #0D1117  gan phang roi vot len  = dong tien vao, tang truong
       do    #E34948  gan phang roi lao xuong = dong tien ra
-    Mot goc gap duy nhat moi duong, dat sau, de con doc duoc o 22px.
+    NEN LIME: hai app cung ten tren cung mot may, o co 40px thi "chu X tren nen
+    toi" nhin y het nhau. Nen lime phan biet duoc tu xa.
     Khong vi, khong dong xu, khong ky hieu tien te.
   -->
-  <rect width="512" height="512" rx="114" fill="#0D1117"/>
+  <rect width="512" height="512" rx="114" fill="#B8FF3D"/>
   <g fill="none" stroke-width="58" stroke-linecap="round" stroke-linejoin="round">
     <path d="M100 120 L240 160 L412 400" stroke="#E34948"/>
-    <path d="M100 392 L240 352 L412 112" stroke="#B8FF3D"/>
+    <path d="M100 392 L240 352 L412 112" stroke="#0D1117"/>
   </g>
 </svg>

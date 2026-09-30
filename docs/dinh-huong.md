@@ -1132,3 +1132,92 @@ Chạy thử: cửa sổ mở được, tiêu đề "XAXI — Quản lý thu chi
 Bốn mặt của app giờ đều đã được mở ít nhất một lần trong cùng một đợt: Android
 (bản phát hành trên A50s), web (Chrome thật), desktop (Windows), và bộ rà 24 mục
 chạy qua giao diện thật.
+
+## 23. Chia sẻ ảnh giao dịch vào app
+
+Chụp màn hình chuyển khoản trong app ngân hàng hay ví điện tử, bấm Chia sẻ,
+chọn Ví XAXI. App đọc chữ trong ảnh, tách ra giao dịch, đoán danh mục, và mở
+màn biên lai đã điền sẵn để bạn duyệt.
+
+Đo trên máy thật với một ảnh chụp có **bốn con số lớn** — số tiền, số tài khoản,
+mã giao dịch, số dư:
+
+```
+−1.250.000 đ · 30/09/2026 · "tien nha thang 9"
+Nguồn: Vietcombank · Danh mục: 🏠 Nhà cửa
+Đối soát số dư ví về 8.420.500 đ (đọc được từ tin nhắn)
+```
+
+Đúng cả số tiền lẫn số dư, và danh mục tự gắn từ nội dung.
+
+### Ảnh không bao giờ rời khỏi tầng native
+
+Đường hiển nhiên là đưa ảnh sang JavaScript rồi gửi ngược xuống cho ML Kit. Làm
+thế thì một ảnh chụp 2 MB phải mã hoá base64 **hai lượt**.
+
+Nhưng bộ đọc chữ đã nằm sẵn bên Java, nên ảnh được đọc và nhận dạng hoàn toàn ở
+đó; chỉ đoạn **chữ** đi ngược lên — vài trăm byte. Đây đúng là chỗ mà "app chạy
+trong WebView" bị mang tiếng oan: cầu nối chỉ đắt khi ta bắt nó chở dữ liệu
+nhị phân, mà ở đây không cần.
+
+**Không tự lưu thẳng.** Ảnh chụp có thể dính nhầm số dư thay vì số tiền giao
+dịch, và một khoản ghi sai vào sổ thì khó phát hiện hơn nhiều so với một lần
+bấm thêm.
+
+### Ba lỗi trên đường đi, cái thứ hai đáng nhớ nhất
+
+**Một — `onCreate` không bắt ảnh.** Nó gọi `captureSharedText` và `captureQuick`
+nhưng thiếu `captureSharedImage`, nên chia sẻ lúc app đang ĐÓNG thì Android tạo
+Activity mới, `onNewIntent` không chạy, và ảnh rơi mất im lặng.
+
+**Hai — bộ vá manifest bỏ qua chính bản vá mới.** `patch-android-manifest.mjs`
+có dòng "gọi nhiều lần không sao — có kiểm tra trước khi chèn": thấy đã có
+`intent-filter` là trả về ngay. Nên khi thêm `image/*` vào khuôn mẫu, dòng đó
+**không bao giờ được áp** lên manifest đã có sẵn.
+
+Và lỗ hổng bị chính cách thử che đi: `am start -n` chỉ định thẳng component thì
+Android không cần khớp intent-filter nào cả, nên thử kiểu đó vẫn chạy. Chỉ khi
+mở bảng Chia sẻ thật mới lộ ra app không có trong danh sách. Bài học: **thử một
+intent-filter bằng cách chỉ định thẳng component là không thử gì cả.**
+
+**Ba — `SecurityException` khi đọc URI.** Bên gửi cấp quyền đọc tạm cho đúng tệp
+đó; gửi bằng `am start` từ shell thì quyền không theo. Không phải lỗi của app,
+nhưng nó dạy một điều: `catch { return "" }` tôi viết trong `consumeSharedImageText`
+đã nuốt sạch lỗi, nên phải đặt dấu vết ở tầng Java mới thấy được nguyên nhân.
+
+---
+
+## 24. Đổi tên thành "Ví XAXI"
+
+Trên máy người dùng có **hai app cùng tên "XAXI"**, và trong bảng Chia sẻ thì
+không cách nào phân biệt — đã bấm nhầm vào app kia một lần.
+
+Tên mới không chỉ khác, mà còn **xếp xuống chữ V** — cách hẳn khỏi "XAXI" trong
+mọi danh sách sắp theo bảng chữ cái. Và nó đúng nghĩa: mã gói vốn là
+`xaxi_wallet`.
+
+`applicationId` **không đổi**. Đổi nó là một app khác hẳn với Android, và người
+dùng mất sạch dữ liệu.
+
+Nhãn phải vá riêng: Capacitor sinh `strings.xml` đúng một lần lúc `cap add` và
+không cập nhật lại khi sync, nên đổi `appName` trong `capacitor.config.ts` là
+chưa đủ — nhãn cũ nằm lại mãi trong thư mục `android/`, mà thư mục đó gitignore
+nên không ai thấy nó đã lệch.
+
+### Biểu tượng: nền lime thay vì nền mực
+
+Ở cỡ 40px trong một danh sách, "chữ X trên nền tối" của hai app nhìn y hệt nhau.
+Nền lime phân biệt được từ xa, không cần đọc chữ — và nó trùng với thẻ số dư
+trên màn hình chính, nên biểu tượng và app nhìn ra cùng một thứ.
+
+Hình giữ nguyên: hai đường xu hướng cắt nhau. Đường tăng trưởng đổi từ lime sang
+mực, vì nền đã là lime.
+
+Lớp trước vẽ bằng **VectorDrawable** chứ không phải PNG — máy này không có bộ
+dựng ảnh, mà vector thì viết tay được, sắc nét ở mọi cỡ, và sửa một lần là cả
+năm độ phân giải đổi theo.
+
+**Vùng an toàn:** khung là 108dp nhưng hệ điều hành cắt chỉ còn 72dp ở giữa. Bản
+đầu toạ độ chạy từ 33 đến 93 và chữ X bị cắt mép ngay trên màn hình chính. Toạ
+độ tính bằng cách chiếu hệ 512 của `brand/icon.svg` vào khung 108:
+`x' = 54 + (x - 256) * 66/512`.

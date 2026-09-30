@@ -5,18 +5,28 @@
  * Thu muc android/ duoc sinh lai moi lan chay `cap add android` nen khong commit duoc;
  * script nay chay sau moi lan sinh. Goi nhieu lan khong sao — co kiem tra truoc khi chen.
  *
+ * Nhan CA hai kieu:
+ *   text/plain  — noi dung thong bao ngan hang, tin nhan bien dong so du
+ *   image/*     — anh chup man hinh giao dich tu app bank / vi dien tu
+ *
  * KHONG them quyen nao. ACTION_SEND la intent-filter, khong phai permission:
- * he dieu hanh chi chuyen van ban toi app khi nguoi dung chu dong bam Chia se.
+ * he dieu hanh chi chuyen du lieu toi app khi nguoi dung chu dong bam Chia se,
+ * va ben gui tu cap quyen doc tam cho dung tep do.
  */
 import { readFileSync, writeFileSync } from 'node:fs'
 
 const MANIFEST = process.argv[2] ?? 'android/app/src/main/AndroidManifest.xml'
 
+/** Dong mimeType cho anh; tach rieng vi con dung de nang cap manifest da co san */
+const IMAGE_MIME = '                <data android:mimeType="image/*" />'
+const TEXT_MIME = '                <data android:mimeType="text/plain" />'
+
 const INTENT_FILTER = `
             <intent-filter>
                 <action android:name="android.intent.action.SEND" />
                 <category android:name="android.intent.category.DEFAULT" />
-                <data android:mimeType="text/plain" />
+${TEXT_MIME}
+${IMAGE_MIME}
             </intent-filter>
 `
 
@@ -37,7 +47,20 @@ export function patchManifest(xml) {
     }
   }
 
-  if (xml.includes('android.intent.action.SEND')) return { xml, changed: false }
+  /*
+   * Da co intent-filter SEND thi VAN phai kiem no co du kieu chua.
+   *
+   * Cho nay tung tra ve ngay "khong doi gi" — tuong la an toan vi goi nhieu lan
+   * khong sao. Nhung khi them image/* vao khuon mau, dong do khong bao gio duoc
+   * ap len manifest da co san: XAXI khong hien trong bang Chia se ANH.
+   *
+   * Va lo hong bi chinh cach thu che di: `am start -n` chi dinh thang component
+   * thi Android khong can khop intent-filter nao ca, nen duong do van chay.
+   */
+  if (xml.includes('android.intent.action.SEND')) {
+    if (xml.includes('image/*') || !xml.includes(TEXT_MIME)) return { xml, changed: false }
+    return { xml: xml.replace(TEXT_MIME, `${TEXT_MIME}\n${IMAGE_MIME}`), changed: true }
+  }
 
   // Tim the </activity> dau tien sau khai bao MainActivity
   const activityStart = xml.search(/<activity\b[^>]*android:name="\.MainActivity"/s)

@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Lop truoc cua bieu tuong, ve bang vector chu khong phai PNG.
+
+  VI SAO VECTOR: bieu tuong PNG phai sinh ra o nam do phan giai, va may nay
+  khong co bo dung anh nao. VectorDrawable viet tay duoc, sac net o moi co, va
+  sua mot lan la ca nam do phan giai doi theo.
+
+  HINH: hai duong xu huong cat nhau thanh chu X — mot duong vot len (tien vao),
+  mot duong lao xuong (tien ra). Giu nguyen hinh hoc cua brand/icon.svg.
+
+  VUNG AN TOAN: khung la 108dp, nhung he dieu hanh CAT chi con 72dp o giua —
+  tuc chi phan 18..90 chac chan con lai. Ban dau toa do chay tu 33 den 93 va chu
+  X bi cat mep ngay tren man hinh chinh. Gio hinh nam tron trong 34..74.
+
+  Toa do tinh bang cach chieu he 512 cua brand/icon.svg vao khung 108:
+      x' = 54 + (x - 256) * 66/512
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+
+    <!-- Duong tien RA: gan phang roi lao xuong -->
+    <path
+        android:pathData="M33.9,36.5 L51.9,41.6 L74.1,72.6"
+        android:strokeColor="#E34948"
+        android:strokeWidth="7.5"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+
+    <!-- Duong tien VAO: gan phang roi vot len. Mau muc, vi nen da la lime -->
+    <path
+        android:pathData="M33.9,71.5 L51.9,66.4 L74.1,35.4"
+        android:strokeColor="#0D1117"
+        android:strokeWidth="7.5"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+</vector>

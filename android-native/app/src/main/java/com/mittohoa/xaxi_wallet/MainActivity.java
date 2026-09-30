@@ -1,6 +1,7 @@
 package com.mittohoa.xaxi_wallet;
 
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 
 import androidx.activity.OnBackPressedCallback;
@@ -26,6 +27,9 @@ public class MainActivity extends BridgeActivity {
      * khi no dung day.
      */
     static String pendingSharedText = null;
+
+    /** Anh vua duoc chia se toi; chi giu URI, doc ra khi lop web hoi den */
+    static Uri pendingSharedImage = null;
 
     /**
      * Lop web dang mo mot tam truot chiem man hinh hay khong.
@@ -67,6 +71,9 @@ public class MainActivity extends BridgeActivity {
         registerPlugin(ShellPlugin.class);
         super.onCreate(savedInstanceState);
         captureSharedText(getIntent());
+        // Phai bat CA anh o day: chia se luc app dang DONG thi Android tao
+        // Activity moi, onNewIntent khong chay, va anh roi mat im lang
+        captureSharedImage(getIntent());
         captureQuick(getIntent());
         // Dang ky sau super de nam tren cung chuoi xu ly Back
         getOnBackPressedDispatcher().addCallback(this, backCallback);
@@ -87,6 +94,9 @@ public class MainActivity extends BridgeActivity {
             // Lop web dang song: bao cho no biet co van ban moi, khong phai doi
             getBridge().triggerWindowJSEvent("xaxiSharedText");
         }
+        if (captureSharedImage(intent) && getBridge() != null) {
+            getBridge().triggerWindowJSEvent("xaxiSharedImage");
+        }
     }
 
     /** Chi nhan van ban thuan; moi thu khac bo qua chu khong doan mo */
@@ -95,6 +105,25 @@ public class MainActivity extends BridgeActivity {
         CharSequence text = intent.getCharSequenceExtra(Intent.EXTRA_TEXT);
         if (text == null || text.length() == 0) return false;
         pendingSharedText = text.toString();
+        return true;
+    }
+
+    /**
+     * Anh nguoi dung chia se toi (anh chup man hinh giao dich ngan hang / vi).
+     *
+     * Chi giu lai URI, KHONG doc anh ra o day: doc o day nghia la giu ca tam
+     * anh trong bo nho cho toi khi lop web hoi den. Doc luc can, roi bo ngay.
+     *
+     * KHONG them quyen nao. Ben gui tu cap quyen doc tam cho dung tep do khi
+     * nguoi dung bam Chia se — het viec la quyen het theo.
+     */
+    private boolean captureSharedImage(Intent intent) {
+        if (intent == null || !Intent.ACTION_SEND.equals(intent.getAction())) return false;
+        String type = intent.getType();
+        if (type == null || !type.startsWith("image/")) return false;
+        Uri uri = intent.getParcelableExtra(Intent.EXTRA_STREAM);
+        if (uri == null) return false;
+        pendingSharedImage = uri;
         return true;
     }
 

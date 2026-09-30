@@ -1,4 +1,14 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="ic_launcher_background">#0D1117</color>
+    <!--
+        Nen LIME, khong phai muc.
+
+        Tren may nay co hai app deu ten "XAXI", va o co 40px trong danh sach
+        chia se thi "mot chu X tren nen toi" nhin y het nhau. O nen lime thi
+        phan biet duoc ngay tu xa, khong can doc chu.
+
+        Lime cung dang la mau cua the so du tren man hinh chinh, nen bieu tuong
+        va app nhin ra cung mot thu.
+    -->
+    <color name="ic_launcher_background">#B8FF3D</color>
 </resources>

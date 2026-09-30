@@ -10,6 +10,7 @@ import { type OcrLine, rebuildLayout } from '../receipt-layout'
 
 interface OcrPlugin {
   recognize(options: { image: string }): Promise<{ text: string; lines?: OcrLine[] }>
+  recognizeShared(): Promise<{ text: string; lines?: OcrLine[] }>
   isAvailable(): Promise<{ available: boolean }>
 }
 
@@ -57,5 +58,29 @@ export async function recognizeImage(file: File): Promise<OcrResult> {
     // dung khi plugin chua tra ve toa do (ban Android cu hon)
     text: (lines.length > 0 ? rebuildLayout(lines) : result.text) ?? '',
     lines,
+  }
+}
+
+/** Ten su kien MainActivity ban ra khi nhan duoc anh chia se luc app dang chay */
+export const SHARED_IMAGE_EVENT = 'xaxiSharedImage'
+
+/**
+ * Doc chu tu anh nguoi dung vua chia se toi app.
+ *
+ * Anh KHONG di qua day. No duoc doc va nhan dang hoan toan ben Java, va chi
+ * doan chu di nguoc len — vai tram byte thay vi vai megabyte base64. Duong kia
+ * (dua anh sang JavaScript roi gui nguoc xuong) phai ma hoa hai luot cho mot
+ * tam anh chup man hinh co 2 MB.
+ *
+ * Tra ve chuoi rong nghia la khong co anh nao dang cho.
+ */
+export async function consumeSharedImageText(): Promise<string> {
+  if (!ocrSupported()) return ''
+  try {
+    const result = await Ocr.recognizeShared()
+    const lines = result?.lines ?? []
+    return ((lines.length > 0 ? rebuildLayout(lines) : result?.text) ?? '').trim()
+  } catch {
+    return ''
   }
 }

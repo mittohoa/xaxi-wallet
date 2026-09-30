@@ -9,6 +9,7 @@
  */
 import { copyFileSync, existsSync, mkdirSync, readFileSync, readdirSync, statSync, writeFileSync } from 'node:fs'
 import { buildVersion } from './version.mjs'
+import { APP_LABEL, patchAppLabel } from './patch-app-label.mjs'
 import { dirname, join, relative, resolve } from 'node:path'
 
 const SOURCE = resolve('android-native')
@@ -296,4 +297,12 @@ if (voiceChanges.length) {
   for (const c of voiceChanges) console.log(`  ${c}`)
 } else {
   console.log('Manifest đã đủ khai báo cho phần giọng nói.')
+}
+
+const labelChanges = patchAppLabel(TARGET)
+if (labelChanges.length) {
+  console.log('Da doi nhan app:')
+  for (const c of labelChanges) console.log(`  ${c}`)
+} else {
+  console.log(`Nhan app da la "${APP_LABEL}".`)
 }

@@ -17,6 +17,7 @@ import {
   nativeBackAvailable,
   setNativeOverlayOpen,
 } from './lib/native/shell'
+import { SHARED_IMAGE_EVENT, consumeSharedImageText } from './lib/native/ocr'
 import { GapFiller } from './components/GapFiller'
 import { GoalsView } from './components/GoalsView'
 import { Budgets } from './pages/Budgets'
@@ -105,6 +106,30 @@ function Shell() {
     }
     window.addEventListener(SHARED_TEXT_EVENT, onShared)
     return () => window.removeEventListener(SHARED_TEXT_EVENT, onShared)
+  }, [])
+
+  /**
+   * Anh chia se toi: anh chup man hinh giao dich tu app ngan hang hay vi dien tu.
+   *
+   * Di thang vao cung mot cho voi van ban chia se — man hinh Dan bien lai, da
+   * dien san so tien, ngay va danh muc doan duoc, cho nguoi dung liec qua roi
+   * bam Luu.
+   *
+   * KHONG tu luu thang. Anh chup co the dinh nham so du tai khoan thay vi so
+   * tien giao dich, ma mot khoan ghi sai vao so thi kho phat hien hon nhieu so
+   * voi mot lan bam them.
+   */
+  useEffect(() => {
+    const take = (text: string) => {
+      if (text) setSharedText(text)
+    }
+    consumeSharedImageText().then(take)
+
+    const onImage = () => {
+      consumeSharedImageText().then(take)
+    }
+    window.addEventListener(SHARED_IMAGE_EVENT, onImage)
+    return () => window.removeEventListener(SHARED_IMAGE_EVENT, onImage)
   }, [])
 
   useEffect(() => {

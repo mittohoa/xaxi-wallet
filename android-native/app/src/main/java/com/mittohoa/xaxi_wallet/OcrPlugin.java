@@ -3,6 +3,9 @@ package com.mittohoa.xaxi_wallet;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Rect;
+import android.net.Uri;
+import android.util.Log;
+import java.io.InputStream;
 import android.util.Base64;
 
 import com.getcapacitor.JSArray;
@@ -61,6 +64,47 @@ public class OcrPlugin extends Plugin {
             return;
         }
 
+        doc(bitmap, call);
+    }
+
+    /**
+     * Doc chu tu ANH DUOC CHIA SE toi app, va tra ve DUNG PHAN CHU.
+     *
+     * Anh khong bao gio roi khoi tang native. Duong kia — dua anh sang
+     * JavaScript roi gui nguoc xuong — phai ma hoa base64 hai luot cho mot tam
+     * anh chup man hinh co 2 MB; o day chi vai tram byte chu di qua cau noi.
+     */
+    @PluginMethod
+    public void recognizeShared(PluginCall call) {
+        Uri uri = MainActivity.pendingSharedImage;
+        MainActivity.pendingSharedImage = null;
+
+        if (uri == null) {
+            JSObject rong = new JSObject();
+            rong.put("text", "");
+            call.resolve(rong);
+            return;
+        }
+
+        Bitmap bitmap;
+        try (InputStream in = getContext().getContentResolver().openInputStream(uri)) {
+            bitmap = BitmapFactory.decodeStream(in);
+        } catch (Exception e) {
+            Log.e("XaxiShare", "mo anh that bai", e);
+            call.reject("Không mở được ảnh vừa chia sẻ.");
+            return;
+        }
+
+        if (bitmap == null) {
+            call.reject("Không đọc được ảnh vừa chia sẻ.");
+            return;
+        }
+
+        doc(bitmap, call);
+    }
+
+    /** Phan nhan dang dung chung cho ca hai duong vao */
+    private void doc(Bitmap bitmap, PluginCall call) {
         TextRecognizer recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS);
         recognizer
             .process(InputImage.fromBitmap(bitmap, 0))

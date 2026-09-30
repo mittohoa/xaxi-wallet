@@ -1,6 +1,6 @@
 {
-  "name": "XAXI — Quản lý thu chi",
-  "short_name": "XAXI",
+  "name": "Ví XAXI — Quản lý thu chi",
+  "short_name": "Ví XAXI",
   "description": "Ghi chép thu chi cá nhân, hoạt động offline, dữ liệu nằm trên máy bạn",
   "start_url": "./",
   "scope": "./",
