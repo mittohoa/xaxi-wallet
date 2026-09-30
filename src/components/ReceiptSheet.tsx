@@ -33,6 +33,7 @@ export function ReceiptSheet({ initialText = '', onClose }: { initialText?: stri
   const [photo, setPhoto] = useState<File | null>(null)
   const [keepPhoto, setKeepPhoto] = useState(true)
   const cameraInput = useRef<HTMLInputElement>(null)
+  const galleryInput = useRef<HTMLInputElement>(null)
   const canScan = ocrSupported()
 
   async function scan(file: File | undefined) {
@@ -53,6 +54,7 @@ export function ReceiptSheet({ initialText = '', onClose }: { initialText?: stri
     } finally {
       setScanning(false)
       if (cameraInput.current) cameraInput.current.value = ''
+      if (galleryInput.current) galleryInput.current.value = ''
     }
   }
 
@@ -123,13 +125,31 @@ export function ReceiptSheet({ initialText = '', onClose }: { initialText?: stri
             >
               <Icon name="camera" /> {scanning ? 'Đang đọc ảnh…' : 'Chụp biên lai'}
             </button>
+            <button type="button" className="btn ghost" onClick={() => galleryInput.current?.click()} disabled={scanning}>
+              <Icon name="file" /> Ảnh có sẵn
+            </button>
             <span className="hint">ảnh được đọc ngay trên máy, không gửi đi đâu</span>
           </div>
+          {/*
+            HAI ô nhập, khác nhau đúng một thuộc tính.
+
+            `capture="environment"` mở THẲNG camera — nhanh, và đó là đường
+            chính. Nhưng nó cũng chặn hẳn ảnh có sẵn: biên lai chụp hôm qua, hay
+            ảnh ai đó gửi qua Zalo, đều không dùng được. Bỏ `capture` thì Android
+            hiện bộ chọn, mất thêm một nhịp — nên giữ cả hai thay vì đánh đổi.
+          */}
           <input
             ref={cameraInput}
             type="file"
             accept="image/*"
             capture="environment"
+            style={{ display: 'none' }}
+            onChange={(e) => scan(e.target.files?.[0])}
+          />
+          <input
+            ref={galleryInput}
+            type="file"
+            accept="image/*"
             style={{ display: 'none' }}
             onChange={(e) => scan(e.target.files?.[0])}
           />

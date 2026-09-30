@@ -2,6 +2,7 @@ package com.mittohoa.xaxi_wallet;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Rect;
 import android.util.Base64;
 
 import com.getcapacitor.JSArray;
@@ -73,6 +74,33 @@ public class OcrPlugin extends Plugin {
                     blocks.put(block.getText());
                 }
                 result.put("blocks", blocks);
+
+                /*
+                 * Tra ve tung DONG kem TOA DO.
+                 *
+                 * Tren mot to hoa don, nhan va so nam hai dau mot dong, cach nhau
+                 * mot khoang trong rong. ML Kit coi hai cot do la HAI KHOI khac
+                 * nhau, nen getText() tra ve tat ca nhan truoc roi moi den tat ca
+                 * so — khong dong nao con chua ca "THANH TOAN" lan "187.920".
+                 *
+                 * Da do tren may that: chup mot to hoa don ra chu doc duoc nhung
+                 * khong ra so tien nao. Chi co toa do moi ghep lai duoc.
+                 */
+                JSArray lines = new JSArray();
+                for (Text.TextBlock block : text.getTextBlocks()) {
+                    for (Text.Line line : block.getLines()) {
+                        Rect box = line.getBoundingBox();
+                        if (box == null) continue;
+                        JSObject item = new JSObject();
+                        item.put("text", line.getText());
+                        item.put("x", box.left);
+                        item.put("y", box.top);
+                        item.put("w", box.width());
+                        item.put("h", box.height());
+                        lines.put(item);
+                    }
+                }
+                result.put("lines", lines);
                 call.resolve(result);
                 recognizer.close();
                 bitmap.recycle();

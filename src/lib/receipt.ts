@@ -52,6 +52,92 @@ const ISSUERS: [RegExp, string][] = [
   [/shopeepay|\bairpay\b/i, 'ShopeePay'],
 ]
 
+/* ---------------- hoa don giay ---------------- */
+
+/**
+ * Nhan cua dong tong tien tren hoa don in, xep theo DO UU TIEN.
+ *
+ * Mot to hoa don co nhieu con so to: tong hang, thue, tong thanh toan, tien
+ * khach dua, tien thoi lai. Chi mot trong so do la so tien giao dich. Thu tu
+ * duoi day quyet dinh lay cai nao — "thanh toan" thang "tong cong", vi tong
+ * cong thuong la truoc thue.
+ */
+const TOTAL_LABELS: RegExp[] = [
+  /t[oôổ]ng\s*thanh\s*to[aá]n/i,
+  /thanh\s*to[aá]n|th[aà]nh\s*ti[eề]n/i,
+  /t[oôổ]ng\s*c[oộ]ng|t[oôổ]ng\s*ti[eề]n|t[oôổ]ng\s*s[oố]\s*ti[eề]n/i,
+  /grand\s*total|total|amount\s*due/i,
+  /t[oôổ]ng|c[oộ]ng/i,
+]
+
+/**
+ * Dong co so to nhung KHONG phai so tien giao dich.
+ *
+ * "Tien mat 200.000" la so khach dua, "Tien thua 12.080" la tien thoi lai. Lay
+ * nham mot trong hai thi khoan chi ghi vao so sai, ma nhin qua van hop ly.
+ */
+const NOT_TOTAL = /ti[eề]n\s*m[aặ]t|ti[eề]n\s*th[uừ]a|ti[eề]n\s*th[oố]i|kh[aá]ch\s*[dđ]ua|ti[eề]n\s*kh[aá]ch|cash|change/i
+
+/** So tien in tran, khong kem don vi: 187.920 hoac 187920 */
+const BARE_MONEY = /\d{1,3}(?:[.,]\d{3})+|\d{4,}/g
+
+/**
+ * Tim so tien tren dong tong cua mot to hoa don in.
+ *
+ * Can GIU NGUYEN xuong dong, nen ham nay nhan van ban tho chu khong phai ban da
+ * lam phang: "dong nao co chu THANH TOAN" la toan bo y tuong.
+ */
+function findTotalOnLine(raw: string): number | null {
+  const lines = raw.split(/\r?\n/)
+  for (const label of TOTAL_LABELS) {
+    for (const line of lines) {
+      if (!label.test(line) || NOT_TOTAL.test(line)) continue
+      const nums = [...line.matchAll(BARE_MONEY)]
+        .map((m) => Number(m[0].replace(/[.,]/g, '')))
+        // Duoi 1000 thi gan nhu chac chan la so luong, gio, hay ma so
+        .filter((n) => Number.isFinite(n) && n >= 1000)
+      if (nums.length > 0) return Math.max(...nums)
+    }
+  }
+  return null
+}
+
+/**
+ * Ten cua hang, doan tu phan dau to hoa don.
+ *
+ * Khong lay don gian "dong dau tien": anh chup thuong dinh ca thanh trang thai
+ * cua dien thoai, nen dong dau co the la "8:26 ae M". Lay dong NHIEU CHU CAI
+ * nhat trong vai dong dau thi ten cua hang thang, vi no von duoc in to va dam.
+ */
+function findShopName(raw: string): string {
+  const dau = raw
+    .split(/\r?\n/)
+    .slice(0, 6)
+    .map((l) => l.trim())
+    .filter((l) => l.length >= 3 && !/^[-=_.*\s]+$/.test(l))
+
+  /*
+   * Cham diem theo CHU IN HOA truoc, roi moi den tong so chu cai.
+   *
+   * Ten cua hang tren hoa don gan nhu luon in hoa va in to. Chi dem tong so chu
+   * cai thi dong dia chi chi nhanh dai hon lai thang — da thay dung nhu vay tren
+   * may that: "Chi nh anh Nguyen Hue" (20 chu) danh bai "HIGHLANDS COFFEE" (15).
+   */
+  let best = ''
+  let bestHoa = -1
+  let bestChu = 0
+  for (const line of dau) {
+    const hoa = (line.match(/[\p{Lu}]/gu) ?? []).length
+    const chu = (line.match(/[\p{L}]/gu) ?? []).length
+    if (hoa > bestHoa || (hoa === bestHoa && chu > bestChu)) {
+      bestHoa = hoa
+      bestChu = chu
+      best = line
+    }
+  }
+  return bestChu >= 4 ? best.replace(/\s+/g, ' ').slice(0, 80) : ''
+}
+
 function toNumber(intPart: string, decimals?: string): number {
   const whole = Number(intPart.replace(/[.,]/g, ''))
   if (!Number.isFinite(whole)) return NaN
@@ -136,7 +222,27 @@ export function parseReceipt(raw: string): ReceiptParse | null {
     const before = text.slice(Math.max(0, m.index - 28), m.index)
     hits.push({ value, sign: m[1], index: m.index, isBalance: BALANCE_LABEL.test(before) })
   }
-  if (hits.length === 0) return null
+  /*
+   * Khong thay so tien nao kem don vi — co the day la HOA DON GIAY.
+   *
+   * Tin nhan ngan hang luon ghi "120,000VND" hay "-35.000d". To hoa don in thi
+   * in so tran trong mot cot: "THANH TOAN    187.920". Truoc khi co duong nay,
+   * chup mot to hoa don that ra chu doc duoc nhung khong ra so tien nao —
+   * dung cai da do tren may that.
+   */
+  if (hits.length === 0) {
+    const total = findTotalOnLine(raw)
+    if (total === null) return null
+    return {
+      amount: Math.round(total),
+      // To hoa don ban hang luon la mot khoan chi
+      kind: 'expense',
+      date: findDate(text) ?? toISO(new Date()),
+      note: findShopName(raw),
+      // Khong co don vi tien te thi day van la mot phong doan; nguoi dung duyet lai
+      confidence: 'low',
+    }
+  }
 
   const balanceHit = [...hits].reverse().find((h) => h.isBalance)
   const amountHit = hits.find((h) => !h.isBalance) ?? hits[0]
